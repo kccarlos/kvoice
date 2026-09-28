@@ -149,7 +149,8 @@ final class LayoutSnapshotTests: XCTestCase {
         _ view: V,
         size: NSSize,
         appearance: NSAppearance.Name = .darkAqua,
-        hostInController: Bool = true
+        hostInController: Bool = true,
+        scale: CGFloat = 1
     ) -> NSImage {
         let window: NSWindow
         let hosting: NSView
@@ -189,7 +190,7 @@ final class LayoutSnapshotTests: XCTestCase {
         // Let SwiftUI settle its first layout pass.
         RunLoop.main.run(until: Date(timeIntervalSinceNow: 0.3))
         hosting.layoutSubtreeIfNeeded()
-        let image = capture(hosting, window: window, size: size)
+        let image = capture(hosting, window: window, size: size, scale: scale)
         window.orderOut(nil)
         windows.append(window)
         return image
@@ -244,13 +245,14 @@ final class LayoutSnapshotTests: XCTestCase {
     /// draws `hosting` at `size` into a 1× opaque bitmap flattened onto the
     /// window's own background (see the inline notes below for why it is
     /// flattened rather than composited with alpha).
-    private static func capture(_ hosting: NSView, window: NSWindow, size: NSSize) -> NSImage {
+    private static func capture(_ hosting: NSView, window: NSWindow, size: NSSize, scale: CGFloat = 1) -> NSImage {
         // A 1× rep, not `bitmapImageRepForCachingDisplay` (which follows the
-        // main screen's 2× backing and doubles every file).
+        // main screen's 2× backing and doubles every file). `scale` 2 is for
+        // the store screenshots (`StoreScreenshotTests`) only.
         let rep = NSBitmapImageRep(
             bitmapDataPlanes: nil,
-            pixelsWide: Int(size.width),
-            pixelsHigh: Int(size.height),
+            pixelsWide: Int(size.width * scale),
+            pixelsHigh: Int(size.height * scale),
             bitsPerSample: 8,
             samplesPerPixel: 4,
             hasAlpha: true,
@@ -266,8 +268,8 @@ final class LayoutSnapshotTests: XCTestCase {
         // every main-window PNG ~110 KB; opaque, the same image is ~10 KB.
         let opaque = NSBitmapImageRep(
             bitmapDataPlanes: nil,
-            pixelsWide: Int(size.width),
-            pixelsHigh: Int(size.height),
+            pixelsWide: Int(size.width * scale),
+            pixelsHigh: Int(size.height * scale),
             bitsPerSample: 8,
             samplesPerPixel: 3,
             hasAlpha: false,

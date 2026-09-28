@@ -1131,6 +1131,16 @@
         }
       }
     },
+    "The App Store edition cannot read text selected in other apps, so no selected text is sent.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "App Store 版本无法读取其他应用中选中的文本，因此不会发送选中的文本。"
+          }
+        }
+      }
+    },
     "The App Store edition cannot watch the mouse, a single modifier key or Escape while another app is in front. Use key combinations, including a Cancel shortcut.": {
       "localizations": {
         "zh-Hans": {

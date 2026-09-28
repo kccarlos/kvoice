@@ -300,5 +300,117 @@ class PreviewWorkflowTests(unittest.TestCase):
         self.assertNotIn("APP_STORE_PROFILE", preview)
 
 
+# The App Store listing: `appstore/` in the public tree, the overlay's
+# `Public/appstore/` here.
+APPSTORE = next(
+    (path for path in (ROOT / "appstore", ROOT / "Public" / "appstore") if path.is_dir()),
+    ROOT / "appstore",
+)
+
+
+class AppStoreMetadataTests(unittest.TestCase):
+    """App Store Connect's limits for the en-US listing, checked before the
+    text is pasted (or uploaded) rather than when it is refused."""
+
+    LIMITS = {
+        "name.txt": 30,
+        "subtitle.txt": 30,
+        "promotional_text.txt": 170,
+        "description.txt": 4000,
+        "keywords.txt": 100,
+        "release_notes.txt": 4000,
+    }
+    URLS = {
+        "support_url.txt": "https://github.com/kccarlos/kvoice/issues",
+        "marketing_url.txt": "https://github.com/kccarlos/kvoice",
+        "privacy_url.txt": "https://github.com/kccarlos/kvoice/blob/main/PRIVACY.md",
+    }
+
+    def field(self, name: str, locale: str | None = "en-US") -> str:
+        base = APPSTORE / "metadata"
+        path = base / locale / name if locale else base / name
+        return path.read_text(encoding="utf-8").rstrip("\n")
+
+    def test_every_field_is_present_and_within_its_limit(self) -> None:
+        for name, limit in self.LIMITS.items():
+            with self.subTest(name):
+                value = self.field(name)
+                self.assertTrue(value.strip(), "empty")
+                self.assertLessEqual(len(value), limit)
+                self.assertEqual(value, value.strip(), "no leading or trailing blanks")
+        self.assertNotIn("\n", self.field("name.txt"))
+        self.assertNotIn("\n", self.field("subtitle.txt"))
+
+    def test_keywords_are_comma_separated_without_spaces_or_repeats(self) -> None:
+        keywords = self.field("keywords.txt")
+        self.assertNotIn(", ", keywords)
+        self.assertNotIn(" ,", keywords)
+        words = keywords.split(",")
+        self.assertTrue(all(words), "no empty keyword")
+        self.assertEqual(len(words), len(set(w.lower() for w in words)), "no repeats")
+
+    def test_urls_and_the_account_level_fields(self) -> None:
+        for name, url in self.URLS.items():
+            with self.subTest(name):
+                self.assertEqual(self.field(name), url)
+        self.assertEqual(self.field("copyright.txt", locale=None), "2026 kccarlos")
+        self.assertEqual(self.field("primary_category.txt", locale=None), "PRODUCTIVITY")
+        self.assertEqual(self.field("secondary_category.txt", locale=None), "UTILITIES")
+
+    def test_the_listing_describes_the_store_edition_only(self) -> None:
+        # Guideline 2.3.10: no pointer to another distribution in the
+        # metadata; Private Cloud Compute is not available yet.
+        listing = " ".join(self.field(name) for name in ("description.txt", "promotional_text.txt", "release_notes.txt", "subtitle.txt"))
+        for phrase in ("github", "download the full", "Private Cloud Compute", "DMG", "Developer ID"):
+            self.assertNotIn(phrase.lower(), listing.lower(), phrase)
+
+    def test_the_listing_leads_with_dictation_and_ai_actions(self) -> None:
+        # The headline is speak once, get finished text (dictation + AI
+        # actions); the built-in actions are named as they ship.
+        first = self.field("description.txt").split("\n", 1)[0].lower()
+        self.assertIn("speak", first)
+        self.assertIn("translation", first)
+        self.assertIn("translate", self.field("keywords.txt").split(","))
+        description = self.field("description.txt")
+        for action in ("Clean Up", "Polish", "Message", "Notes", "Prompt", "Writing", "Email Draft",
+                       "Summarize", "TODO List", "Q&A", "Terminal", "Translate"):
+            self.assertIn(action, description, action)
+
+    def test_review_notes_and_privacy_answers_exist(self) -> None:
+        notes = (APPSTORE / "review_notes.txt").read_text(encoding="utf-8")
+        self.assertLessEqual(len(notes), 4000, "App Review Information notes limit")
+        self.assertIn("PostEvent", notes)
+        self.assertIn("TextEdit", notes)
+        privacy = (APPSTORE / "app_privacy.md").read_text(encoding="utf-8")
+        self.assertIn("Data Not Collected", privacy)
+
+    def test_screenshots_are_a_store_size_and_small(self) -> None:
+        shots = sorted((APPSTORE / "screenshots" / "en-US").glob("*.*"))
+        allowed = {(1280, 800), (1440, 900), (2560, 1600), (2880, 1800)}
+        for shot in shots:
+            with self.subTest(shot.name):
+                self.assertIn(shot.suffix.lower(), {".png", ".jpg", ".jpeg"})
+                self.assertLess(shot.stat().st_size, 1_000_000, "the export gate's per-file limit")
+                self.assertIn(image_size(shot), allowed)
+
+
+def image_size(path: Path) -> tuple[int, int]:
+    """Width and height from a PNG's IHDR or a JPEG's SOF marker."""
+    data = path.read_bytes()
+    if data[:8] == b"\x89PNG\r\n\x1a\n":
+        return int.from_bytes(data[16:20], "big"), int.from_bytes(data[20:24], "big")
+    index = 2
+    while index < len(data):
+        if data[index] != 0xFF:
+            index += 1
+            continue
+        marker = data[index + 1]
+        length = int.from_bytes(data[index + 2:index + 4], "big")
+        if marker in (0xC0, 0xC1, 0xC2):
+            return int.from_bytes(data[index + 7:index + 9], "big"), int.from_bytes(data[index + 5:index + 7], "big")
+        index += 2 + length
+    raise ValueError(f"no image size in {path}")
+
+
 if __name__ == "__main__":
     unittest.main()

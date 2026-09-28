@@ -93,6 +93,10 @@ final class DistributionEditionTests: XCTestCase {
             availability(.typedInsertion, .appStore),
             .disabled(reason: SettingAvailabilityReason.typingIsTheInsertionPathInAppStoreEdition.message)
         )
+        XCTAssertEqual(
+            availability(.selectedTextContext, .appStore),
+            .disabled(reason: SettingAvailabilityReason.noSelectedTextContextInAppStoreEdition.message)
+        )
     }
 
     /// The edition's refusal outranks "finish the dictation first": the
@@ -113,6 +117,8 @@ final class DistributionEditionTests: XCTestCase {
         XCTAssertEqual(availability(.selectionAction, .developerID), .enabled)
         XCTAssertEqual(availability(.middleMouseTrigger, .developerID), .enabled)
         XCTAssertEqual(availability(.typedInsertion, .developerID), .enabled)
+        XCTAssertEqual(availability(.selectedTextContext, .developerID), .enabled)
+        XCTAssertEqual(availability(.selectedTextContext, .developerID, gate: SettingsGate(dictation: .jobActive)), .enabled)
         // The Selection Action is not a recording setting: a job does not
         // freeze it.
         XCTAssertEqual(availability(.selectionAction, .developerID, gate: SettingsGate(dictation: .jobActive)), .enabled)
@@ -120,7 +126,7 @@ final class DistributionEditionTests: XCTestCase {
 
     /// The rest of the table does not depend on the edition.
     func testEveryOtherKeyIsTheSameInBothEditions() {
-        let editionKeys: Set<SettingKey> = [.selectionAction, .middleMouseTrigger, .typedInsertion]
+        let editionKeys: Set<SettingKey> = [.selectionAction, .selectedTextContext, .middleMouseTrigger, .typedInsertion]
         for key in SettingKey.allCases where !editionKeys.contains(key) {
             XCTAssertEqual(availability(key, .appStore), availability(key, .developerID), key.rawValue)
         }

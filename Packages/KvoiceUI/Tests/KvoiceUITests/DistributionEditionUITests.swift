@@ -55,6 +55,36 @@ final class DistributionEditionUITests: XCTestCase {
         XCTAssertNotNil(model.disabledReason(.selectionAction))
         XCTAssertTrue(model.isEnabled(.shortcut), "key combinations stay")
         XCTAssertTrue(model.isEnabled(.insertedText), "the other inserted-text toggles stay")
+        XCTAssertFalse(model.isEnabled(.selectedTextContext))
+        XCTAssertNotNil(model.disabledReason(.selectedTextContext))
+    }
+
+    // MARK: The pointer to the full edition (2026-09-28 amendment)
+
+    func testFullEditionLinkIsOfferedOnlyInTheAppStoreEdition() {
+        XCTAssertEqual(SettingsAvailabilityModel(edition: .appStore).fullEditionLink, HelpLinks.fullEditionReleases)
+        XCTAssertNil(SettingsAvailabilityModel(edition: .developerID).fullEditionLink, "the DMG is the full edition")
+        XCTAssertNil(SettingsAvailabilityModel().fullEditionLink, "a preview or test build without a shell")
+    }
+
+    func testTheOneSwitchRemovesTheLink() {
+        XCTAssertNil(SettingsAvailabilityModel(edition: .appStore, offersFullEditionLink: false).fullEditionLink)
+        XCTAssertNil(SettingsAvailabilityModel.fullEditionLink(for: .appStore, offered: false))
+        XCTAssertEqual(
+            SettingsAvailabilityModel.fullEditionLink(for: .appStore, offered: true),
+            HelpLinks.fullEditionReleases
+        )
+        XCTAssertNil(SettingsAvailabilityModel.fullEditionLink(for: .developerID, offered: true))
+    }
+
+    func testOnboardingOffersTheLinkOnlyInTheAppStoreEdition() {
+        XCTAssertEqual(OnboardingViewModel(edition: .appStore).fullEditionLink, HelpLinks.fullEditionReleases)
+        XCTAssertNil(OnboardingViewModel(edition: .developerID).fullEditionLink)
+    }
+
+    func testFullEditionLinkIsTheLatestGitHubRelease() {
+        XCTAssertEqual(HelpLinks.fullEditionReleases.absoluteString, "https://github.com/kccarlos/kvoice/releases/latest")
+        XCTAssertEqual(HelpLinks.fullEditionReleases.scheme, "https")
     }
 }
 

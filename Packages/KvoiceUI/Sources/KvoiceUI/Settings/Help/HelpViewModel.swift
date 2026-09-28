@@ -11,6 +11,15 @@ public enum HelpLinks {
     /// Where Feedback › Compose addresses its mail. A placeholder until a support
     /// address exists.
     public static let feedbackAddress = "kvoice-feedback@example.com"
+    /// ADR-026 (2026-09-28 amendment): where the App Store edition points
+    /// for the full-featured Developer ID edition, beside every "not in this
+    /// edition" sentence. Shown only in the App Store edition
+    /// (`SettingsAvailabilityModel.fullEditionLink`).
+    public static let fullEditionReleases = URL(string: "https://github.com/kccarlos/kvoice/releases/latest")!
+    /// The one switch for that link. App Review may object to an app
+    /// pointing at another distribution of itself (Guidelines 2.3.10 and
+    /// 3.1.x); setting this to `false` removes every instance at once.
+    public static let offersFullEditionLink = true
 }
 
 /// The actions the Help section can take that only the app shell can

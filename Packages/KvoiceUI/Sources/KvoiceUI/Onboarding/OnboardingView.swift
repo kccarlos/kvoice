@@ -641,6 +641,10 @@ public struct OnboardingView: View {
                         .font(.callout)
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
+                    // ADR-026: the App Store edition's pointer to the full
+                    // edition, where a lone modifier key works.
+                    FullEditionLink(url: viewModel.fullEditionLink)
+                        .font(.callout)
                     HStack {
                         Button("Choose Another Shortcut…") {
                             viewModel.requestShortcutRecording()

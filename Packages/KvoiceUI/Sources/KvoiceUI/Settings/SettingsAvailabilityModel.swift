@@ -32,9 +32,37 @@ public final class SettingsAvailabilityModel {
     /// `systemNotReady` does not block saving.
     public private(set) var privateCloudComputeStaticRefusal: AIProviderUnavailableReason?
 
-    public init(table: [SettingKey: SettingAvailability] = [:], edition: DistributionEdition = .developerID) {
+    /// ADR-026 (2026-09-28 amendment): whether the App Store edition may
+    /// point at the full edition (`HelpLinks.offersFullEditionLink`,
+    /// injectable so a test can turn it off).
+    private let offersFullEditionLink: Bool
+
+    public init(
+        table: [SettingKey: SettingAvailability] = [:],
+        edition: DistributionEdition = .developerID,
+        offersFullEditionLink: Bool = HelpLinks.offersFullEditionLink
+    ) {
         self.table = table
         self.edition = edition
+        self.offersFullEditionLink = offersFullEditionLink
+    }
+
+    /// ADR-026 (2026-09-28 amendment): the link a "not in this edition"
+    /// sentence offers — the GitHub releases page of the full edition — or
+    /// nil in the Developer ID edition (which is the full edition) and when
+    /// the switch is off.
+    public var fullEditionLink: URL? {
+        Self.fullEditionLink(for: edition, offered: offersFullEditionLink)
+    }
+
+    /// The rule behind `fullEditionLink`, for surfaces that know the edition
+    /// but have no availability model (onboarding).
+    nonisolated public static func fullEditionLink(
+        for edition: DistributionEdition,
+        offered: Bool = HelpLinks.offersFullEditionLink
+    ) -> URL? {
+        guard offered, edition == .appStore else { return nil }
+        return HelpLinks.fullEditionReleases
     }
 
     public subscript(key: SettingKey) -> SettingAvailability {

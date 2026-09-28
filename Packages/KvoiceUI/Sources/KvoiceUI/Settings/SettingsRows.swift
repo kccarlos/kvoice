@@ -201,3 +201,21 @@ struct SettingsFooter<Base: View>: View {
         }
     }
 }
+
+/// ADR-026 (2026-09-28 amendment): the pointer to the full edition under a
+/// "not in this edition" sentence. `url` comes from
+/// `SettingsAvailabilityModel.fullEditionLink` (or its static rule), so it is
+/// nil — and this renders nothing — in the Developer ID edition and when
+/// `HelpLinks.offersFullEditionLink` is off. A caller must not put it inside
+/// a `.disabled` container, or the link is dead in exactly the edition it is
+/// for.
+struct FullEditionLink: View {
+    let url: URL?
+
+    var body: some View {
+        if let url {
+            Link("Get the full version from GitHub", destination: url)
+                .accessibilityHint("Opens the KVoice releases page on GitHub in your browser.")
+        }
+    }
+}

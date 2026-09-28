@@ -116,6 +116,7 @@ public struct AIActionsForm: View {
                 viewModel: actions,
                 draft: $actionDraft,
                 isBuiltIn: isBuiltIn(target),
+                availability: availability,
                 onSave: { saveAction(target) },
                 onCancel: {
                     actions.clearPreview()
@@ -508,18 +509,23 @@ public struct AIActionsForm: View {
             ForEach(0..<AIEndpointSettings.selectionActionSlotCount, id: \.self) { slot in
                 selectionSlotRow(slot)
             }
+            // On the rows, not the Section: the footer's link must stay live.
+            .disabled(!availability.isEnabled(.selectionAction))
         } header: {
             Text("Selection Action")
         } footer: {
             // ADR-026: the App Store edition cannot read another app's
-            // selection; the reason replaces the description.
+            // selection; the reason replaces the description, with the
+            // pointer to the full edition under it.
             if let reason = availability.disabledReason(.selectionAction) {
-                Text(reason)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(reason)
+                    FullEditionLink(url: availability.fullEditionLink)
+                }
             } else {
                 Text("Select text in any app, press a slot's shortcut, and KVoice runs that action on the selection and inserts the result in its place through Accessibility — never a simulated paste. Experimental.")
             }
         }
-        .disabled(!availability.isEnabled(.selectionAction))
     }
 
     private func selectionSlotRow(_ slot: Int) -> some View {

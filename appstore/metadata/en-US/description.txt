@@ -1,0 +1,35 @@
+Speak once and get finished text, typed right where you are working. KVoice turns your voice into clean writing in any app on your Mac: hold your shortcut, talk, let go, and your words arrive as a polished paragraph, a ready-to-send message, an email draft, tidy notes, a TODO list or a translation.
+
+WHAT YOU CAN DO WITH ONE SENTENCE
+- Ramble for a minute, get a clear, polite email with a greeting and sign-off.
+- Speak Chinese, get English text (or any language pair you set).
+- Talk through your day, get a checklist of actionable tasks.
+- Ask a question out loud, get the answer typed into your document.
+- Describe what you want, get a precise prompt for your favorite AI assistant.
+
+AI ACTIONS
+Thirteen actions are built in: Clean Up, Polish, Message, Notes, Prompt, Writing, Email Draft, Summarize, TODO List, Q&A, Terminal, Translate and a second Translate for two-way conversations. Pick a default from the menu bar, or turn on action triggers and start a sentence with an action's trigger word to use another. Edit any of them or write your own.
+AI Actions run on the engine you choose: Apple Intelligence on this Mac (macOS 26 or later: no account, no key, nothing leaves the Mac), or any OpenAI-compatible service with your own key, including a model on your own computer with Ollama.
+
+OR JUST DICTATE
+No AI needed for plain dictation. Hold the shortcut to talk and release it to finish, or switch to Toggle or Hybrid for hands-free recording. A small recorder shows what it hears without taking focus from your app. When KVoice cannot type safely, for example into a password field that macOS protects, it copies the text to the clipboard instead and tells you.
+
+ON-DEVICE SPEECH RECOGNITION
+Your speech is transcribed on your Mac. Whisper large-v3-turbo, the recommended model, understands about a hundred languages and runs on the Neural Engine. Parakeet, Nemotron, SenseVoice and Paraformer are there too, and on macOS 26 or later, Apple Speech, the recognizer built into macOS. Once a model is downloaded, dictation works offline. Add names and jargon to the Dictionary so they come out spelled your way.
+
+HISTORY, IF YOU WANT IT
+Search past dictations, run them through a different model, transcribe an audio file, and export to CSV, Markdown or plain text. You decide how long anything is kept, and whether recordings are kept at all.
+
+PRIVATE BY DESIGN
+- Audio is transcribed on your Mac and never uploaded.
+- AI Actions are off until you turn them on, and then send text only to the engine you picked, straight from your Mac. Nothing goes to us.
+- With AI Actions off, KVoice is designed to go online only to download the speech models you choose.
+- No accounts, no analytics, no ads, no tracking. API keys are kept in a file only your user account can read.
+
+PERMISSIONS, EXPLAINED
+KVoice asks for the Microphone to hear you while you hold the shortcut, and for permission to type into other apps, which macOS lists under Accessibility. It uses that permission only to type your own dictation into the app you are dictating into; it does not read other apps' text.
+
+FREE AND OPEN SOURCE
+KVoice is free, with no in-app purchases, and its source code is published under the MIT license. Services you connect to AI Actions may charge you for their use.
+
+Requires a Mac with Apple silicon and macOS 15 or later. Apple Speech and Apple Intelligence need macOS 26 or later. Interface in English and Simplified Chinese.

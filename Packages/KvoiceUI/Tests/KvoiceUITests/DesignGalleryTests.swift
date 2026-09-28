@@ -126,7 +126,7 @@ final class DesignGalleryTests: XCTestCase {
     /// installed; the Runtime card with a placement; the managed package
     /// below. `LayoutSnapshotTests.content(for:)` renders the page with no
     /// catalog, which is what a bare view model gives.
-    private static func seededModelsSection() -> AnyView {
+    static func seededModelsSection() -> AnyView {
         let whisper = SpeechModelCatalogEntry(
             id: "whisper-large-v3-turbo-coreml-uncompressed", displayName: "Whisper large-v3-turbo", variantName: "Standard",
             family: "whisper-large-v3-turbo", runtime: .whisperKitCoreML, hosting: .onDevice,
@@ -142,15 +142,18 @@ final class DesignGalleryTests: XCTestCase {
             revision: "v3", manifestResource: "parakeet", manifestSHA256: String(repeating: "b", count: 64)
         )
         let summary = InstalledModelSummary(modelID: whisper.id, revision: "04e5c42d80a522518023727e8c7e68d4bb391b28", ownership: .managedByKvoice)
-        let speechModels = SpeechModelsViewModel(snapshot: SpeechModelsSnapshot(
+        let modelsSnapshot = SpeechModelsSnapshot(
             catalog: SpeechModelCatalog(entries: [whisper, parakeet]),
             states: [whisper.id: .ready(summary), parakeet.id: .absent],
             defaultModelID: whisper.id,
             residentModelID: whisper.id,
             dictationIsActive: false,
             activity: .idle
-        ))
-        let runtime = RuntimeCardViewModel(snapshot: RuntimeSnapshot(
+        )
+        // The providers return the seed, so the section's own poll (it runs
+        // while the render settles) keeps it instead of clearing it.
+        let speechModels = SpeechModelsViewModel(snapshot: modelsSnapshot, snapshotProvider: { modelsSnapshot })
+        let runtimeSnapshot = RuntimeSnapshot(
             residentModelID: whisper.id,
             residentModelName: "Whisper large-v3-turbo",
             computeUnits: .neuralEngineAndCPU,
@@ -166,7 +169,8 @@ final class DesignGalleryTests: XCTestCase {
             dictationIsActive: false,
             isExercisingRuntime: false,
             computeUnitsAvailability: .enabled
-        ))
+        )
+        let runtime = RuntimeCardViewModel(snapshot: runtimeSnapshot, snapshotProvider: { runtimeSnapshot })
         let viewModel = ModelSettingsViewModel(
             state: .ready(summary),
             descriptor: ModelDescriptor(

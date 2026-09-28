@@ -33,7 +33,13 @@ public struct PromptModeSettingsView: View {
         }
     }
 
-    public init(viewModel: PromptModeSettingsViewModel = .init()) {
+    /// ADR-026: handed to the action editor so the selected-text switch
+    /// follows the edition; the default (everything enabled) is what
+    /// previews see.
+    private let availability: SettingsAvailabilityModel
+
+    public init(viewModel: PromptModeSettingsViewModel = .init(), availability: SettingsAvailabilityModel = .init()) {
+        self.availability = availability
         self.viewModel = viewModel
     }
 
@@ -81,6 +87,7 @@ public struct PromptModeSettingsView: View {
                 viewModel: viewModel,
                 draft: $draft,
                 isBuiltIn: isBuiltIn(target),
+                availability: availability,
                 onSave: { save(target) },
                 onCancel: {
                     viewModel.clearPreview()

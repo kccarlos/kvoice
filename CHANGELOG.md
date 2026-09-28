@@ -23,8 +23,7 @@ The first public version. It includes:
   to insert.
 - A Dictionary for names and jargon.
 - Optional AI Actions (thirteen built in, editable, plus your own) through
-  any OpenAI-compatible endpoint or Apple Intelligence on this Mac, and in the
-  Mac App Store edition, Apple's Private Cloud Compute where available.
+  any OpenAI-compatible endpoint or Apple Intelligence on this Mac.
 - Optional History with search, retention settings, re-transcription,
   audio-file transcription and exports.
 - Shortcuts, Siri and Spotlight actions.

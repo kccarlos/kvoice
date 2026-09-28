@@ -150,6 +150,13 @@ public final class OnboardingViewModel {
     /// shortcut help describe what the edition's permission does.
     public let edition: DistributionEdition
 
+    /// ADR-026 (2026-09-28 amendment): the shortcut help's pointer to the
+    /// full edition — nil outside the App Store edition and when
+    /// `HelpLinks.offersFullEditionLink` is off.
+    public var fullEditionLink: URL? {
+        SettingsAvailabilityModel.fullEditionLink(for: edition)
+    }
+
     public init(
         stage: OnboardingStage = .welcome,
         modelState: ModelLifecycleState = .absent,

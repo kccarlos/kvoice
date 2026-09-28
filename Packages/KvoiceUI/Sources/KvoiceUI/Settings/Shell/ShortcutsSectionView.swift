@@ -163,6 +163,9 @@ public struct ShortcutsSectionView: View {
 
     private var secondaryTriggersSection: some View {
         Section {
+            // The job refusal applies to the rows, not the Section: the
+            // footer's full-edition link (ADR-026) must never be dead.
+            Group {
             auxiliaryRow(
                 String(localized: "Cancel shortcut", bundle: .module),
                 binding: triggers.cancelShortcut,
@@ -187,14 +190,17 @@ public struct ShortcutsSectionView: View {
                 middleMouseDelaySlider(delay)
             }
             SettingsResetRow(.triggers, host: general.host, origin: .page(.shortcuts))
+            }
+            .disabled(!availability.isEnabled(.triggers))
         } header: {
             Text("More Ways to Trigger")
         } footer: {
             SettingsFooter(note: triggers.refusalNote?()) {
                 Text(availability.footnote(.triggers, base: footerText))
+                // ADR-026: nil (nothing drawn) outside the App Store edition.
+                FullEditionLink(url: availability.fullEditionLink)
             }
         }
-        .disabled(!availability.isEnabled(.triggers))
     }
 
     private var footerText: String {

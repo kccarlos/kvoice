@@ -9,6 +9,10 @@ struct AIActionEditorView: View {
     @Bindable var viewModel: PromptModeSettingsViewModel
     @Binding var draft: PromptModeDraft
     let isBuiltIn: Bool
+    /// ADR-026: the edition's refusal for the selected-text context and the
+    /// pointer to the full edition. The default (everything enabled) is what
+    /// the Actions tab, previews and the gallery see.
+    var availability: SettingsAvailabilityModel = .init()
     let onSave: () -> Void
     let onCancel: () -> Void
 
@@ -218,12 +222,25 @@ struct AIActionEditorView: View {
         Section {
             Toggle("Include clipboard text", isOn: $draft.includesClipboardText)
                 .accessibilityHint("Sends the clipboard's text with each request for this action, in a separate tagged block.")
-            Toggle("Include selected text", isOn: $draft.includesSelectedText)
+            // ADR-026 §6(b): held off in the App Store edition, which cannot
+            // read another app's selection (a stored "on" from the other
+            // edition is kept and ignored).
+            Toggle(
+                "Include selected text",
+                isOn: availability.isEnabled(.selectedTextContext) ? $draft.includesSelectedText : .constant(false)
+            )
+                .disabled(!availability.isEnabled(.selectedTextContext))
                 .accessibilityHint("Sends the focused field's selection with each request for this action, in a separate tagged block.")
         } header: {
             Text("Context Awareness")
         } footer: {
-            Text("Off by default. When on, the text is sent to your AI endpoint as reference material for this action only. KVoice never captures the screen.")
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Off by default. When on, the text is sent to your AI endpoint as reference material for this action only. KVoice never captures the screen.")
+                if let reason = availability.disabledReason(.selectedTextContext) {
+                    Text(reason)
+                    FullEditionLink(url: availability.fullEditionLink)
+                }
+            }
         }
     }
 

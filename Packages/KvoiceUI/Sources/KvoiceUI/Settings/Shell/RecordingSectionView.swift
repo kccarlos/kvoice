@@ -206,6 +206,9 @@ public struct RecordingSectionView: View {
 
     private var insertedTextSection: some View {
         Section {
+            // The job refusal applies to the rows, not the Section: the
+            // footer's full-edition link (ADR-026) must never be dead.
+            Group {
             placeholderToggle(
                 "Add space after inserting",
                 binding: options.addSpaceAfterInsertion,
@@ -241,6 +244,8 @@ public struct RecordingSectionView: View {
                 host: general.host,
                 origin: .page(.recording)
             )
+            }
+            .disabled(!availability.isEnabled(.insertedText))
         } header: {
             Text("Inserted Text")
         } footer: {
@@ -249,9 +254,10 @@ public struct RecordingSectionView: View {
                     .insertedText,
                     base: pendingNote(insertedTextFooter)
                 ))
+                // ADR-026: nil (nothing drawn) outside the App Store edition.
+                FullEditionLink(url: availability.fullEditionLink)
             }
         }
-        .disabled(!availability.isEnabled(.insertedText))
     }
 
     /// ADR-026: the App Store edition types; the footer says so instead of

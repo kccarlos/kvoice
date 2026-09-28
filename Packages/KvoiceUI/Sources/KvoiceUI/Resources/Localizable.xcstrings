@@ -4481,6 +4481,16 @@
         }
       }
     },
+    "Get the full version from GitHub": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "从 GitHub 获取完整版"
+          }
+        }
+      }
+    },
     "Give the action a name and instructions first.": {
       "localizations": {
         "zh-Hans": {
@@ -7009,6 +7019,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "在主窗口中打开“AI 操作”页面。设置向导保持打开，不会发送任何内容。"
+          }
+        }
+      }
+    },
+    "Opens the KVoice releases page on GitHub in your browser.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在浏览器中打开 GitHub 上的 KVoice 发布页面。"
           }
         }
       }

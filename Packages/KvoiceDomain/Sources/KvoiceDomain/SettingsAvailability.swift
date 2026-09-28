@@ -109,6 +109,15 @@ public enum SettingsAvailability {
             }
             return .enabled
 
+        case .selectedTextContext:
+            // ADR-026 §6(b): the "selected text" AI context reads another
+            // app's selection through Accessibility; in the App Store edition
+            // it is always empty, so the per-action switch is held off.
+            if !environment.edition.canReadSelectionInOtherApps {
+                return .disabled(reason: SettingAvailabilityReason.noSelectedTextContextInAppStoreEdition.message)
+            }
+            return .enabled
+
         case .shortcut, .recordingInteraction, .triggers, .recordingFeedback,
              .insertedText, .recordingLength, .recorderStyle:
             // Every recording setting travels in the job's settings snapshot;
@@ -225,6 +234,9 @@ public enum SettingKey: String, CaseIterable, Sendable, Hashable {
     /// AI Actions › Selection Action slots (ADR-026: not in the App Store
     /// edition).
     case selectionAction
+    /// An action's editor › Context Awareness › "Include selected text"
+    /// (ADR-026 §6(b): not in the App Store edition).
+    case selectedTextContext
     /// AI Actions › Configurations › the "Apple Intelligence (on-device)"
     /// row: its subtitle and "Set as Active" (ADR-024).
     case aiAppleIntelligenceConfiguration
@@ -287,6 +299,7 @@ public enum SettingAvailabilityReason: String, CaseIterable, Sendable {
     case noGlobalInputMonitorsInAppStoreEdition
     case typingIsTheInsertionPathInAppStoreEdition
     case noSelectionReadingInAppStoreEdition
+    case noSelectedTextContextInAppStoreEdition
 
     public var message: String {
         switch self {
@@ -318,6 +331,8 @@ public enum SettingAvailabilityReason: String, CaseIterable, Sendable {
             return "In the App Store edition KVoice always types the text into the app you dictate into; it cannot write to other apps' text fields directly."
         case .noSelectionReadingInAppStoreEdition:
             return "The App Store edition cannot read text selected in other apps, so Selection Actions are not available."
+        case .noSelectedTextContextInAppStoreEdition:
+            return "The App Store edition cannot read text selected in other apps, so no selected text is sent."
         }
     }
 }

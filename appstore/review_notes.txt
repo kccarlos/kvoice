@@ -1,0 +1,24 @@
+WHAT KVOICE DOES
+KVoice is a menu-bar dictation app. The user holds a keyboard shortcut, speaks, and releases it; the speech is transcribed on the Mac and the text is typed into the app that was in front when recording started. There is no Dock icon: look for the KVoice icon in the menu bar. No account or sign-in exists.
+
+WHY IT ASKS FOR ACCESSIBILITY (POSTEVENT)
+macOS shows the permission KVoice requests under Privacy & Security > Accessibility. KVoice requests only the event-posting privilege (CGRequestPostEventAccess / CGPreflightPostEventAccess, the "PostEvent" service), and uses it for one purpose: to type the user's own dictated text, as Unicode keyboard events, into the app the user is dictating into, at the moment they finish speaking. It also presses Return once after inserting if the user turned on "double-press to send". It never posts a paste shortcut, never reads another app's text or UI, never records keystrokes, and does not use the Accessibility API to control other apps. Dictation is itself an accessibility use: it lets people write without a keyboard. Before typing, KVoice checks that the app in front is still the one the recording started in and that Secure Event Input is off (password fields); otherwise it copies the text to the clipboard and tells the user. Without the permission, KVoice still transcribes and offers the text on the clipboard.
+
+MICROPHONE
+Used only while the user holds (or toggles) the dictation shortcut, or during the microphone test in setup. Audio is processed on the Mac and never uploaded.
+
+SPEECH MODELS
+Transcription runs on the Mac. The user picks a speech model during setup or in Speech Models. Downloadable models (Whisper, Parakeet and others) are Core ML weights: data, not executable code. They are fetched over HTTPS from Hugging Face at revisions pinned in the app, and every file is verified against a SHA-256 manifest that ships inside the app bundle before it is used; they add no functionality beyond what is in the reviewed binary. On macOS 26 or later, Apple Speech (SpeechAnalyzer) is also offered: its language assets are managed by macOS itself, and KVoice downloads nothing for it.
+
+AI ACTIONS (OPTIONAL, OFF BY DEFAULT)
+Users may turn on AI Actions to clean up or translate the transcript, with Apple Intelligence on the device (macOS 26 or later) or an OpenAI-compatible service they configure with their own endpoint and key. Nothing is sent anywhere while AI Actions is off. There is no developer server; requests go directly from the Mac to the service the user chose.
+
+HOW TO TEST
+1. Launch KVoice and follow the setup guide.
+2. Speech model: on macOS 26 or later choose Apple Speech and install English (smallest and quickest); otherwise download "Whisper v3 Turbo Standard" (about 650 MB; the first load takes a few minutes while Core ML compiles it for the Neural Engine).
+3. Allow the Microphone, then allow KVoice under Privacy & Security > Accessibility when prompted.
+4. Set the recording shortcut to a key combination, for example Control-Shift-Space.
+5. Open TextEdit and create a new document. Hold the shortcut, say "Hello from KVoice", and release. The text is typed into the document.
+Optional: in Settings > AI Actions, add an "Apple Intelligence (on-device)" configuration and turn on AI Actions to see the transcript polished before it is typed.
+
+This edition is sandboxed and has no features that read or control other apps.

@@ -1,0 +1,29 @@
+#include "Release.xcconfig"
+
+// The sandboxed Mac App Store edition (ADR-026). Same sources, same bundle
+// identifier as the Developer ID edition; what differs is decided at run
+// time from KVOICE_DISTRIBUTION_EDITION, which Info.plist carries as
+// `KvoiceDistributionEdition` and the composition root reads once
+// (`DistributionEdition`, KvoiceDomain). No `#if` in the packages.
+KVOICE_DISTRIBUTION_EDITION = appStore
+
+// The App Sandbox. The entitlements file (set per configuration in the
+// project, Apps/KvoiceApp/Kvoice-AppStore.entitlements) carries
+// `com.apple.security.app-sandbox`; this setting keeps Xcode's own sandbox
+// checks consistent with it.
+ENABLE_APP_SANDBOX = YES
+
+// The hardened runtime and the absence of get-task-allow are inherited from
+// Release: the App Store does not require the first and rejects a build
+// carrying the second. The store re-signs with Apple's own signature, so a
+// secure timestamp is not needed; Scripts/build_app.sh passes none for this
+// configuration, which keeps a local sandbox build signable offline.
+OTHER_CODE_SIGN_FLAGS =
+
+// The Mac App Store provisioning profile, for a manually signed archive
+// (Scripts/archive_app_store.sh with KVOICE_APP_STORE_PROFILE, the release
+// workflow). Passed through this indirection because an xcconfig reaches the
+// app target only: PROVISIONING_PROFILE_SPECIFIER on the command line would
+// also reach the SwiftPM resource bundles, which cannot take a profile.
+// Empty for every other build, which needs no profile.
+PROVISIONING_PROFILE_SPECIFIER = $(KVOICE_APP_STORE_PROFILE_SPECIFIER)

@@ -1,0 +1,6 @@
+# actionlint (https://github.com/rhysd/actionlint): labels it does not know yet.
+# `xcode-27` is GitHub's Xcode 27 hosted image (public preview, arm64).
+self-hosted-runner:
+  labels:
+    - xcode-27
+    - xcode-27-xlarge

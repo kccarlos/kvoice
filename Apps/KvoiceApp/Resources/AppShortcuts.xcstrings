@@ -1,0 +1,116 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "Cancel ${applicationName} dictation" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "取消${applicationName}听写"
+          }
+        }
+      }
+    },
+    "Dismiss ${applicationName}" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "关闭${applicationName}"
+          }
+        }
+      }
+    },
+    "Get my last ${applicationName} transcription" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "获取我最近的${applicationName}转写"
+          }
+        }
+      }
+    },
+    "Start ${applicationName} dictation" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "开始${applicationName}听写"
+          }
+        }
+      }
+    },
+    "Start dictation with ${applicationName}" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "用${applicationName}开始听写"
+          }
+        }
+      }
+    },
+    "Start recording with ${applicationName}" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "用${applicationName}开始录音"
+          }
+        }
+      }
+    },
+    "Stop ${applicationName} dictation" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "停止${applicationName}听写"
+          }
+        }
+      }
+    },
+    "Stop recording with ${applicationName}" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "停止${applicationName}录音"
+          }
+        }
+      }
+    },
+    "Toggle ${applicationName} dictation" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "切换${applicationName}听写"
+          }
+        }
+      }
+    },
+    "Toggle recording with ${applicationName}" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "切换${applicationName}录音"
+          }
+        }
+      }
+    },
+    "What did I last dictate with ${applicationName}" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "我最近用${applicationName}听写了什么"
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}

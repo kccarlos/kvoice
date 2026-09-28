@@ -1,0 +1,3 @@
+# Model manifest fixtures
+
+The valid examples follow the machine-readable manifest contract in PRD Appendix 5 A5.4 and use deterministic fake file hashes; they do not claim that the files exist. The validator enforces required fields, `additionalProperties: false` at every schema object, lowercase immutable revisions/hashes, and rejects Boolean values where JSON integers are required. Invalid examples exercise schema version, immutable revision, hash, traversal, empty allowlist, byte-count, offline-tokenizer, and additional-property checks. The real release tool must replace the fake file entries with hashes computed from downloaded bytes.

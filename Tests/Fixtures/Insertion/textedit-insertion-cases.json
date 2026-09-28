@@ -1,0 +1,81 @@
+{
+  "schemaVersion": 1,
+  "fixtureSet": "textedit-ax-insertion-v1",
+  "indexUnit": "UTF-16 code units",
+  "successInvariant": {
+    "targetProcessIdentifierAtCapture": "equals-targetProcessIdentifierAtCompletion",
+    "clipboard": "content-and-change-count-unchanged",
+    "method": "direct-accessibility-mutation",
+    "pasteSimulation": false
+  },
+  "cases": [
+    {
+      "id": "TE-ASCII-SELECTION",
+      "coverage": ["ascii", "selection", "utf16"],
+      "target": {"application": "TextEdit", "processIdentifierAtCapture": 101, "processIdentifierAtCompletion": 101, "elementRole": "AXTextArea"},
+      "before": {"value": "hello world", "selectedRangeUTF16": {"location": 6, "length": 5}},
+      "insertText": "kvoice",
+      "expected": {"outcome": "inserted", "value": "hello kvoice", "selectedRangeUTF16": {"location": 12, "length": 0}, "caretUTF16": 12},
+      "clipboard": {"before": "sentinel-ascii", "beforeChangeCount": 41, "after": "sentinel-ascii", "afterChangeCount": 41}
+    },
+    {
+      "id": "TE-ASCII-CARET",
+      "coverage": ["ascii", "caret", "utf16"],
+      "target": {"application": "TextEdit", "processIdentifierAtCapture": 102, "processIdentifierAtCompletion": 102, "elementRole": "AXTextArea"},
+      "before": {"value": "prefix | suffix", "selectedRangeUTF16": {"location": 7, "length": 0}},
+      "insertText": "inserted",
+      "expected": {"outcome": "inserted", "value": "prefix inserted| suffix", "selectedRangeUTF16": {"location": 15, "length": 0}, "caretUTF16": 15}
+    },
+    {
+      "id": "TE-EMOJI-SELECTION",
+      "coverage": ["emoji", "surrogatePair", "selection", "utf16"],
+      "target": {"application": "TextEdit", "processIdentifierAtCapture": 103, "processIdentifierAtCompletion": 103, "elementRole": "AXTextArea"},
+      "before": {"value": "Hi 👋!", "selectedRangeUTF16": {"location": 3, "length": 2}},
+      "insertText": "hello",
+      "expected": {"outcome": "inserted", "value": "Hi hello!", "selectedRangeUTF16": {"location": 8, "length": 0}, "caretUTF16": 8},
+      "clipboard": {"before": "sentinel-emoji", "beforeChangeCount": 42, "after": "sentinel-emoji", "afterChangeCount": 42}
+    },
+    {
+      "id": "TE-CJK-SELECTION",
+      "coverage": ["cjk", "selection", "utf16"],
+      "target": {"application": "TextEdit", "processIdentifierAtCapture": 104, "processIdentifierAtCompletion": 104, "elementRole": "AXTextArea"},
+      "before": {"value": "你好，世界", "selectedRangeUTF16": {"location": 3, "length": 2}},
+      "insertText": "kvoice",
+      "expected": {"outcome": "inserted", "value": "你好，kvoice", "selectedRangeUTF16": {"location": 9, "length": 0}, "caretUTF16": 9}
+    },
+    {
+      "id": "TE-MULTILINE-SELECTION",
+      "coverage": ["multiline", "lineFeed", "selection", "utf16"],
+      "target": {"application": "TextEdit", "processIdentifierAtCapture": 105, "processIdentifierAtCompletion": 105, "elementRole": "AXTextArea"},
+      "before": {"value": "first\nsecond\nthird", "selectedRangeUTF16": {"location": 6, "length": 6}},
+      "insertText": "middle line",
+      "expected": {"outcome": "inserted", "value": "first\nmiddle line\nthird", "selectedRangeUTF16": {"location": 17, "length": 0}, "caretUTF16": 17}
+    },
+    {
+      "id": "TE-COMBINING-MARK-SELECTION",
+      "coverage": ["combiningMark", "selection", "utf16"],
+      "target": {"application": "TextEdit", "processIdentifierAtCapture": 106, "processIdentifierAtCompletion": 106, "elementRole": "AXTextArea"},
+      "before": {"value": "Café noir", "selectedRangeUTF16": {"location": 0, "length": 5}},
+      "insertText": "Café",
+      "expected": {"outcome": "inserted", "value": "Café noir", "selectedRangeUTF16": {"location": 4, "length": 0}, "caretUTF16": 4}
+    },
+    {
+      "id": "TE-TARGET-CHANGED-CLIPBOARD-FALLBACK",
+      "coverage": ["targetAffinity", "clipboardFallback", "clipboard"],
+      "target": {"application": "TextEdit", "processIdentifierAtCapture": 107, "processIdentifierAtCompletion": 207, "elementRole": "AXTextArea"},
+      "before": {"value": "original", "selectedRangeUTF16": {"location": 0, "length": 8}},
+      "insertText": "new text",
+      "expected": {"outcome": "copiedToClipboard", "reason": "targetChanged", "targetValueUnchanged": true, "clipboardValue": "new text"},
+      "clipboard": {"before": "sentinel-target-switch", "beforeChangeCount": 43, "after": "new text", "afterChangeCount": 44}
+    },
+    {
+      "id": "TE-SECURE-FIELD-REFUSES-MUTATION",
+      "coverage": ["secureTarget", "clipboardFallback", "clipboard"],
+      "target": {"application": "TextEdit", "processIdentifierAtCapture": 108, "processIdentifierAtCompletion": 108, "elementRole": "AXTextField", "secure": true},
+      "before": {"value": "••••", "selectedRangeUTF16": {"location": 0, "length": 4}},
+      "insertText": "secret",
+      "expected": {"outcome": "copiedToClipboard", "reason": "secureTarget", "targetValueUnchanged": true, "clipboardValue": "secret"},
+      "clipboard": {"before": "sentinel-secure", "beforeChangeCount": 44, "after": "secret", "afterChangeCount": 45}
+    }
+  ]
+}

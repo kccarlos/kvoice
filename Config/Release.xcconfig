@@ -1,0 +1,21 @@
+#include "Base.xcconfig"
+
+SWIFT_OPTIMIZATION_LEVEL = -O
+SWIFT_COMPILATION_MODE = wholemodule
+ONLY_ACTIVE_ARCH = NO
+
+// Distribution signing (the release documentation, "Developer ID and notarization").
+// Notarization rejects a binary that lacks any of these three:
+//  - the hardened runtime;
+//  - a secure timestamp. `--timestamp` asks Apple's timestamp server, so a
+//    Release build signed with a real identity fails to sign without the
+//    network. An ad-hoc signature ignores the flag, so a fork's CI build
+//    still signs;
+//  - the absence of `com.apple.security.get-task-allow`. Xcode injects that
+//    debugging entitlement into every `xcodebuild build` unless told not to,
+//    and it was in the Release bundle until 2026-09-27. Debug, TestHost
+//    and Bench (Config/Bench.xcconfig) keep the injection so a debugger
+//    can still attach.
+ENABLE_HARDENED_RUNTIME = YES
+OTHER_CODE_SIGN_FLAGS = $(inherited) --timestamp
+CODE_SIGN_INJECT_BASE_ENTITLEMENTS = NO

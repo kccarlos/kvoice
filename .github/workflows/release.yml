@@ -1,0 +1,386 @@
+# Release: a `vMAJOR.MINOR.PATCH` tag on a sync commit of main builds both
+# editions of that version.
+#
+#   version      the version and build number from the tag; refuses a tag
+#                that is not a sync commit on main, or whose CHANGELOG.md
+#                section is missing. No secrets.
+#   test         the unit suite. No secrets.
+#   developer-id the notarized direct-download DMG: Developer ID signature,
+#                notarization of the app and the DMG, stapled.
+#   app-store    the Mac App Store package: Apple Distribution + Mac
+#                Installer Distribution, the Mac App Store profile, uploaded
+#                to App Store Connect (TestFlight). Never submitted for
+#                review; that stays a person's decision in App Store Connect.
+#   publish      the GitHub Release with the DMG, its SHA-256 and the notes.
+#   summary      a table of every job's result in the run summary; fails the
+#                run, visibly, when either edition failed.
+#
+# The two editions are independent by decision: `publish` needs only
+# `developer-id`, so the DMG ships even when the App Store upload fails.
+# That failure is not silent: `summary` names it and turns the run red, and
+# the App Store job is re-run (or a new tag pushed) on its own.
+#
+# The signing jobs use the protected `release` environment: they wait for a
+# maintainer's approval and are the only jobs that can read its secrets.
+# Nothing here runs on pull requests, and nothing uses pull_request_target.
+# Secret and variable names, and how to produce each value, are in the
+# contributor docs (Docs/Build.md, "Releases").
+#
+# Runner: see ci.yml. The signing jobs honour KVOICE_MACOS_RUNNER too.
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  version:
+    name: Version and preflight
+    # A fork's tags do not try to release (they would fail at the missing
+    # environment); a fork that wants its own releases changes this line.
+    if: github.repository == 'kccarlos/kvoice'
+    runs-on: macos-26
+    timeout-minutes: 10
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      store-version: ${{ steps.version.outputs.store-version }}
+      build: ${{ steps.version.outputs.build }}
+      prerelease: ${{ steps.version.outputs.prerelease }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Derive the version from the tag
+        id: version
+        env:
+          TAG: ${{ github.ref_name }}
+          RUN_NUMBER: ${{ github.run_number }}
+        run: |
+          values="$(./Scripts/release_version.sh "$TAG" "$RUN_NUMBER")"
+          printf '%s\n' "$values"
+          get() { printf '%s\n' "$values" | sed -n "s/^$1=//p"; }
+          {
+            echo "version=$(get KVOICE_MARKETING_VERSION)"
+            echo "store-version=$(get KVOICE_STORE_VERSION)"
+            echo "build=$(get KVOICE_BUILD_NUMBER)"
+            echo "prerelease=$(get KVOICE_PRERELEASE)"
+          } >> "$GITHUB_OUTPUT"
+
+      # This repository is written only by the export; a release is a tag
+      # on one of its sync commits, never on a hand-made commit.
+      - name: The tag is a sync commit on main
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          git merge-base --is-ancestor "$TAG" origin/main \
+            || { echo "::error::$TAG is not on main"; exit 1; }
+          subject="$(git log -1 --format=%s "$TAG")"
+          case "$subject" in
+            "sync: kvoice dev @ "*) ;;
+            *) echo "::error::$TAG is on '$subject', not a sync commit"; exit 1 ;;
+          esac
+
+      - name: Conventional Commits since the previous tag
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          previous="$(git describe --tags --abbrev=0 --match 'v*' "$TAG^" 2>/dev/null || true)"
+          if [ -n "$previous" ]; then
+            ./Scripts/check_commit_message.sh --range "$previous..$TAG"
+          else
+            echo "first release; no previous tag"
+          fi
+
+      # Fails now, before anything is signed, when CHANGELOG.md has no
+      # section for this version.
+      - name: Release notes preflight
+        env:
+          TAG: ${{ github.ref_name }}
+        run: ./Scripts/release_notes.sh "$TAG" > "$RUNNER_TEMP/notes.md" && cat "$RUNNER_TEMP/notes.md"
+
+  test:
+    name: Unit tests
+    needs: version
+    runs-on: ${{ vars.KVOICE_MACOS_RUNNER || 'xcode-27' }}
+    timeout-minutes: 60
+    env:
+      DEVELOPER_DIR: ${{ vars.KVOICE_DEVELOPER_DIR || '/Applications/Xcode_27.0.app/Contents/Developer' }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Toolchain
+        run: ./Scripts/ci_check_toolchain.sh 27
+      - name: Tests
+        run: ./Scripts/test.sh
+
+  developer-id:
+    name: Developer ID DMG
+    needs: [version, test]
+    runs-on: ${{ vars.KVOICE_MACOS_RUNNER || 'xcode-27' }}
+    environment: release
+    timeout-minutes: 120
+    env:
+      DEVELOPER_DIR: ${{ vars.KVOICE_DEVELOPER_DIR || '/Applications/Xcode_27.0.app/Contents/Developer' }}
+      KVOICE_MARKETING_VERSION: ${{ needs.version.outputs.version }}
+      KVOICE_BUILD_NUMBER: ${{ needs.version.outputs.build }}
+      APPLE_TEAM_ID: ${{ vars.APPLE_TEAM_ID }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Toolchain
+        run: ./Scripts/ci_check_toolchain.sh 27
+      - name: The team
+        run: |
+          printf '%s' "$APPLE_TEAM_ID" | grep -Eq '^[A-Z0-9]{10}$' \
+            || { echo "::error::Set the repository variable APPLE_TEAM_ID to the 10-character Apple team ID"; exit 1; }
+
+      - name: Import the Developer ID identity
+        env:
+          DEVELOPER_ID_P12_BASE64: ${{ secrets.DEVELOPER_ID_P12_BASE64 }}
+          DEVELOPER_ID_P12_PASSWORD: ${{ secrets.DEVELOPER_ID_P12_PASSWORD }}
+        run: ./Scripts/ci_import_signing_identity.sh >> "$GITHUB_ENV"
+
+      # A public release is notarized or it is not published: a build signed
+      # any other way would make every user re-grant Accessibility and
+      # Microphone on the next update, or not open at all.
+      - name: Refuse anything but a Developer ID
+        run: |
+          if [ "${KVOICE_NOTARIZE:-false}" != "true" ]; then
+            echo "::error::No Developer ID identity was imported. Set DEVELOPER_ID_P12_BASE64 and DEVELOPER_ID_P12_PASSWORD in the release environment."
+            exit 1
+          fi
+          case "$KVOICE_CODE_SIGN_IDENTITY" in
+            *"($APPLE_TEAM_ID)") ;;
+            *) echo "::error::The Developer ID identity is not team $APPLE_TEAM_ID's"; exit 1 ;;
+          esac
+
+      - name: App Store Connect API key (notarization)
+        env:
+          ASC_API_KEY_P8_BASE64: ${{ secrets.ASC_API_KEY_P8_BASE64 }}
+          ASC_API_KEY_ID: ${{ secrets.ASC_API_KEY_ID }}
+          ASC_API_ISSUER_ID: ${{ secrets.ASC_API_ISSUER_ID }}
+        run: |
+          if [ -z "$ASC_API_KEY_P8_BASE64" ] || [ -z "$ASC_API_KEY_ID" ] || [ -z "$ASC_API_ISSUER_ID" ]; then
+            echo "::error::Set ASC_API_KEY_P8_BASE64, ASC_API_KEY_ID and ASC_API_ISSUER_ID in the release environment"
+            exit 1
+          fi
+          key="$RUNNER_TEMP/AuthKey_$ASC_API_KEY_ID.p8"
+          (umask 077 && printf '%s' "$ASC_API_KEY_P8_BASE64" | base64 --decode > "$key")
+          {
+            echo "NOTARY_API_KEY_PATH=$key"
+            echo "NOTARY_API_KEY_ID=$ASC_API_KEY_ID"
+            echo "NOTARY_API_ISSUER_ID=$ASC_API_ISSUER_ID"
+          } >> "$GITHUB_ENV"
+
+      - name: Release build
+        run: ./Scripts/build_app.sh Release
+
+      - name: Verify the signature
+        run: |
+          app=.build/xcode-derived/Build/Products/Release/kvoice.app
+          ./Scripts/check_release_signature.sh --developer-id "$app"
+          codesign -dvv "$app" 2>&1 | grep -E '^(Identifier|Authority|TeamIdentifier|Timestamp)='
+          codesign -dvv "$app" 2>&1 | grep -qx "TeamIdentifier=$APPLE_TEAM_ID" \
+            || { echo "::error::the app is not signed by team $APPLE_TEAM_ID"; exit 1; }
+          /usr/libexec/PlistBuddy -c 'Print CFBundleShortVersionString' "$app/Contents/Info.plist"
+          /usr/libexec/PlistBuddy -c 'Print CFBundleVersion' "$app/Contents/Info.plist"
+
+      # The app is notarized and stapled first, so the copy inside the DMG
+      # carries its own ticket and opens offline; then the DMG itself.
+      - name: Notarize and staple the app
+        run: ./Scripts/notarize.sh .build/xcode-derived/Build/Products/Release/kvoice.app
+
+      - name: Package the DMG
+        run: ./Scripts/make_dmg.sh Release "$KVOICE_MARKETING_VERSION" .build/release
+
+      - name: Notarize and staple the DMG
+        # Stapling rewrites the DMG; notarize.sh rewrites its .sha256 too.
+        run: ./Scripts/notarize.sh ".build/release/KVoice-$KVOICE_MARKETING_VERSION.dmg"
+
+      - name: Upload the DMG
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: dmg
+          path: |
+            .build/release/KVoice-*.dmg
+            .build/release/KVoice-*.dmg.sha256
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Remove the signing identity and the key
+        if: always()
+        run: |
+          ./Scripts/ci_remove_signing_identity.sh
+          rm -f "$RUNNER_TEMP"/AuthKey_*.p8
+
+  app-store:
+    name: Mac App Store upload
+    needs: [version, test]
+    runs-on: ${{ vars.KVOICE_MACOS_RUNNER || 'xcode-27' }}
+    environment: release
+    timeout-minutes: 120
+    env:
+      DEVELOPER_DIR: ${{ vars.KVOICE_DEVELOPER_DIR || '/Applications/Xcode_27.0.app/Contents/Developer' }}
+      # The App Store takes dotted integers: a pre-release tag uploads
+      # X.Y.Z with this run's build number (a TestFlight candidate).
+      KVOICE_MARKETING_VERSION: ${{ needs.version.outputs.store-version }}
+      KVOICE_BUILD_NUMBER: ${{ needs.version.outputs.build }}
+      APPLE_TEAM_ID: ${{ vars.APPLE_TEAM_ID }}
+      # "1" once Apple has assigned the Private Cloud Compute entitlement
+      # and the profile includes it (ADR-027); anything else leaves it out.
+      KVOICE_PCC_ENTITLEMENT: ${{ vars.KVOICE_PCC_ENTITLEMENT == '1' && '1' || '0' }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Toolchain
+        run: ./Scripts/ci_check_toolchain.sh 27
+      - name: The team
+        run: |
+          printf '%s' "$APPLE_TEAM_ID" | grep -Eq '^[A-Z0-9]{10}$' \
+            || { echo "::error::Set the repository variable APPLE_TEAM_ID to the 10-character Apple team ID"; exit 1; }
+
+      - name: Import the distribution identities
+        env:
+          APPLE_DISTRIBUTION_P12_BASE64: ${{ secrets.APPLE_DISTRIBUTION_P12_BASE64 }}
+          APPLE_DISTRIBUTION_P12_PASSWORD: ${{ secrets.APPLE_DISTRIBUTION_P12_PASSWORD }}
+          MAC_INSTALLER_P12_BASE64: ${{ secrets.MAC_INSTALLER_P12_BASE64 }}
+          MAC_INSTALLER_P12_PASSWORD: ${{ secrets.MAC_INSTALLER_P12_PASSWORD }}
+        run: |
+          if [ -z "$APPLE_DISTRIBUTION_P12_BASE64" ] || [ -z "$MAC_INSTALLER_P12_BASE64" ]; then
+            echo "::error::Set APPLE_DISTRIBUTION_P12_BASE64 and MAC_INSTALLER_P12_BASE64 (and their passwords) in the release environment"
+            exit 1
+          fi
+          ./Scripts/ci_import_signing_identity.sh >> "$GITHUB_ENV"
+
+      - name: Provisioning profile and App Store Connect API key
+        env:
+          APP_STORE_PROFILE_BASE64: ${{ secrets.APP_STORE_PROFILE_BASE64 }}
+          ASC_API_KEY_P8_BASE64: ${{ secrets.ASC_API_KEY_P8_BASE64 }}
+          ASC_API_KEY_ID: ${{ secrets.ASC_API_KEY_ID }}
+          ASC_API_ISSUER_ID: ${{ secrets.ASC_API_ISSUER_ID }}
+        run: |
+          if [ -z "$APP_STORE_PROFILE_BASE64" ]; then
+            echo "::error::Set APP_STORE_PROFILE_BASE64 (the Mac App Store provisioning profile) in the release environment"
+            exit 1
+          fi
+          if [ -z "$ASC_API_KEY_P8_BASE64" ] || [ -z "$ASC_API_KEY_ID" ] || [ -z "$ASC_API_ISSUER_ID" ]; then
+            echo "::error::Set ASC_API_KEY_P8_BASE64, ASC_API_KEY_ID and ASC_API_ISSUER_ID in the release environment"
+            exit 1
+          fi
+          profile="$RUNNER_TEMP/kvoice-app-store.provisionprofile"
+          key="$RUNNER_TEMP/AuthKey_$ASC_API_KEY_ID.p8"
+          printf '%s' "$APP_STORE_PROFILE_BASE64" | base64 --decode > "$profile"
+          # archive_app_store.sh installs it as <UUID>.provisionprofile; the
+          # cleanup removes exactly that file, never other profiles.
+          uuid="$(security cms -D -i "$profile" | plutil -extract UUID raw -o - -)"
+          (umask 077 && printf '%s' "$ASC_API_KEY_P8_BASE64" | base64 --decode > "$key")
+          {
+            echo "KVOICE_APP_STORE_PROFILE=$profile"
+            echo "KVOICE_APP_STORE_PROFILE_UUID=$uuid"
+            echo "KVOICE_ASC_KEY_PATH=$key"
+            echo "KVOICE_ASC_KEY_ID=$ASC_API_KEY_ID"
+            echo "KVOICE_ASC_ISSUER_ID=$ASC_API_ISSUER_ID"
+          } >> "$GITHUB_ENV"
+
+      # Archive (manual signing), check the archived app's sandbox and
+      # entitlements, export the signed .pkg, upload it.
+      - name: Archive, export and upload
+        run: ./Scripts/archive_app_store.sh --upload .build/app-store
+
+      - name: Remove the identities, the profile and the key
+        if: always()
+        run: |
+          ./Scripts/ci_remove_signing_identity.sh
+          rm -f "$RUNNER_TEMP"/AuthKey_*.p8 "$RUNNER_TEMP/kvoice-app-store.provisionprofile"
+          if [ -n "${KVOICE_APP_STORE_PROFILE_UUID:-}" ]; then
+            rm -f "$HOME/Library/Developer/Xcode/UserData/Provisioning Profiles/$KVOICE_APP_STORE_PROFILE_UUID.provisionprofile" \
+                  "$HOME/Library/MobileDevice/Provisioning Profiles/$KVOICE_APP_STORE_PROFILE_UUID.provisionprofile"
+          fi
+
+  publish:
+    name: GitHub Release
+    needs: [version, developer-id]
+    runs-on: macos-26
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: dmg
+          path: dist
+
+      - name: Release notes
+        env:
+          TAG: ${{ github.ref_name }}
+          VERSION: ${{ needs.version.outputs.version }}
+          KVOICE_NOTARIZED: "true"
+        run: |
+          ./Scripts/release_notes.sh "$TAG" "dist/KVoice-$VERSION.dmg.sha256" > "$RUNNER_TEMP/notes.md"
+          cat "$RUNNER_TEMP/notes.md"
+
+      - name: Create the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+          VERSION: ${{ needs.version.outputs.version }}
+          PRERELEASE: ${{ needs.version.outputs.prerelease }}
+        run: |
+          set -- --verify-tag --title "KVoice $VERSION" --notes-file "$RUNNER_TEMP/notes.md"
+          if [ "$PRERELEASE" = "true" ]; then set -- "$@" --prerelease; fi
+          gh release create "$TAG" "$@" \
+            "dist/KVoice-$VERSION.dmg" "dist/KVoice-$VERSION.dmg.sha256"
+
+  summary:
+    name: Release summary
+    needs: [version, test, developer-id, app-store, publish]
+    if: always() && needs.version.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Results of both editions
+        env:
+          VERSION: ${{ needs.version.outputs.version }}
+          TEST: ${{ needs.test.result }}
+          DEVELOPER_ID: ${{ needs.developer-id.result }}
+          APP_STORE: ${{ needs.app-store.result }}
+          PUBLISH: ${{ needs.publish.result }}
+        run: |
+          {
+            echo "## KVoice $VERSION"
+            echo
+            echo "| Job | Result |"
+            echo "| --- | --- |"
+            echo "| Unit tests | $TEST |"
+            echo "| Developer ID DMG (notarized) | $DEVELOPER_ID |"
+            echo "| GitHub Release | $PUBLISH |"
+            echo "| Mac App Store upload (TestFlight) | $APP_STORE |"
+          } >> "$GITHUB_STEP_SUMMARY"
+          status=0
+          if [ "$APP_STORE" != "success" ]; then
+            echo "::error title=App Store upload $APP_STORE::The Mac App Store upload did not succeed ($APP_STORE). The DMG release is independent of it; re-run the app-store job, or push a new tag if its upload had already gone through."
+            status=1
+          fi
+          if [ "$DEVELOPER_ID" != "success" ] || [ "$PUBLISH" != "success" ]; then
+            echo "::error title=DMG release $DEVELOPER_ID / $PUBLISH::The Developer ID DMG or the GitHub Release did not succeed."
+            status=1
+          fi
+          exit "$status"

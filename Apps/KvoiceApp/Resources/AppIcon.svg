@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-label="kvoice">
+  <!--
+    Source of truth for the app icon. Regenerate AppIcon.icns after editing:
+
+        ./Scripts/make_app_icon.sh
+
+    To change the colour, edit the two gradient stops below and regenerate.
+    Nothing else in the design depends on them.
+
+    Geometry follows Apple's macOS icon grid: on a 1024 canvas the icon body is
+    824x824 inset by 100 on every side, with a corner radius of 824 * 0.225.
+    The surrounding margin is intentional; macOS expects it and the Dock does
+    not add its own.
+
+    Note for editors: an XML comment may not contain a double hyphen. Using one
+    makes NSImage reject the whole file, and it fails silently.
+  -->
+  <defs>
+    <linearGradient id="background" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#5B54F0"/>
+      <stop offset="1" stop-color="#2B2775"/>
+    </linearGradient>
+  </defs>
+
+  <rect x="100" y="100" width="824" height="824" rx="185.4" fill="url(#background)"/>
+
+  <!--
+    The same artwork as MenuBarLogo.svg, in its original coordinates, scaled to
+    60% of the body width and centred on the body. The transform maps the art's
+    own centre (735.5, 546) onto the canvas centre (512, 512).
+  -->
+  <g fill="#fff" transform="translate(139.0, 235.1) scale(0.5071)">
+    <rect x="248" y="508" width="68" height="132" rx="34"/>
+    <rect x="349" y="440" width="68" height="261" rx="34"/>
+    <rect x="452" y="350" width="72" height="422" rx="36"/>
+    <rect x="568" y="458" width="62" height="218" rx="31"/>
+
+    <path d="M815 217
+             C739 217 678 278 678 354
+             V567
+             C678 668 741 741 815 741
+             C889 741 951 668 951 567
+             V354
+             C951 278 890 217 815 217Z"/>
+
+    <rect x="786" y="716" width="58" height="116" rx="29"/>
+    <rect x="665" y="814" width="295" height="61" rx="31"/>
+
+    <rect x="996" y="460" width="62" height="214" rx="31"/>
+
+    <rect x="1120" y="387" width="70" height="356" rx="35"/>
+    <rect x="1087" y="387" width="136" height="43" rx="21.5"/>
+    <rect x="1087" y="700" width="136" height="43" rx="21.5"/>
+  </g>
+</svg>

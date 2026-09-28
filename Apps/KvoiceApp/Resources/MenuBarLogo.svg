@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="158 127 1155 838" role="img" aria-label="kvoice">
+  <!--
+    The menu-bar glyph. Rendered as an AppKit template image, so only alpha
+    matters: the white fill becomes black on a light menu bar and white on a
+    dark one, and inverts correctly while the menu is open.
+
+    The viewBox is deliberately NOT the artwork's bounds. The art spans
+    x 248..1223, y 217..875; this box adds a 90-unit margin on every side so
+    MenuBarLogoGlow.svg can bleed its halo into that margin. Both files MUST
+    keep the same viewBox, or the glyph would visibly change size whenever the
+    glow turns on.
+  -->
+  <g fill="#fff">
+    <!-- Left waveform bars -->
+    <rect x="248" y="508" width="68" height="132" rx="34"/>
+    <rect x="349" y="440" width="68" height="261" rx="34"/>
+    <rect x="452" y="350" width="72" height="422" rx="36"/>
+    <rect x="568" y="458" width="62" height="218" rx="31"/>
+
+    <!-- Main microphone -->
+    <path d="M815 217
+             C739 217 678 278 678 354
+             V567
+             C678 668 741 741 815 741
+             C889 741 951 668 951 567
+             V354
+             C951 278 890 217 815 217Z"/>
+
+    <!-- Stem and base -->
+    <rect x="786" y="716" width="58" height="116" rx="29"/>
+    <rect x="665" y="814" width="295" height="61" rx="31"/>
+
+    <!-- Right waveform -->
+    <rect x="996" y="460" width="62" height="214" rx="31"/>
+
+    <!-- Right I-shaped bar -->
+    <rect x="1120" y="387" width="70" height="356" rx="35"/>
+    <rect x="1087" y="387" width="136" height="43" rx="21.5"/>
+    <rect x="1087" y="700" width="136" height="43" rx="21.5"/>
+  </g>
+</svg>

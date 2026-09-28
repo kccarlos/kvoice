@@ -1,0 +1,1456 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "%lld-hour": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld 小时"
+          }
+        }
+      }
+    },
+    "%lld-minute": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld 分钟"
+          }
+        }
+      }
+    },
+    "%lld-second": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld 秒"
+          }
+        }
+      }
+    },
+    "1 hour": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 小时"
+          }
+        }
+      }
+    },
+    "1 to 5 minutes": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 至 5 分钟"
+          }
+        }
+      }
+    },
+    "10 minutes": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "10 分钟"
+          }
+        }
+      }
+    },
+    "15 seconds to 1 minute": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "15 秒至 1 分钟"
+          }
+        }
+      }
+    },
+    "30 minutes": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "30 分钟"
+          }
+        }
+      }
+    },
+    "A Selection Action is still running.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "一个选中文本操作仍在运行。"
+          }
+        }
+      }
+    },
+    "A file is being transcribed.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在转写文件。"
+          }
+        }
+      }
+    },
+    "A model operation is in progress.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "模型操作进行中。"
+          }
+        }
+      }
+    },
+    "AI Actions is off, so this has no effect until you turn it on.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AI 操作已关闭，打开之前此项不起作用。"
+          }
+        }
+      }
+    },
+    "AI authentication failed. Inserted the local transcript instead.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AI 身份验证失败。已改为插入本地转写文本。"
+          }
+        }
+      }
+    },
+    "AI did not respond in time. Inserted the local transcript instead.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AI 未及时响应。已改为插入本地转写文本。"
+          }
+        }
+      }
+    },
+    "AI is not configured. Inserted the local transcript instead.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AI 尚未配置。已改为插入本地转写文本。"
+          }
+        }
+      }
+    },
+    "AI skipped. Inserted the local transcript instead.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已跳过 AI。已改为插入本地转写文本。"
+          }
+        }
+      }
+    },
+    "Accessibility permission is missing, so the result was copied to the clipboard.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "缺少辅助功能权限，结果已复制到剪贴板。"
+          }
+        }
+      }
+    },
+    "Accessibility permission is required for automatic insertion.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "自动插入需要辅助功能权限。"
+          }
+        }
+      }
+    },
+    "Add an AI configuration before choosing what AI Actions do.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "请先添加 AI 配置，再选择 AI 操作的行为。"
+          }
+        }
+      }
+    },
+    "Add an AI configuration in AI Actions before using a Selection Action.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "使用选中文本操作前，请先在“AI 操作”中添加一个 AI 配置。"
+          }
+        }
+      }
+    },
+    "All": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "全部"
+          }
+        }
+      }
+    },
+    "All time": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "全部时间"
+          }
+        }
+      }
+    },
+    "Anthropic": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Anthropic"
+          }
+        }
+      }
+    },
+    "Apple Intelligence (Private Cloud Compute)": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple 智能（私密云计算）"
+          }
+        }
+      }
+    },
+    "Apple Intelligence (on-device)": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple 智能（本机）"
+          }
+        }
+      }
+    },
+    "Apple Intelligence isn't available right now.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple 智能目前不可用。"
+          }
+        }
+      }
+    },
+    "Apple Intelligence isn't available right now. Inserted the local transcript instead.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple 智能目前不可用，已改为插入本地转写文本。"
+          }
+        }
+      }
+    },
+    "Apple Speech": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple 语音"
+          }
+        }
+      }
+    },
+    "Apple Speech doesn't support the selected transcription language on this Mac.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple 语音在此 Mac 上不支持所选的转写语言。"
+          }
+        }
+      }
+    },
+    "Apple Speech has no assets for the selected language on this Mac yet. Install them in Settings › Speech Models.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple 语音在此 Mac 上尚无所选语言的资源。请在“设置 › 语音模型”中安装。"
+          }
+        }
+      }
+    },
+    "Apple Speech isn't available on this Mac.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "此 Mac 不支持 Apple 语音。"
+          }
+        }
+      }
+    },
+    "Apple Speech places its own model; this choice applies to the Core ML runtimes only.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple 语音自行安排模型的运行位置；此选项仅对 Core ML 运行时生效。"
+          }
+        }
+      }
+    },
+    "Azure OpenAI": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Azure OpenAI"
+          }
+        }
+      }
+    },
+    "Batch": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "批处理"
+          }
+        }
+      }
+    },
+    "CPU": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CPU"
+          }
+        }
+      }
+    },
+    "CPU only": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "仅 CPU"
+          }
+        }
+      }
+    },
+    "Cannot insert into a secure field. Copied the result to the clipboard.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法插入到安全输入框。结果已复制到剪贴板。"
+          }
+        }
+      }
+    },
+    "Cerebras": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cerebras"
+          }
+        }
+      }
+    },
+    "Choose another speech model in Settings › Speech Models.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "请在“设置 › 语音模型”中选择其他语音模型。"
+          }
+        }
+      }
+    },
+    "Cloud": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "云端"
+          }
+        }
+      }
+    },
+    "Custom": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "自定义"
+          }
+        }
+      }
+    },
+    "Dictation cancelled.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "听写已取消。"
+          }
+        }
+      }
+    },
+    "Finish the current dictation first.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "请先完成当前听写。"
+          }
+        }
+      }
+    },
+    "FluidAudio (CoreML)": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "FluidAudio (CoreML)"
+          }
+        }
+      }
+    },
+    "Fn": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fn"
+          }
+        }
+      }
+    },
+    "GPU": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GPU"
+          }
+        }
+      }
+    },
+    "GPU + CPU": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GPU + CPU"
+          }
+        }
+      }
+    },
+    "Gemini": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gemini"
+          }
+        }
+      }
+    },
+    "Groq": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Groq"
+          }
+        }
+      }
+    },
+    "History is unavailable. Dictation continues without it.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "历史记录不可用。听写将继续，但不保存历史记录。"
+          }
+        }
+      }
+    },
+    "Hybrid": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "混合"
+          }
+        }
+      }
+    },
+    "In the App Store edition KVoice always types the text into the app you dictate into; it cannot write to other apps' text fields directly.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在 App Store 版本中，KVoice 始终以键入的方式将文本输入到你正在听写的应用中；它无法直接写入其他应用的文本框。"
+          }
+        }
+      }
+    },
+    "KVoice is still finishing the previous dictation.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "KVoice 仍在完成上一次听写。"
+          }
+        }
+      }
+    },
+    "KVoice was quitting; the selection was left as it was.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "KVoice 正在退出；所选文本保持原样。"
+          }
+        }
+      }
+    },
+    "Last 14 days": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "最近 14 天"
+          }
+        }
+      }
+    },
+    "Last 180 days": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "最近 180 天"
+          }
+        }
+      }
+    },
+    "Last 24 hours": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "最近 24 小时"
+          }
+        }
+      }
+    },
+    "Last 30 days": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "最近 30 天"
+          }
+        }
+      }
+    },
+    "Last 7 days": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "最近 7 天"
+          }
+        }
+      }
+    },
+    "Last 90 days": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "最近 90 天"
+          }
+        }
+      }
+    },
+    "Last year": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "最近一年"
+          }
+        }
+      }
+    },
+    "MLX": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MLX"
+          }
+        }
+      }
+    },
+    "Microphone access has not been granted yet. Allow it in Setup or Settings › Dictation.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "尚未授予麦克风访问权限。请在设置向导或“设置 › 听写”中允许。"
+          }
+        }
+      }
+    },
+    "Microphone access has not been granted yet. Allow it in Setup or Settings.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "尚未授予麦克风访问权限。请在设置向导或“设置”中允许。"
+          }
+        }
+      }
+    },
+    "Microphone access is denied. Enable KVoice in System Settings › Privacy & Security › Microphone.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "麦克风访问被拒绝。请在“系统设置 › 隐私与安全性 › 麦克风”中启用 KVoice。"
+          }
+        }
+      }
+    },
+    "Microphone access is restricted on this Mac.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "这台 Mac 上的麦克风访问受到限制。"
+          }
+        }
+      }
+    },
+    "Nearing today's Private Cloud Compute limit.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "即将达到今日的私密云计算使用上限。"
+          }
+        }
+      }
+    },
+    "Neural Engine": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "神经网络引擎"
+          }
+        }
+      }
+    },
+    "Neural Engine + CPU": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "神经网络引擎 + CPU"
+          }
+        }
+      }
+    },
+    "No action is assigned to this shortcut. Choose one in AI Actions.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "此快捷键尚未指定操作。请在“AI 操作”中选择一个。"
+          }
+        }
+      }
+    },
+    "No application is in front to work on.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "前台没有可操作的应用。"
+          }
+        }
+      }
+    },
+    "No application was in front. Copied the result to the clipboard.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "前台没有应用。结果已复制到剪贴板。"
+          }
+        }
+      }
+    },
+    "No editable field was focused. Copied the result to the clipboard.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "没有聚焦的可编辑输入框。结果已复制到剪贴板。"
+          }
+        }
+      }
+    },
+    "No limit": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无限制"
+          }
+        }
+      }
+    },
+    "No microphone is available. Connect or select an input device and try again.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "没有可用的麦克风。请连接或选择一个输入设备后重试。"
+          }
+        }
+      }
+    },
+    "No model is loaded.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "尚未加载模型。"
+          }
+        }
+      }
+    },
+    "No transcript was produced. Nothing was inserted; try again.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "未生成转写文本。未插入任何内容，请重试。"
+          }
+        }
+      }
+    },
+    "No transcription model is installed. Download or choose one in Settings › Model.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "未安装转写模型。请在“设置 › 模型”中下载或选择一个。"
+          }
+        }
+      }
+    },
+    "No transcription model is ready. Download or choose one in Settings › Model.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "没有就绪的转写模型。请在“设置 › 模型”中下载或选择一个。"
+          }
+        }
+      }
+    },
+    "No usable speech was recorded. Hold the shortcut a little longer and try again.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "未录到可用的语音。请按住快捷键稍久一点后重试。"
+          }
+        }
+      }
+    },
+    "No usable speech was recorded. Try again.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "未录到可用的语音。请重试。"
+          }
+        }
+      }
+    },
+    "Not enough free disk space to install the model.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "磁盘可用空间不足，无法安装模型。"
+          }
+        }
+      }
+    },
+    "Ollama (local)": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ollama（本地）"
+          }
+        }
+      }
+    },
+    "On-Device": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "本机运行"
+          }
+        }
+      }
+    },
+    "OpenAI": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OpenAI"
+          }
+        }
+      }
+    },
+    "OpenRouter": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OpenRouter"
+          }
+        }
+      }
+    },
+    "Over 5 minutes": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "5 分钟以上"
+          }
+        }
+      }
+    },
+    "Performance test running…": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "性能测试进行中…"
+          }
+        }
+      }
+    },
+    "Private Cloud Compute is available only in the Mac App Store edition of KVoice.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "私密云计算仅在 Mac App Store 版 KVoice 中可用。"
+          }
+        }
+      }
+    },
+    "Private Cloud Compute isn't ready yet. Try again in a moment.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "私密云计算尚未就绪，请稍后再试。"
+          }
+        }
+      }
+    },
+    "Private Cloud Compute requires macOS 27 or later.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "私密云计算需要 macOS 27 或更高版本。"
+          }
+        }
+      }
+    },
+    "Push-to-Talk": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "按住说话"
+          }
+        }
+      }
+    },
+    "Recording reached the maximum length.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "录音已达到最大时长。"
+          }
+        }
+      }
+    },
+    "Recording stopped at the %@ limit.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "录音已在 %@上限处停止。"
+          }
+        }
+      }
+    },
+    "Recording was interrupted. Nothing was inserted; try again.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "录音被中断。未插入任何内容，请重试。"
+          }
+        }
+      }
+    },
+    "Reloading the model with the new compute units…": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在用新的计算单元重新加载模型…"
+          }
+        }
+      }
+    },
+    "Requires macOS 26 or later.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "需要 macOS 26 或更高版本。"
+          }
+        }
+      }
+    },
+    "Result copied to the clipboard.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "结果已复制到剪贴板。"
+          }
+        }
+      }
+    },
+    "Right Command": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "右 Command"
+          }
+        }
+      }
+    },
+    "Right Control": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "右 Control"
+          }
+        }
+      }
+    },
+    "Right Option": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "右 Option"
+          }
+        }
+      }
+    },
+    "Right Shift": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "右 Shift"
+          }
+        }
+      }
+    },
+    "Select some text first, then press the shortcut.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "请先选中一些文本，再按快捷键。"
+          }
+        }
+      }
+    },
+    "Settings could not be read and defaults are in use.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法读取设置，正在使用默认值。"
+          }
+        }
+      }
+    },
+    "Something went wrong inside KVoice. Nothing was inserted.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "KVoice 内部出现问题。未插入任何内容。"
+          }
+        }
+      }
+    },
+    "Streaming": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "流式"
+          }
+        }
+      }
+    },
+    "The AI endpoint URL is invalid. Inserted the local transcript instead.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AI 端点 URL 无效。已改为插入本地转写文本。"
+          }
+        }
+      }
+    },
+    "The AI endpoint could not be reached. Inserted the local transcript instead.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法连接 AI 端点。已改为插入本地转写文本。"
+          }
+        }
+      }
+    },
+    "The AI endpoint is rate-limited. Inserted the local transcript instead.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AI 端点已限流。已改为插入本地转写文本。"
+          }
+        }
+      }
+    },
+    "The AI endpoint returned an error. Inserted the local transcript instead.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AI 端点返回了错误。已改为插入本地转写文本。"
+          }
+        }
+      }
+    },
+    "The AI response was unusable. Inserted the local transcript instead.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AI 响应无法使用。已改为插入本地转写文本。"
+          }
+        }
+      }
+    },
+    "The API key file has unsafe permissions. AI is disabled until it is repaired.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "API 密钥文件的权限不安全。修复前 AI 已被停用。"
+          }
+        }
+      }
+    },
+    "The App Store edition cannot read text selected in other apps, so Selection Actions are not available.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "App Store 版本无法读取其他应用中选中的文本，因此“选中文本操作”不可用。"
+          }
+        }
+      }
+    },
+    "The App Store edition cannot watch the mouse, a single modifier key or Escape while another app is in front. Use key combinations, including a Cancel shortcut.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "App Store 版本无法在其他应用位于前台时监听鼠标、单个修饰键或 Esc 键。请使用组合键，包括取消快捷键。"
+          }
+        }
+      }
+    },
+    "The Apple Speech assets could not be downloaded. Check the connection and try again.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法下载 Apple 语音资源。请检查网络连接后重试。"
+          }
+        }
+      }
+    },
+    "The Apple Speech assets for this language are not on this Mac yet.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "此语言的 Apple 语音资源尚未下载到此 Mac。"
+          }
+        }
+      }
+    },
+    "The Notch style needs a display with a camera housing.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "“刘海”样式需要带摄像头凹槽的显示器。"
+          }
+        }
+      }
+    },
+    "The application did not accept the text. Copied the result to the clipboard.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "该应用未接受文本。结果已复制到剪贴板。"
+          }
+        }
+      }
+    },
+    "The audio could not be prepared for transcription. Try again.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法为转写准备音频。请重试。"
+          }
+        }
+      }
+    },
+    "The current speech model does not take a dictionary. The list is kept for a model that does.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "当前语音模型不支持词典。列表会为支持的模型保留。"
+          }
+        }
+      }
+    },
+    "The focused field cannot be edited directly. Copied the result to the clipboard.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "聚焦的输入框无法直接编辑。结果已复制到剪贴板。"
+          }
+        }
+      }
+    },
+    "The input device changed during recording. Nothing was inserted; try again.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "录音期间输入设备发生了变化。未插入任何内容，请重试。"
+          }
+        }
+      }
+    },
+    "The microphone could not be started. Check the input device and try again.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法启动麦克风。请检查输入设备后重试。"
+          }
+        }
+      }
+    },
+    "The model download failed. Retry from Settings › Model.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "模型下载失败。请在“设置 › 模型”中重试。"
+          }
+        }
+      }
+    },
+    "The model download was cancelled.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "模型下载已取消。"
+          }
+        }
+      }
+    },
+    "The model is still downloading.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "模型仍在下载中。"
+          }
+        }
+      }
+    },
+    "The result could not be copied to the clipboard. It is kept in History and shown below.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法将结果复制到剪贴板。它已保存在历史记录中并显示在下方。"
+          }
+        }
+      }
+    },
+    "The result is too long to type. Copied it to the clipboard.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "结果太长，无法键入。已复制到剪贴板。"
+          }
+        }
+      }
+    },
+    "The shortcut could not be registered. Choose another one in Settings.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法注册快捷键。请在“设置”中选择另一个。"
+          }
+        }
+      }
+    },
+    "The shortcut release was not received. Recording stopped.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "未收到快捷键松开事件。录音已停止。"
+          }
+        }
+      }
+    },
+    "The target application changed. Copied the result to the clipboard.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "目标应用发生了变化。结果已复制到剪贴板。"
+          }
+        }
+      }
+    },
+    "The transcript is too long for the on-device model. Inserted the local transcript instead.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "转写文本过长，本机模型无法处理，已改为插入本地转写文本。"
+          }
+        }
+      }
+    },
+    "The transcription model is still loading. Try again in a moment.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "转写模型仍在加载。请稍后重试。"
+          }
+        }
+      }
+    },
+    "The transcription model is unavailable. Open Settings › Model to repair it.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "转写模型不可用。请打开“设置 › 模型”进行修复。"
+          }
+        }
+      }
+    },
+    "This Mac isn't eligible for Apple Intelligence.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "这台 Mac 不支持 Apple 智能。"
+          }
+        }
+      }
+    },
+    "This build of KVoice isn't signed for Private Cloud Compute.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "此版本的 KVoice 未获得使用私密云计算的签名授权。"
+          }
+        }
+      }
+    },
+    "Today's Private Cloud Compute limit is reached. AI actions insert the plain transcript until it resets.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已达到今日的私密云计算使用上限。重置前，AI 操作将插入原始转写文本。"
+          }
+        }
+      }
+    },
+    "Today's Private Cloud Compute limit is reached. Inserted the local transcript instead.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已达到今日的私密云计算使用上限，已改为插入本地转写文本。"
+          }
+        }
+      }
+    },
+    "Toggle": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "切换"
+          }
+        }
+      }
+    },
+    "Transcription cancelled.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "转写已取消。"
+          }
+        }
+      }
+    },
+    "Transcription failed. Nothing was inserted; try again.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "转写失败。未插入任何内容，请重试。"
+          }
+        }
+      }
+    },
+    "Turn on Apple Intelligence in System Settings.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "请在“系统设置”中打开 Apple 智能。"
+          }
+        }
+      }
+    },
+    "Under 15 seconds": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "15 秒以内"
+          }
+        }
+      }
+    },
+    "WhisperKit (CoreML)": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "WhisperKit (CoreML)"
+          }
+        }
+      }
+    },
+    "macOS limits how many languages KVoice can keep Apple Speech assets for. Delete another language's assets first.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "macOS 限制了 KVoice 可保留 Apple 语音资源的语言数量。请先删除另一种语言的资源。"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

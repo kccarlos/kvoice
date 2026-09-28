@@ -1,0 +1,15 @@
+# GitHub Actions only. The Swift package versions are pinned exactly on
+# purpose (AGENTS.md: dependency pins are contract) and are changed by hand,
+# with review, never by a bot.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns:
+          - "*"
+    commit-message:
+      prefix: ci

@@ -1,0 +1,87 @@
+{
+  "schemaVersion": 1,
+  "fixtureSet": "kvoice-model-manifest-v1",
+  "schemaSource": "PRD Appendix 5 A5.4",
+  "valid": [
+    {
+      "fixtureId": "MODEL-VALID-PRIMARY",
+      "manifest": {
+        "schemaVersion": 1,
+        "modelID": "whisper-large-v3-turbo-coreml-uncompressed",
+        "family": "whisper-large-v3-turbo",
+        "format": "whisperkit-coreml",
+        "workingSpaceBytes": 1073741824,
+        "source": {
+          "repository": "argmaxinc/whisperkit-coreml",
+          "revision": "04e5c42d80a522518023727e8c7e68d4bb391b28",
+          "subdirectory": "openai_whisper-large-v3-v20240930_turbo"
+        },
+        "runtimeCompatibility": {"swiftPackage": "argmaxinc/argmax-oss-swift/WhisperKit", "exactVersion": "1.1.0"},
+        "tokenizer": {"relativeRoot": "tokenizer", "offlineRequired": true},
+        "files": [
+          {"path": "model/AudioEncoder.mlmodelc", "bytes": 1048576, "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "role": "audioEncoder"},
+          {"path": "model/MelSpectrogram.mlmodelc", "bytes": 524288, "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "role": "melSpectrogram"},
+          {"path": "model/TextDecoder.mlmodelc", "bytes": 2097152, "sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc", "role": "textDecoder"},
+          {"path": "tokenizer/tokenizer.json", "bytes": 4096, "sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd", "role": "tokenizer"}
+        ]
+      }
+    },
+    {
+      "fixtureId": "MODEL-VALID-COMPARATOR",
+      "manifest": {
+        "schemaVersion": 1,
+        "modelID": "whisper-large-v3-turbo-coreml-626mb",
+        "family": "whisper-large-v3-turbo",
+        "format": "whisperkit-coreml",
+        "workingSpaceBytes": 1073741824,
+        "source": {
+          "repository": "argmaxinc/whisperkit-coreml",
+          "revision": "7235bbd38ae9ab5476bee007313c0bb327387b84",
+          "subdirectory": "openai_whisper-large-v3-v20240930_626MB"
+        },
+        "runtimeCompatibility": {"swiftPackage": "argmaxinc/argmax-oss-swift/WhisperKit", "exactVersion": "1.1.0"},
+        "tokenizer": {"relativeRoot": "tokenizer", "offlineRequired": true},
+        "files": [
+          {"path": "model/TextDecoder.mlmodelc", "bytes": 1, "sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee", "role": "textDecoder"}
+        ]
+      }
+    }
+  ],
+  "invalid": [
+    {
+      "fixtureId": "MODEL-INVALID-SCHEMA-VERSION",
+      "expectedViolation": "schemaVersion must equal 1",
+      "manifest": {"schemaVersion": 2, "modelID": "fixture", "family": "whisper-large-v3-turbo", "format": "whisperkit-coreml", "workingSpaceBytes": 0, "source": {"repository": "argmaxinc/whisperkit-coreml", "revision": "04e5c42d80a522518023727e8c7e68d4bb391b28", "subdirectory": "fixture"}, "runtimeCompatibility": {"swiftPackage": "argmaxinc/argmax-oss-swift/WhisperKit", "exactVersion": "1.1.0"}, "tokenizer": {"relativeRoot": "tokenizer", "offlineRequired": true}, "files": [{"path": "a", "bytes": 1, "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "role": "configuration"}]}
+    },
+    {
+      "fixtureId": "MODEL-INVALID-REVISION",
+      "expectedViolation": "source.revision must be a 40-character lowercase hexadecimal commit",
+      "manifest": {"schemaVersion": 1, "modelID": "fixture", "family": "whisper-large-v3-turbo", "format": "whisperkit-coreml", "workingSpaceBytes": 0, "source": {"repository": "argmaxinc/whisperkit-coreml", "revision": "NOT-A-COMMIT", "subdirectory": "fixture"}, "runtimeCompatibility": {"swiftPackage": "argmaxinc/argmax-oss-swift/WhisperKit", "exactVersion": "1.1.0"}, "tokenizer": {"relativeRoot": "tokenizer", "offlineRequired": true}, "files": [{"path": "a", "bytes": 1, "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "role": "configuration"}]}
+    },
+    {
+      "fixtureId": "MODEL-INVALID-HASH",
+      "expectedViolation": "file sha256 must be 64 lowercase hexadecimal characters",
+      "manifest": {"schemaVersion": 1, "modelID": "fixture", "family": "whisper-large-v3-turbo", "format": "whisperkit-coreml", "workingSpaceBytes": 0, "source": {"repository": "argmaxinc/whisperkit-coreml", "revision": "04e5c42d80a522518023727e8c7e68d4bb391b28", "subdirectory": "fixture"}, "runtimeCompatibility": {"swiftPackage": "argmaxinc/argmax-oss-swift/WhisperKit", "exactVersion": "1.1.0"}, "tokenizer": {"relativeRoot": "tokenizer", "offlineRequired": true}, "files": [{"path": "a", "bytes": 1, "sha256": "ABC", "role": "configuration"}]}
+    },
+    {
+      "fixtureId": "MODEL-INVALID-PATH-TRAVERSAL",
+      "expectedViolation": "file path must remain below package root",
+      "manifest": {"schemaVersion": 1, "modelID": "fixture", "family": "whisper-large-v3-turbo", "format": "whisperkit-coreml", "workingSpaceBytes": 0, "source": {"repository": "argmaxinc/whisperkit-coreml", "revision": "04e5c42d80a522518023727e8c7e68d4bb391b28", "subdirectory": "fixture"}, "runtimeCompatibility": {"swiftPackage": "argmaxinc/argmax-oss-swift/WhisperKit", "exactVersion": "1.1.0"}, "tokenizer": {"relativeRoot": "tokenizer", "offlineRequired": true}, "files": [{"path": "../outside.bin", "bytes": 1, "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "role": "configuration"}]}
+    },
+    {
+      "fixtureId": "MODEL-INVALID-EMPTY-FILES",
+      "expectedViolation": "files must contain at least one allowlisted file",
+      "manifest": {"schemaVersion": 1, "modelID": "fixture", "family": "whisper-large-v3-turbo", "format": "whisperkit-coreml", "workingSpaceBytes": 0, "source": {"repository": "argmaxinc/whisperkit-coreml", "revision": "04e5c42d80a522518023727e8c7e68d4bb391b28", "subdirectory": "fixture"}, "runtimeCompatibility": {"swiftPackage": "argmaxinc/argmax-oss-swift/WhisperKit", "exactVersion": "1.1.0"}, "tokenizer": {"relativeRoot": "tokenizer", "offlineRequired": true}, "files": []}
+    },
+    {
+      "fixtureId": "MODEL-INVALID-BYTE-COUNT",
+      "expectedViolation": "file bytes must be a positive integer",
+      "manifest": {"schemaVersion": 1, "modelID": "fixture", "family": "whisper-large-v3-turbo", "format": "whisperkit-coreml", "workingSpaceBytes": 0, "source": {"repository": "argmaxinc/whisperkit-coreml", "revision": "04e5c42d80a522518023727e8c7e68d4bb391b28", "subdirectory": "fixture"}, "runtimeCompatibility": {"swiftPackage": "argmaxinc/argmax-oss-swift/WhisperKit", "exactVersion": "1.1.0"}, "tokenizer": {"relativeRoot": "tokenizer", "offlineRequired": true}, "files": [{"path": "a", "bytes": 0, "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "role": "configuration"}]}
+    },
+    {
+      "fixtureId": "MODEL-INVALID-OFFLINE-TOKENIZER",
+      "expectedViolation": "tokenizer.offlineRequired must be true",
+      "manifest": {"schemaVersion": 1, "modelID": "fixture", "family": "whisper-large-v3-turbo", "format": "whisperkit-coreml", "workingSpaceBytes": 0, "source": {"repository": "argmaxinc/whisperkit-coreml", "revision": "04e5c42d80a522518023727e8c7e68d4bb391b28", "subdirectory": "fixture"}, "runtimeCompatibility": {"swiftPackage": "argmaxinc/argmax-oss-swift/WhisperKit", "exactVersion": "1.1.0"}, "tokenizer": {"relativeRoot": "tokenizer", "offlineRequired": false}, "files": [{"path": "a", "bytes": 1, "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "role": "configuration"}]}
+    }
+  ]
+}

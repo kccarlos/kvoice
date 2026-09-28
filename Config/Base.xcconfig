@@ -1,0 +1,22 @@
+PRODUCT_NAME = kvoice
+PRODUCT_BUNDLE_IDENTIFIER = io.github.kccarlos.kvoice
+// Development builds carry the version of the *next* release; a release
+// build overrides both from the tag and the Actions run number
+// (the release documentation). Bump MARKETING_VERSION here right after tagging.
+MARKETING_VERSION = 0.1.0
+CURRENT_PROJECT_VERSION = 1
+MACOSX_DEPLOYMENT_TARGET = 15.0
+SUPPORTED_PLATFORMS = macosx
+ARCHS = arm64
+SWIFT_VERSION = 6.0
+SWIFT_STRICT_CONCURRENCY = complete
+ENABLE_USER_SCRIPT_SANDBOXING = YES
+
+// Xcode extracts localizable string literals into the String Catalogs at
+// build time (Docs/Localization.md).
+SWIFT_EMIT_LOC_STRINGS = YES
+
+// Which distribution this build is (ADR-026): `developerID` (the notarized
+// DMG, unsandboxed) unless Config/AppStore.xcconfig says `appStore`.
+// Info.plist carries it as `KvoiceDistributionEdition`.
+KVOICE_DISTRIBUTION_EDITION = developerID

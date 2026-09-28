@@ -1,0 +1,574 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		A10000010000000000000001 /* KvoiceApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000001 /* KvoiceApp.swift */; };
+		A10000010000000000000002 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000002 /* AppDelegate.swift */; };
+		A10000010000000000000024 /* StatusItemIconController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000024 /* StatusItemIconController.swift */; };
+		A10000010000000000000025 /* MenuBarLogo.svg in Resources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000025 /* MenuBarLogo.svg */; };
+		A10000010000000000000026 /* MenuBarLogoGlow.svg in Resources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000026 /* MenuBarLogoGlow.svg */; };
+		A10000010000000000000020 /* AppDelegate+Menu.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000020 /* AppDelegate+Menu.swift */; };
+		A10000010000000000000021 /* AppDelegate+Settings.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000021 /* AppDelegate+Settings.swift */; };
+		A10000010000000000000022 /* AppDelegate+Model.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000022 /* AppDelegate+Model.swift */; };
+		A10000010000000000000023 /* AppDelegate+Onboarding.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000023 /* AppDelegate+Onboarding.swift */; };
+		A10000010000000000000046 /* TutorialWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000046 /* TutorialWindowController.swift */; };
+		A10000010000000000000047 /* AppDelegate+Tutorial.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000047 /* AppDelegate+Tutorial.swift */; };
+		A10000010000000000000048 /* AppDelegate+RecorderControls.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000048 /* AppDelegate+RecorderControls.swift */; };
+		A10000010000000000000049 /* AppDelegate+Memory.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000049 /* AppDelegate+Memory.swift */; };
+		A1000001000000000000004A /* AppDelegate+SettingsCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000001000000000000004A /* AppDelegate+SettingsCoordinator.swift */; };
+		A10000010000000000000003 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A20000010000000000000006 /* SwiftUI.framework */; };
+		A10000010000000000000004 /* AppKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A20000010000000000000007 /* AppKit.framework */; };
+		A10000010000000000000005 /* AppComposition.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000001000000000000000D /* AppComposition.swift */; };
+		A10000010000000000000006 /* AppModelComposition.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000001000000000000000E /* AppModelComposition.swift */; };
+		A10000010000000000000007 /* OnboardingWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000001000000000000000F /* OnboardingWindowController.swift */; };
+		A10000010000000000000029 /* AppDelegate+SettingsSurface.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000029 /* AppDelegate+SettingsSurface.swift */; };
+		A1000001000000000000002B /* AppDelegate+AIActions.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000001000000000000002B /* AppDelegate+AIActions.swift */; };
+		A1000001000000000000002C /* AppDelegate+History.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000001000000000000002C /* AppDelegate+History.swift */; };
+		A10000010000000000000031 /* AppDelegate+Runtime.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000031 /* AppDelegate+Runtime.swift */; };
+		A1000001000000000000002D /* AppDelegate+Triggers.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000001000000000000002D /* AppDelegate+Triggers.swift */; };
+		A10000010000000000000052 /* AppDelegate+StatusPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000052 /* AppDelegate+StatusPanel.swift */; };
+		A10000010000000000000053 /* AppDelegate+Lifecycle.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000053 /* AppDelegate+Lifecycle.swift */; };
+		A10000010000000000000051 /* StatusPanelController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000051 /* StatusPanelController.swift */; };
+		A1000001000000000000002A /* THIRD_PARTY_NOTICES.md in Resources */ = {isa = PBXBuildFile; fileRef = A2000001000000000000002A /* THIRD_PARTY_NOTICES.md */; };
+		A10000010000000000000009 /* ModelManifest.json in Resources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000011 /* ModelManifest.json */; };
+		A10000010000000000000027 /* AppIcon.icns in Resources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000027 /* AppIcon.icns */; };
+		A10000010000000000000028 /* AppIcon.svg in Resources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000028 /* AppIcon.svg */; };
+		A1000001000000000000000A /* ModelManifest.sha256 in Resources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000012 /* ModelManifest.sha256 */; };
+		A1000001000000000000003A /* Shell.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = A2000001000000000000003A /* Shell.xcstrings */; };
+		A10000010000000000000040 /* DictationIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000040 /* DictationIntents.swift */; };
+		A10000010000000000000041 /* AIActionEntity.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000041 /* AIActionEntity.swift */; };
+		A10000010000000000000042 /* KvoiceShortcuts.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000042 /* KvoiceShortcuts.swift */; };
+		A10000010000000000000043 /* AppDelegate+Intents.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000043 /* AppDelegate+Intents.swift */; };
+		A10000010000000000000044 /* AppShortcuts.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000044 /* AppShortcuts.xcstrings */; };
+		A10000010000000000000050 /* kvoice.defaults.json in Resources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000050 /* kvoice.defaults.json */; };
+		A10000010000000000000045 /* AppIntents.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A20000010000000000000045 /* AppIntents.framework */; };
+		A1000001000000000000003B /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = A2000001000000000000003B /* Localizable.xcstrings */; };
+		A1000001000000000000000B /* MainWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000013 /* MainWindowController.swift */; };
+		A10000010000000000000062 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000062 /* PrivacyInfo.xcprivacy */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		A20000010000000000000001 /* KvoiceApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KvoiceApp.swift; sourceTree = "<group>"; };
+		A20000010000000000000002 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		A20000010000000000000024 /* StatusItemIconController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusItemIconController.swift; sourceTree = "<group>"; };
+		A20000010000000000000025 /* MenuBarLogo.svg */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = Resources/MenuBarLogo.svg; sourceTree = "<group>"; };
+		A20000010000000000000026 /* MenuBarLogoGlow.svg */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = Resources/MenuBarLogoGlow.svg; sourceTree = "<group>"; };
+		A20000010000000000000020 /* AppDelegate+Menu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AppDelegate+Menu.swift"; sourceTree = "<group>"; };
+		A20000010000000000000021 /* AppDelegate+Settings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AppDelegate+Settings.swift"; sourceTree = "<group>"; };
+		A20000010000000000000022 /* AppDelegate+Model.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AppDelegate+Model.swift"; sourceTree = "<group>"; };
+		A20000010000000000000023 /* AppDelegate+Onboarding.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AppDelegate+Onboarding.swift"; sourceTree = "<group>"; };
+		A20000010000000000000046 /* TutorialWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TutorialWindowController.swift; sourceTree = "<group>"; };
+		A20000010000000000000047 /* AppDelegate+Tutorial.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AppDelegate+Tutorial.swift"; sourceTree = "<group>"; };
+		A20000010000000000000048 /* AppDelegate+RecorderControls.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AppDelegate+RecorderControls.swift"; sourceTree = "<group>"; };
+		A20000010000000000000049 /* AppDelegate+Memory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AppDelegate+Memory.swift"; sourceTree = "<group>"; };
+		A2000001000000000000004A /* AppDelegate+SettingsCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AppDelegate+SettingsCoordinator.swift"; sourceTree = "<group>"; };
+		A20000010000000000000003 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		A20000010000000000000004 /* Kvoice.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Kvoice.entitlements; sourceTree = "<group>"; };
+		A20000010000000000000005 /* kvoice.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = kvoice.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A20000010000000000000006 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
+		A20000010000000000000007 /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = System/Library/Frameworks/AppKit.framework; sourceTree = SDKROOT; };
+		A20000010000000000000008 /* Base.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Base.xcconfig; sourceTree = "<group>"; };
+		A20000010000000000000009 /* Debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Debug.xcconfig; sourceTree = "<group>"; };
+		A2000001000000000000000A /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Release.xcconfig; sourceTree = "<group>"; };
+		A2000001000000000000000B /* TestHost.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = TestHost.xcconfig; sourceTree = "<group>"; };
+		A2000001000000000000000C /* Bench.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Bench.xcconfig; sourceTree = "<group>"; };
+		A2000001000000000000000D /* AppComposition.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppComposition.swift; sourceTree = "<group>"; };
+		A2000001000000000000000E /* AppModelComposition.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModelComposition.swift; sourceTree = "<group>"; };
+		A2000001000000000000000F /* OnboardingWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingWindowController.swift; sourceTree = "<group>"; };
+		A20000010000000000000029 /* AppDelegate+SettingsSurface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AppDelegate+SettingsSurface.swift"; sourceTree = "<group>"; };
+		A2000001000000000000002B /* AppDelegate+AIActions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AppDelegate+AIActions.swift"; sourceTree = "<group>"; };
+		A2000001000000000000002C /* AppDelegate+History.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AppDelegate+History.swift"; sourceTree = "<group>"; };
+		A20000010000000000000031 /* AppDelegate+Runtime.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AppDelegate+Runtime.swift"; sourceTree = "<group>"; };
+		A2000001000000000000002D /* AppDelegate+Triggers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AppDelegate+Triggers.swift"; sourceTree = "<group>"; };
+		A20000010000000000000052 /* AppDelegate+StatusPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AppDelegate+StatusPanel.swift"; sourceTree = "<group>"; };
+		A20000010000000000000053 /* AppDelegate+Lifecycle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AppDelegate+Lifecycle.swift"; sourceTree = "<group>"; };
+		A20000010000000000000051 /* StatusPanelController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "StatusPanelController.swift"; sourceTree = "<group>"; };
+		A2000001000000000000002A /* THIRD_PARTY_NOTICES.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; name = THIRD_PARTY_NOTICES.md; path = ../../THIRD_PARTY_NOTICES.md; sourceTree = "<group>"; };
+		A20000010000000000000011 /* ModelManifest.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = ModelManifest.json; sourceTree = "<group>"; };
+		A20000010000000000000027 /* AppIcon.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = Resources/AppIcon.icns; sourceTree = "<group>"; };
+		A20000010000000000000028 /* AppIcon.svg */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = Resources/AppIcon.svg; sourceTree = "<group>"; };
+		A20000010000000000000012 /* ModelManifest.sha256 */ = {isa = PBXFileReference; lastKnownFileType = text; path = ModelManifest.sha256; sourceTree = "<group>"; };
+		A2000001000000000000003A /* Shell.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Resources/Shell.xcstrings; sourceTree = "<group>"; };
+		A20000010000000000000040 /* DictationIntents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DictationIntents.swift; sourceTree = "<group>"; };
+		A20000010000000000000041 /* AIActionEntity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIActionEntity.swift; sourceTree = "<group>"; };
+		A20000010000000000000042 /* KvoiceShortcuts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KvoiceShortcuts.swift; sourceTree = "<group>"; };
+		A20000010000000000000043 /* AppDelegate+Intents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AppDelegate+Intents.swift"; sourceTree = "<group>"; };
+		A20000010000000000000044 /* AppShortcuts.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Resources/AppShortcuts.xcstrings; sourceTree = "<group>"; };
+		A20000010000000000000050 /* kvoice.defaults.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = Resources/kvoice.defaults.json; sourceTree = "<group>"; };
+		A20000010000000000000045 /* AppIntents.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppIntents.framework; path = System/Library/Frameworks/AppIntents.framework; sourceTree = SDKROOT; };
+		A2000001000000000000003B /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; name = "Localizable.xcstrings (KvoiceUI)"; path = Packages/KvoiceUI/Sources/KvoiceUI/Resources/Localizable.xcstrings; sourceTree = SOURCE_ROOT; };
+		A20000010000000000000013 /* MainWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainWindowController.swift; sourceTree = "<group>"; };
+		A20000010000000000000060 /* AppStore.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = AppStore.xcconfig; sourceTree = "<group>"; };
+		A20000010000000000000061 /* Kvoice-AppStore.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "Kvoice-AppStore.entitlements"; sourceTree = "<group>"; };
+		A20000010000000000000062 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		A30000010000000000000001 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A10000010000000000000003 /* SwiftUI.framework in Frameworks */,
+				A10000010000000000000004 /* AppKit.framework in Frameworks */,
+				A10000010000000000000045 /* AppIntents.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		A40000010000000000000001 = {
+			isa = PBXGroup;
+			children = (
+				A40000010000000000000002 /* Apps */,
+				A40000010000000000000003 /* Config */,
+				A40000010000000000000004 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		A40000010000000000000002 /* Apps */ = {
+			isa = PBXGroup;
+			children = (
+				A40000010000000000000005 /* KvoiceApp */,
+			);
+			path = Apps;
+			sourceTree = "<group>";
+		};
+		A40000010000000000000003 /* Config */ = {
+			isa = PBXGroup;
+			children = (
+				A20000010000000000000008 /* Base.xcconfig */,
+				A20000010000000000000009 /* Debug.xcconfig */,
+				A2000001000000000000000A /* Release.xcconfig */,
+				A2000001000000000000000B /* TestHost.xcconfig */,
+				A2000001000000000000000C /* Bench.xcconfig */,
+				A20000010000000000000060 /* AppStore.xcconfig */,
+			);
+			path = Config;
+			sourceTree = "<group>";
+		};
+		A40000010000000000000004 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				A20000010000000000000005 /* kvoice.app */,
+			);
+			name = Products;
+			path = "";
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		A40000010000000000000005 /* KvoiceApp */ = {
+			isa = PBXGroup;
+			children = (
+				A20000010000000000000001 /* KvoiceApp.swift */,
+				A20000010000000000000002 /* AppDelegate.swift */,
+				A20000010000000000000024 /* StatusItemIconController.swift */,
+				A20000010000000000000025 /* MenuBarLogo.svg */,
+				A20000010000000000000026 /* MenuBarLogoGlow.svg */,
+				A20000010000000000000020 /* AppDelegate+Menu.swift */,
+				A20000010000000000000021 /* AppDelegate+Settings.swift */,
+				A20000010000000000000022 /* AppDelegate+Model.swift */,
+				A20000010000000000000023 /* AppDelegate+Onboarding.swift */,
+				A2000001000000000000000D /* AppComposition.swift */,
+				A2000001000000000000000E /* AppModelComposition.swift */,
+				A2000001000000000000000F /* OnboardingWindowController.swift */,
+				A20000010000000000000046 /* TutorialWindowController.swift */,
+				A20000010000000000000047 /* AppDelegate+Tutorial.swift */,
+				A20000010000000000000048 /* AppDelegate+RecorderControls.swift */,
+				A20000010000000000000049 /* AppDelegate+Memory.swift */,
+				A2000001000000000000004A /* AppDelegate+SettingsCoordinator.swift */,
+				A20000010000000000000029 /* AppDelegate+SettingsSurface.swift */,
+				A2000001000000000000002B /* AppDelegate+AIActions.swift */,
+				A2000001000000000000002C /* AppDelegate+History.swift */,
+				A20000010000000000000031 /* AppDelegate+Runtime.swift */,
+				A2000001000000000000002D /* AppDelegate+Triggers.swift */,
+				A20000010000000000000052 /* AppDelegate+StatusPanel.swift */,
+				A20000010000000000000053 /* AppDelegate+Lifecycle.swift */,
+				A20000010000000000000051 /* StatusPanelController.swift */,
+				A20000010000000000000013 /* MainWindowController.swift */,
+				A2000001000000000000002A /* THIRD_PARTY_NOTICES.md */,
+				A20000010000000000000003 /* Info.plist */,
+				A20000010000000000000004 /* Kvoice.entitlements */,
+				A20000010000000000000061 /* Kvoice-AppStore.entitlements */,
+				A20000010000000000000062 /* PrivacyInfo.xcprivacy */,
+				A20000010000000000000011 /* ModelManifest.json */,
+				A20000010000000000000027 /* AppIcon.icns */,
+				A20000010000000000000028 /* AppIcon.svg */,
+				A20000010000000000000012 /* ModelManifest.sha256 */,
+				A2000001000000000000003A /* Shell.xcstrings */,
+				A2000001000000000000003B /* Localizable.xcstrings */,
+				A20000010000000000000044 /* AppShortcuts.xcstrings */,
+				A20000010000000000000050 /* kvoice.defaults.json */,
+				A40000010000000000000006 /* Intents */,
+			);
+			path = KvoiceApp;
+			sourceTree = "<group>";
+		};
+		A40000010000000000000006 /* Intents */ = {
+			isa = PBXGroup;
+			children = (
+				A20000010000000000000040 /* DictationIntents.swift */,
+				A20000010000000000000041 /* AIActionEntity.swift */,
+				A20000010000000000000042 /* KvoiceShortcuts.swift */,
+				A20000010000000000000043 /* AppDelegate+Intents.swift */,
+			);
+			path = Intents;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		A50000010000000000000001 /* kvoice */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A60000010000000000000002 /* Build configuration list for PBXNativeTarget "kvoice" */;
+			buildPhases = (
+				A30000010000000000000002 /* Sources */,
+				A30000010000000000000001 /* Frameworks */,
+				A30000010000000000000003 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			packageProductDependencies = (
+				B20000010000000000000001 /* KvoiceAppCore */,
+				B20000010000000000000002 /* KvoiceAudio */,
+				B20000010000000000000003 /* KvoiceDomain */,
+				B20000010000000000000004 /* KvoiceHotkeys */,
+				B20000010000000000000005 /* KvoiceInsertion */,
+				B20000010000000000000006 /* KvoicePersistence */,
+				B20000010000000000000007 /* KvoiceTranscription */,
+				B20000010000000000000008 /* KvoiceUI */,
+				B20000010000000000000009 /* KvoiceModelManagement */,
+				B2000001000000000000000A /* KvoiceAI */,
+				B2000001000000000000000B /* KvoiceDiagnostics */,
+				B2000001000000000000000C /* KvoiceParakeet */,
+				B2000001000000000000000D /* KvoiceAppleIntelligence */,
+				B2000001000000000000000E /* KvoiceAppleSpeech */,
+			);
+			name = kvoice;
+			productName = kvoice;
+			productReference = A20000010000000000000005 /* kvoice.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		B20000010000000000000001 /* KvoiceAppCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B10000010000000000000001 /* kvoice */;
+			productName = KvoiceAppCore;
+		};
+		B20000010000000000000002 /* KvoiceAudio */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B10000010000000000000001 /* kvoice */;
+			productName = KvoiceAudio;
+		};
+		B20000010000000000000003 /* KvoiceDomain */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B10000010000000000000001 /* kvoice */;
+			productName = KvoiceDomain;
+		};
+		B20000010000000000000004 /* KvoiceHotkeys */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B10000010000000000000001 /* kvoice */;
+			productName = KvoiceHotkeys;
+		};
+		B20000010000000000000005 /* KvoiceInsertion */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B10000010000000000000001 /* kvoice */;
+			productName = KvoiceInsertion;
+		};
+		B20000010000000000000006 /* KvoicePersistence */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B10000010000000000000001 /* kvoice */;
+			productName = KvoicePersistence;
+		};
+		B20000010000000000000007 /* KvoiceTranscription */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B10000010000000000000001 /* kvoice */;
+			productName = KvoiceTranscription;
+		};
+		B20000010000000000000008 /* KvoiceUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B10000010000000000000001 /* kvoice */;
+			productName = KvoiceUI;
+		};
+		B20000010000000000000009 /* KvoiceModelManagement */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B10000010000000000000001 /* kvoice */;
+			productName = KvoiceModelManagement;
+		};
+		B2000001000000000000000A /* KvoiceAI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B10000010000000000000001 /* kvoice */;
+			productName = KvoiceAI;
+		};
+		B2000001000000000000000B /* KvoiceDiagnostics */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B10000010000000000000001 /* kvoice */;
+			productName = KvoiceDiagnostics;
+		};
+		B2000001000000000000000C /* KvoiceParakeet */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B10000010000000000000001 /* kvoice */;
+			productName = KvoiceParakeet;
+		};
+		B2000001000000000000000D /* KvoiceAppleIntelligence */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B10000010000000000000001 /* kvoice */;
+			productName = KvoiceAppleIntelligence;
+		};
+		B2000001000000000000000E /* KvoiceAppleSpeech */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B10000010000000000000001 /* kvoice */;
+			productName = KvoiceAppleSpeech;
+		};
+/* End XCSwiftPackageProductDependency section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		B10000010000000000000001 /* kvoice */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = .;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin PBXProject section */
+		A50000010000000000000002 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 1600;
+				TargetAttributes = {
+					A50000010000000000000001 = {
+						CreatedOnToolsVersion = 16.0;
+					};
+				};
+			};
+			buildConfigurationList = A60000010000000000000001 /* Build configuration list for PBXProject "Kvoice" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+				"zh-Hans",
+			);
+			mainGroup = A40000010000000000000001;
+			productRefGroup = A40000010000000000000004 /* Products */;
+			packageReferences = (
+				B10000010000000000000001 /* kvoice */,
+			);
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				A50000010000000000000001 /* kvoice */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		A30000010000000000000003 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A10000010000000000000009 /* ModelManifest.json in Resources */,
+				A10000010000000000000027 /* AppIcon.icns in Resources */,
+				A10000010000000000000028 /* AppIcon.svg in Resources */,
+				A10000010000000000000025 /* MenuBarLogo.svg in Resources */,
+				A10000010000000000000026 /* MenuBarLogoGlow.svg in Resources */,
+				A1000001000000000000000A /* ModelManifest.sha256 in Resources */,
+				A1000001000000000000002A /* THIRD_PARTY_NOTICES.md in Resources */,
+				A1000001000000000000003A /* Shell.xcstrings in Resources */,
+				A1000001000000000000003B /* Localizable.xcstrings in Resources */,
+				A10000010000000000000044 /* AppShortcuts.xcstrings in Resources */,
+				A10000010000000000000050 /* kvoice.defaults.json in Resources */,
+				A10000010000000000000062 /* PrivacyInfo.xcprivacy in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		A30000010000000000000002 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A10000010000000000000001 /* KvoiceApp.swift in Sources */,
+				A10000010000000000000002 /* AppDelegate.swift in Sources */,
+				A10000010000000000000024 /* StatusItemIconController.swift in Sources */,
+				A10000010000000000000020 /* AppDelegate+Menu.swift in Sources */,
+				A10000010000000000000021 /* AppDelegate+Settings.swift in Sources */,
+				A10000010000000000000022 /* AppDelegate+Model.swift in Sources */,
+				A10000010000000000000023 /* AppDelegate+Onboarding.swift in Sources */,
+				A10000010000000000000005 /* AppComposition.swift in Sources */,
+				A10000010000000000000006 /* AppModelComposition.swift in Sources */,
+				A10000010000000000000007 /* OnboardingWindowController.swift in Sources */,
+				A10000010000000000000046 /* TutorialWindowController.swift in Sources */,
+				A10000010000000000000047 /* AppDelegate+Tutorial.swift in Sources */,
+				A10000010000000000000048 /* AppDelegate+RecorderControls.swift in Sources */,
+				A10000010000000000000049 /* AppDelegate+Memory.swift in Sources */,
+				A1000001000000000000004A /* AppDelegate+SettingsCoordinator.swift in Sources */,
+				A10000010000000000000029 /* AppDelegate+SettingsSurface.swift in Sources */,
+				A1000001000000000000002B /* AppDelegate+AIActions.swift in Sources */,
+				A1000001000000000000002C /* AppDelegate+History.swift in Sources */,
+				A10000010000000000000031 /* AppDelegate+Runtime.swift in Sources */,
+				A1000001000000000000002D /* AppDelegate+Triggers.swift in Sources */,
+				A10000010000000000000052 /* AppDelegate+StatusPanel.swift in Sources */,
+				A10000010000000000000053 /* AppDelegate+Lifecycle.swift in Sources */,
+				A10000010000000000000051 /* StatusPanelController.swift in Sources */,
+				A1000001000000000000000B /* MainWindowController.swift in Sources */,
+				A10000010000000000000040 /* DictationIntents.swift in Sources */,
+				A10000010000000000000041 /* AIActionEntity.swift in Sources */,
+				A10000010000000000000042 /* KvoiceShortcuts.swift in Sources */,
+				A10000010000000000000043 /* AppDelegate+Intents.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		A70000010000000000000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = A20000010000000000000009 /* Debug.xcconfig */;
+			buildSettings = {
+				INFOPLIST_FILE = Apps/KvoiceApp/Info.plist;
+				CODE_SIGN_ENTITLEMENTS = Apps/KvoiceApp/Kvoice.entitlements;
+				SWIFT_VERSION = 6.0;
+				PRODUCT_BUNDLE_IDENTIFIER = io.github.kccarlos.kvoice;
+			};
+			name = Debug;
+		};
+		A70000010000000000000002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = A2000001000000000000000A /* Release.xcconfig */;
+			buildSettings = {
+				INFOPLIST_FILE = Apps/KvoiceApp/Info.plist;
+				CODE_SIGN_ENTITLEMENTS = Apps/KvoiceApp/Kvoice.entitlements;
+				SWIFT_VERSION = 6.0;
+				PRODUCT_BUNDLE_IDENTIFIER = io.github.kccarlos.kvoice;
+			};
+			name = Release;
+		};
+		A70000010000000000000005 /* TestHost */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = A2000001000000000000000B /* TestHost.xcconfig */;
+			buildSettings = {
+				INFOPLIST_FILE = Apps/KvoiceApp/Info.plist;
+				CODE_SIGN_ENTITLEMENTS = Apps/KvoiceApp/Kvoice.entitlements;
+				SWIFT_VERSION = 6.0;
+				PRODUCT_BUNDLE_IDENTIFIER = io.github.kccarlos.kvoice.testhost;
+			};
+			name = TestHost;
+		};
+		A70000010000000000000006 /* Bench */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = A2000001000000000000000C /* Bench.xcconfig */;
+			buildSettings = {
+				INFOPLIST_FILE = Apps/KvoiceApp/Info.plist;
+				CODE_SIGN_ENTITLEMENTS = Apps/KvoiceApp/Kvoice.entitlements;
+				SWIFT_VERSION = 6.0;
+				PRODUCT_BUNDLE_IDENTIFIER = io.github.kccarlos.kvoice;
+			};
+			name = Bench;
+		};
+		A70000010000000000000003 /* Project Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+		A70000010000000000000004 /* Project Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Release;
+		};
+		A70000010000000000000007 /* Project Bench */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Bench;
+		};
+		A70000010000000000000008 /* Project TestHost */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				SWIFT_VERSION = 6.0;
+			};
+			name = TestHost;
+		};
+		A70000010000000000000009 /* AppStore */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = A20000010000000000000060 /* AppStore.xcconfig */;
+			buildSettings = {
+				INFOPLIST_FILE = Apps/KvoiceApp/Info.plist;
+				CODE_SIGN_ENTITLEMENTS = "Apps/KvoiceApp/Kvoice-AppStore.entitlements";
+				SWIFT_VERSION = 6.0;
+				PRODUCT_BUNDLE_IDENTIFIER = io.github.kccarlos.kvoice;
+			};
+			name = AppStore;
+		};
+		A7000001000000000000000A /* Project AppStore */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				SWIFT_VERSION = 6.0;
+			};
+			name = AppStore;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		A60000010000000000000001 /* Build configuration list for PBXProject "Kvoice" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A70000010000000000000003 /* Project Debug */,
+				A70000010000000000000004 /* Project Release */,
+				A70000010000000000000007 /* Project Bench */,
+				A70000010000000000000008 /* Project TestHost */,
+				A7000001000000000000000A /* Project AppStore */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A60000010000000000000002 /* Build configuration list for PBXNativeTarget "kvoice" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A70000010000000000000001 /* Debug */,
+				A70000010000000000000002 /* Release */,
+				A70000010000000000000005 /* TestHost */,
+				A70000010000000000000006 /* Bench */,
+				A70000010000000000000009 /* AppStore */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = A50000010000000000000002 /* Project object */;
+}

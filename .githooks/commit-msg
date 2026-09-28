@@ -1,0 +1,6 @@
+#!/bin/sh
+# Conventional Commits gate. Installed by
+# `git config core.hooksPath .githooks` — Scripts/bootstrap.sh does that.
+# The message is rejected before the commit exists, so no history rewrite
+# is ever needed to fix a subject.
+exec "$(git rev-parse --show-toplevel)/Scripts/check_commit_message.sh" --file "$1"

@@ -1,0 +1,138 @@
+# Continuous integration: every push to main and every pull request.
+#
+# No secrets and read-only permissions: pull requests from forks run exactly
+# what a push runs. Builds are signed ad hoc (never unsigned: macOS refuses
+# Accessibility to an unsigned app, see CONTRIBUTING.md), and the signature
+# checks run in the modes that need no certificate.
+#
+# Runner: kvoice needs Xcode 27 and the macOS 27 SDK. On GitHub-hosted
+# runners that is the `xcode-27` image (arm64, macOS 27; public preview).
+# Pull requests always run there, with the image's Xcode 27.0. Pushes use
+# the repository variables KVOICE_MACOS_RUNNER (a self-hosted runner's
+# label, if the hosted image is ever unavailable) and KVOICE_DEVELOPER_DIR
+# when they are set, else `xcode-27` and Xcode 27.0. Scripts/
+# ci_check_toolchain.sh fails the job first, with the reason, if the Xcode
+# it finds is older. The contributor docs explain the choice (Docs/Build.md).
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  commits:
+    name: Commit messages
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      # Conventional Commits (CONTRIBUTING.md). The hook that
+      # Scripts/bootstrap.sh installs checks this locally; this catches a
+      # commit made without it.
+      - name: Conventional Commits
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: ./Scripts/check_commit_message.sh --range "$BASE_SHA..$HEAD_SHA"
+
+  scripts:
+    name: Script tests
+    # The release scripts run on macOS in the release workflow, so their
+    # tests do too (BSD awk and sed, not GNU). No Xcode needed: the GA image.
+    runs-on: macos-26
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Release script tests
+        run: python3 -m unittest -v Scripts.test_release_scripts
+
+  test:
+    name: Unit tests
+    runs-on: ${{ github.event_name == 'pull_request' && 'xcode-27' || vars.KVOICE_MACOS_RUNNER || 'xcode-27' }}
+    timeout-minutes: 60
+    env:
+      DEVELOPER_DIR: ${{ github.event_name != 'pull_request' && vars.KVOICE_DEVELOPER_DIR || '/Applications/Xcode_27.0.app/Contents/Developer' }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Toolchain
+        run: ./Scripts/ci_check_toolchain.sh 27
+      # SwiftPM's clones and downloads (the FluidAudio binary among them),
+      # keyed on the pinned versions. Build products are not cached.
+      - name: Cache SwiftPM dependencies
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/Library/Caches/org.swift.swiftpm
+            .build/repositories
+          key: spm-${{ runner.os }}-${{ runner.arch }}-xcode27-${{ hashFiles('Package.resolved') }}
+          restore-keys: |
+            spm-${{ runner.os }}-${{ runner.arch }}-xcode27-
+      # Always the script, never bare `swift test`: it selects Xcode's
+      # toolchain and passes --disable-keychain (Docs/Build.md).
+      - name: Tests
+        run: ./Scripts/test.sh
+
+  build:
+    name: Build ${{ matrix.configuration }}
+    runs-on: ${{ github.event_name == 'pull_request' && 'xcode-27' || vars.KVOICE_MACOS_RUNNER || 'xcode-27' }}
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        configuration: [Debug, Release, AppStore]
+    env:
+      DEVELOPER_DIR: ${{ github.event_name != 'pull_request' && vars.KVOICE_DEVELOPER_DIR || '/Applications/Xcode_27.0.app/Contents/Developer' }}
+      # Ad hoc on purpose, so the result does not depend on what a runner's
+      # keychain happens to hold. Still a complete, verifiable signature.
+      KVOICE_CODE_SIGN_IDENTITY: "-"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Toolchain
+        run: ./Scripts/ci_check_toolchain.sh 27
+      - name: Cache Xcode's package checkouts
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/Library/Caches/org.swift.swiftpm
+            .build/xcode-derived/SourcePackages
+          key: xcode-packages-${{ runner.os }}-${{ runner.arch }}-xcode27-${{ hashFiles('Package.resolved') }}
+          restore-keys: |
+            xcode-packages-${{ runner.os }}-${{ runner.arch }}-xcode27-
+      - name: Build
+        run: ./Scripts/build_app.sh "${{ matrix.configuration }}"
+      - name: Verify the signature
+        env:
+          CONFIGURATION: ${{ matrix.configuration }}
+        run: |
+          app=".build/xcode-derived/Build/Products/$CONFIGURATION/kvoice.app"
+          codesign --verify --deep --strict --verbose=2 "$app"
+          case "$CONFIGURATION" in
+            # The notarization prerequisites that do not need a certificate:
+            # hardened runtime, entitlements = audio input only, no
+            # get-task-allow, no sandbox, edition developerID. (The timestamp
+            # and Developer ID rules apply to a real identity only.)
+            Release) ./Scripts/check_release_signature.sh "$app" ;;
+            # The sandbox and exactly the App Store edition's entitlements.
+            AppStore) ./Scripts/check_app_store_signature.sh "$app" ;;
+          esac
+      - name: Package the DMG (not published)
+        if: matrix.configuration == 'Release'
+        run: ./Scripts/make_dmg.sh Release 0.0.0-ci .build/release

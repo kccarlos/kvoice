@@ -1,0 +1,9 @@
+#include "Release.xcconfig"
+
+GCC_PREPROCESSOR_DEFINITIONS = $(inherited) KVOICE_BENCH=1
+
+// Bench is never distributed: keep the debugging entitlement so Instruments
+// and a debugger can attach, and sign offline without a timestamp — the
+// two notarization settings Release.xcconfig adds (the release documentation).
+CODE_SIGN_INJECT_BASE_ENTITLEMENTS = YES
+OTHER_CODE_SIGN_FLAGS =

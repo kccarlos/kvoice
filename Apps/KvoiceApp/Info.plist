@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleDisplayName</key>
+	<string>KVoice</string>
+	<!--
+		English is the source language of the String Catalogs and has no
+		en.lproj of its own. Without this key Foundation sees only the
+		translated lproj folders and picks the first of them for every
+		user, so an English-speaking user would get Chinese menus. Keep it.
+	-->
+	<key>CFBundleDevelopmentRegion</key>
+	<string>en</string>
+	<key>CFBundleIdentifier</key>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<!--
+		Generated from Resources/AppIcon.svg by Scripts/make_app_icon.sh. Even
+		though LSUIElement hides the Dock icon by default, this is what appears
+		in Finder, the About panel, Notification Center, and the Accessibility
+		list in System Settings, and in the Dock when the user turns on
+		"Show Dock Icon".
+	-->
+	<key>CFBundleIconFile</key>
+	<string>AppIcon</string>
+	<key>CFBundleShortVersionString</key>
+	<string>$(MARKETING_VERSION)</string>
+	<key>CFBundleVersion</key>
+	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>LSMinimumSystemVersion</key>
+	<string>$(MACOSX_DEPLOYMENT_TARGET)</string>
+	<key>LSUIElement</key>
+	<true/>
+	<!--
+		ADR-026: which distribution this bundle is — `developerID` (the
+		notarized DMG, unsandboxed) or `appStore` (the sandboxed Mac App Store
+		edition). Set by Config/Base.xcconfig and Config/AppStore.xcconfig;
+		read once by the composition root (`DistributionEdition`).
+	-->
+	<key>KvoiceDistributionEdition</key>
+	<string>$(KVOICE_DISTRIBUTION_EDITION)</string>
+	<!-- App Store metadata (ADR-026); harmless for the Developer ID edition. -->
+	<key>LSApplicationCategoryType</key>
+	<string>public.app-category.productivity</string>
+	<!--
+		Only HTTPS through URLSession (model downloads, the optional
+		OpenAI-compatible endpoint): exempt encryption, so no export
+		compliance documentation.
+	-->
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>KVoice needs microphone access to transcribe your dictation locally.</string>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>KVoice can connect to an OpenAI-compatible service running on your local network when you configure one.</string>
+	<!--
+		"Transcribe File…": these are also what Open With and a Dock drop
+		hand to application(_:open:), which transcribes them into History.
+		Keep in step with MediaFileDecoder.supportedExtensions.
+	-->
+	<key>CFBundleDocumentTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeName</key>
+			<string>Audio or video file</string>
+			<key>CFBundleTypeRole</key>
+			<string>Viewer</string>
+			<key>LSHandlerRank</key>
+			<string>Alternate</string>
+			<key>LSItemContentTypes</key>
+			<array>
+				<string>public.audio</string>
+				<string>public.movie</string>
+				<string>public.mpeg-4</string>
+				<string>com.apple.quicktime-movie</string>
+				<string>public.mp3</string>
+				<string>com.microsoft.waveform-audio</string>
+				<string>public.aiff-audio</string>
+				<string>com.apple.m4a-audio</string>
+				<string>public.aac-audio</string>
+				<string>org.xiph.flac</string>
+				<string>com.apple.coreaudio-format</string>
+			</array>
+		</dict>
+	</array>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+	</dict>
+</dict>
+</plist>

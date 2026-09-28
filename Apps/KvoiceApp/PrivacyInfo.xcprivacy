@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!--
+		The app's privacy manifest (ADR-026). Shipped in both editions.
+		kvoice collects no data and does no tracking: transcription is on this
+		Mac, and the optional AI endpoint is one the user configures.
+
+		Required-reason APIs actually called by kvoice's own code (checked by
+		PrivacyManifestTests, which scans the sources):
+		  - UserDefaults (SettingsStore, LocalStateStore, the interface
+		    language override): CA92.1, this app's own defaults only. The
+		    legacy-domain copy (LegacyDefaultsDomainMigration) reads another
+		    identifier's domain and therefore never runs in the App Store
+		    edition.
+		  - Disk space (volumeAvailableCapacityForImportantUsageKey, the model
+		    download preflight): E174.1, a download is refused when the volume
+		    lacks room; 85F4.1, Speech Models shows the free space.
+		None of the file-timestamp or system-boot-time APIs are used (file
+		attributes are read for size, type and permissions only).
+	-->
+	<key>NSPrivacyTracking</key>
+	<false/>
+	<key>NSPrivacyTrackingDomains</key>
+	<array/>
+	<key>NSPrivacyCollectedDataTypes</key>
+	<array/>
+	<key>NSPrivacyAccessedAPITypes</key>
+	<array>
+		<dict>
+			<key>NSPrivacyAccessedAPIType</key>
+			<string>NSPrivacyAccessedAPICategoryUserDefaults</string>
+			<key>NSPrivacyAccessedAPITypeReasons</key>
+			<array>
+				<string>CA92.1</string>
+			</array>
+		</dict>
+		<dict>
+			<key>NSPrivacyAccessedAPIType</key>
+			<string>NSPrivacyAccessedAPICategoryDiskSpace</string>
+			<key>NSPrivacyAccessedAPITypeReasons</key>
+			<array>
+				<string>E174.1</string>
+				<string>85F4.1</string>
+			</array>
+		</dict>
+	</array>
+</dict>
+</plist>

@@ -1,0 +1,70 @@
+name: Bug report
+description: Something in kvoice does not work as it should.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. Please do not paste transcripts, API keys or
+        anything else private. For a security problem, use the Security tab
+        (Report a vulnerability) instead of an issue.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you did, what you expected, and what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Hold the shortcut in TextEdit and say "hello world"
+        2. Release
+        3. ...
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: kvoice version
+      description: Help › About, or the menu bar menu.
+      placeholder: "0.1.0, or a commit if you built it yourself"
+    validations:
+      required: true
+  - type: dropdown
+    id: edition
+    attributes:
+      label: Edition
+      options:
+        - Direct download (DMG)
+        - Mac App Store
+        - Built from source
+    validations:
+      required: true
+  - type: input
+    id: macos
+    attributes:
+      label: macOS version and Mac
+      placeholder: "macOS 26.1, MacBook Air M2"
+    validations:
+      required: true
+  - type: input
+    id: target-app
+    attributes:
+      label: App you were dictating into
+      description: Insertion problems are usually specific to one app.
+  - type: input
+    id: model
+    attributes:
+      label: Speech model and AI engine
+      placeholder: "Whisper v3 Turbo Standard; AI Actions off"
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Diagnostics
+      description: |
+        Optional. Data & Privacy › Copy Diagnostics produces a summary that contains no
+        transcript text or keys. Paste it here if you are comfortable doing so.
+      render: text

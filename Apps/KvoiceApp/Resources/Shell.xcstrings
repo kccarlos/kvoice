@@ -1,0 +1,1189 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "%@  %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$@  %2$@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@  %2$@"
+          }
+        }
+      }
+    },
+    "%@ (%@)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$@ (%2$@)"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@（%@）"
+          }
+        }
+      }
+    },
+    "%@ (Not Available in This Version)": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@（此版本不可用）"
+          }
+        }
+      }
+    },
+    "%@ (Not Installed)": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@（未安装）"
+          }
+        }
+      }
+    },
+    "%@ (System Default)": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@（系统默认）"
+          }
+        }
+      }
+    },
+    "%@ (Unavailable)": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@（不可用）"
+          }
+        }
+      }
+    },
+    "AI": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AI"
+          }
+        }
+      }
+    },
+    "AI Action": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AI 操作"
+          }
+        }
+      }
+    },
+    "AI is on but no configuration is set, so dictation inserts the raw transcript. Add one in AI Actions.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AI 已开启但尚未设置配置，听写将插入原始转写文本。请在“AI 操作”中添加一个配置。"
+          }
+        }
+      }
+    },
+    "About KVoice": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "关于 KVoice"
+          }
+        }
+      }
+    },
+    "Accessibility off — clipboard only": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "辅助功能未开启 — 仅复制到剪贴板"
+          }
+        }
+      }
+    },
+    "Add an AI configuration in AI Actions before turning this on.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "开启前请先在“AI 操作”中添加一个 AI 配置。"
+          }
+        }
+      }
+    },
+    "App": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "应用"
+          }
+        }
+      }
+    },
+    "Auto-detect": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "自动检测"
+          }
+        }
+      }
+    },
+    "Cancel Current Dictation": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "取消当前听写"
+          }
+        }
+      }
+    },
+    "Cancel Dictation": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "取消听写"
+          }
+        }
+      }
+    },
+    "Choose a verified KVoice model package": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "选择一个已验证的 KVoice 模型包"
+          }
+        }
+      }
+    },
+    "Configuration": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "配置"
+          }
+        }
+      }
+    },
+    "Copies the final text of the newest history entry.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "复制最新一条历史记录的最终文本。"
+          }
+        }
+      }
+    },
+    "Copies the transcript the last dictation kept after it could not be inserted.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "复制上次听写在无法插入后保留的转写文本。"
+          }
+        }
+      }
+    },
+    "Copy Last Transcription": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "复制上次转写"
+          }
+        }
+      }
+    },
+    "Copy Transcript": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "复制转写文本"
+          }
+        }
+      }
+    },
+    "Couldn't start dictation. %@": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法开始听写。%@"
+          }
+        }
+      }
+    },
+    "Default Action": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "默认操作"
+          }
+        }
+      }
+    },
+    "Deleting…": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在删除…"
+          }
+        }
+      }
+    },
+    "Dictation": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "听写"
+          }
+        }
+      }
+    },
+    "Dictation In Progress…": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "听写进行中…"
+          }
+        }
+      }
+    },
+    "Dictation cancelled.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "听写已取消。"
+          }
+        }
+      }
+    },
+    "Discards the active dictation without inserting anything, or dismisses the result shown on screen. The same as pressing Escape.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "放弃当前听写而不插入任何内容，或关闭屏幕上显示的结果。等同于按 Escape 键。"
+          }
+        }
+      }
+    },
+    "Dismiss": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "关闭"
+          }
+        }
+      }
+    },
+    "Dismissed.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已关闭。"
+          }
+        }
+      }
+    },
+    "Download paused": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "下载已暂停"
+          }
+        }
+      }
+    },
+    "Downloading %lld%%": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在下载 %lld%%"
+          }
+        }
+      }
+    },
+    "Downloading…": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在下载…"
+          }
+        }
+      }
+    },
+    "Ends the active recording; the transcript is inserted into the app that was in front when it started.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "结束当前录音；转写文本会插入到录音开始时位于前台的应用中。"
+          }
+        }
+      }
+    },
+    "Fix in Permissions…": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在权限中修复…"
+          }
+        }
+      }
+    },
+    "Fix in Speech Models…": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在语音模型中修复…"
+          }
+        }
+      }
+    },
+    "Get Last Transcription": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "获取最近的转写"
+          }
+        }
+      }
+    },
+    "Here is the last transcription.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "这是最近一次转写。"
+          }
+        }
+      }
+    },
+    "History": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "历史记录"
+          }
+        }
+      }
+    },
+    "History (unavailable)": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "历史记录（不可用）"
+          }
+        }
+      }
+    },
+    "History is off, so there is no last transcription. Turn it on in Data & Privacy.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "历史记录已关闭，因此没有最近的转写。请在“数据与隐私”中开启。"
+          }
+        }
+      }
+    },
+    "History is unavailable right now.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "历史记录目前不可用。"
+          }
+        }
+      }
+    },
+    "History is unavailable, so there is no saved transcription to copy.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "历史记录不可用，因此没有已保存的转写可以复制。"
+          }
+        }
+      }
+    },
+    "Insert Transcript Again": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "再次插入转写文本"
+          }
+        }
+      }
+    },
+    "Inserting…": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在插入…"
+          }
+        }
+      }
+    },
+    "Inserts the kept transcript into the app that is in front now.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "将保留的转写文本插入到当前位于最前面的应用。"
+          }
+        }
+      }
+    },
+    "Installing…": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在安装…"
+          }
+        }
+      }
+    },
+    "KVoice Help": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "KVoice 帮助"
+          }
+        }
+      }
+    },
+    "KVoice Setup": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "KVoice 设置向导"
+          }
+        }
+      }
+    },
+    "KVoice Tutorial": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "KVoice 教程"
+          }
+        }
+      }
+    },
+    "KVoice is already recording.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "KVoice 已在录音。"
+          }
+        }
+      }
+    },
+    "KVoice is busy with another transcription. Try again when it finishes.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "KVoice 正忙于另一项转写。请在其完成后重试。"
+          }
+        }
+      }
+    },
+    "KVoice is not recording.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "KVoice 未在录音。"
+          }
+        }
+      }
+    },
+    "KVoice is still finishing the previous dictation.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "KVoice 仍在完成上一次听写。"
+          }
+        }
+      }
+    },
+    "KVoice voice input": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "KVoice 语音输入"
+          }
+        }
+      }
+    },
+    "Language": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "语言"
+          }
+        }
+      }
+    },
+    "Language: %@": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "语言：%@"
+          }
+        }
+      }
+    },
+    "Language: Auto-detect": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "语言：自动检测"
+          }
+        }
+      }
+    },
+    "Last Transcription": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "最近的转写"
+          }
+        }
+      }
+    },
+    "Loading…": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在加载…"
+          }
+        }
+      }
+    },
+    "Manage Models…": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "管理模型…"
+          }
+        }
+      }
+    },
+    "Memory pressure — dictation may be slower": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "内存压力 — 听写可能变慢"
+          }
+        }
+      }
+    },
+    "Microphone": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "麦克风"
+          }
+        }
+      }
+    },
+    "Microphone Settings…": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "麦克风设置…"
+          }
+        }
+      }
+    },
+    "Microphone denied": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "麦克风已被拒绝"
+          }
+        }
+      }
+    },
+    "Microphone not granted": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "麦克风未授权"
+          }
+        }
+      }
+    },
+    "Microphone: %@": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "麦克风：%@"
+          }
+        }
+      }
+    },
+    "Missing": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "缺失"
+          }
+        }
+      }
+    },
+    "Model loading…": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "模型加载中…"
+          }
+        }
+      }
+    },
+    "Model not ready": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "模型未就绪"
+          }
+        }
+      }
+    },
+    "Model: %@": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "模型：%@"
+          }
+        }
+      }
+    },
+    "Model: Missing": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "模型：缺失"
+          }
+        }
+      }
+    },
+    "Needs a base URL and model before it can be used.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "需要先填写基础 URL 和模型才能使用。"
+          }
+        }
+      }
+    },
+    "Needs attention": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "需要处理"
+          }
+        }
+      }
+    },
+    "No AI configurations — add one in AI Actions": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "没有 AI 配置 — 请在“AI 操作”中添加"
+          }
+        }
+      }
+    },
+    "No Shortcut": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无快捷键"
+          }
+        }
+      }
+    },
+    "No input device": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "没有输入设备"
+          }
+        }
+      }
+    },
+    "No recording shortcut is confirmed yet. Confirm one in Shortcuts.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "尚未确认录音快捷键。请在“快捷键”中确认一个。"
+          }
+        }
+      }
+    },
+    "Prioritized List in Use": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在使用优先级列表"
+          }
+        }
+      }
+    },
+    "Quit KVoice": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "退出 KVoice"
+          }
+        }
+      }
+    },
+    "Ready": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "就绪"
+          }
+        }
+      }
+    },
+    "Recording without the AI action: no AI endpoint is configured.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在录音，但未使用 AI 操作：尚未配置 AI 端点。"
+          }
+        }
+      }
+    },
+    "Recording. Stop when you are done.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在录音。说完后请停止。"
+          }
+        }
+      }
+    },
+    "Returns the final text of the newest History entry, so another action can use it. Needs History to be on.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "返回最新一条历史记录的最终文本，供其他操作使用。需要开启历史记录。"
+          }
+        }
+      }
+    },
+    "Settings…": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "设置…"
+          }
+        }
+      }
+    },
+    "Setup Guide…": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "设置向导…"
+          }
+        }
+      }
+    },
+    "Shortcut Unavailable": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "快捷键不可用"
+          }
+        }
+      }
+    },
+    "Start Dictation": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "开始听写"
+          }
+        }
+      }
+    },
+    "Start Recording": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "开始录音"
+          }
+        }
+      }
+    },
+    "Start Recording (Model Not Ready)": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "开始录音（模型未就绪）"
+          }
+        }
+      }
+    },
+    "Start dictation with ${aiAction}": {
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "使用 ${aiAction} 开始听写"
+          }
+        }
+      }
+    },
+    "Starts a hands-free recording, as if the shortcut were pressed in Toggle mode. Stop it with Stop Dictation, Toggle Dictation, or the shortcut.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "开始免手持录音，如同在“切换”模式下按下快捷键。可通过“停止听写”“切换听写”或快捷键停止。"
+          }
+        }
+      }
+    },
+    "Starts a recording when KVoice is idle and stops it when it is recording. Bind this to one trigger for start and stop.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "KVoice 空闲时开始录音，录音中则停止。将其绑定到一个触发器即可同时用于开始和停止。"
+          }
+        }
+      }
+    },
+    "Status: %@": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "状态：%@"
+          }
+        }
+      }
+    },
+    "Status: Ready": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "状态：就绪"
+          }
+        }
+      }
+    },
+    "Stop Dictation": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "停止听写"
+          }
+        }
+      }
+    },
+    "Stopped. Transcribing and inserting.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已停止。正在转写并插入。"
+          }
+        }
+      }
+    },
+    "Stopping…": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在停止…"
+          }
+        }
+      }
+    },
+    "System Default": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "系统默认"
+          }
+        }
+      }
+    },
+    "System Default (%@)": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "系统默认（%@）"
+          }
+        }
+      }
+    },
+    "That AI action no longer exists. Pick another one in the shortcut.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "该 AI 操作已不存在。请在快捷指令中选择另一个。"
+          }
+        }
+      }
+    },
+    "The Selection Action did not run.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "选中文本操作未能运行。"
+          }
+        }
+      }
+    },
+    "The history database could not be opened. Dictation continues without saving history.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法打开历史记录数据库。听写将继续，但不会保存历史记录。"
+          }
+        }
+      }
+    },
+    "The recording shortcut could not be registered: %@. Choose another in Shortcuts.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法注册录音快捷键：%@。请在“快捷键”中选择另一个。"
+          }
+        }
+      }
+    },
+    "The text is being inserted and can't be cancelled now.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "文本正在插入，现在无法取消。"
+          }
+        }
+      }
+    },
+    "There is no transcription in History yet.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "历史记录中还没有转写。"
+          }
+        }
+      }
+    },
+    "Toggle Dictation": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "切换听写"
+          }
+        }
+      }
+    },
+    "Transcription": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "转写"
+          }
+        }
+      }
+    },
+    "Turns AI processing off. Dictation inserts the raw transcript.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "关闭 AI 处理。听写将插入原始转写文本。"
+          }
+        }
+      }
+    },
+    "Turns AI processing on with the default action.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "以默认操作开启 AI 处理。"
+          }
+        }
+      }
+    },
+    "Unavailable": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "不可用"
+          }
+        }
+      }
+    },
+    "Unload Model Now": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "立即卸载模型"
+          }
+        }
+      }
+    },
+    "Unloading Model…": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在卸载模型…"
+          }
+        }
+      }
+    },
+    "Use AI Actions": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "使用 AI 操作"
+          }
+        }
+      }
+    },
+    "Use Raw Transcript Now": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "立即使用原始转写"
+          }
+        }
+      }
+    },
+    "Verifying…": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在验证…"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

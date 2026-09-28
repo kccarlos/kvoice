@@ -1,0 +1,2 @@
+# ADDITIONAL RULES: SHOW QUESTION
+- Begin the output with the line "Question:" followed by the question from <TRANSCRIPT>, cleaned of fillers and false starts but otherwise unchanged, then one blank line, then the line "Answer:" and the answer on the following line.

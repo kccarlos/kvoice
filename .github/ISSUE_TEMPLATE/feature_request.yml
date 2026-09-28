@@ -1,0 +1,36 @@
+name: Feature request
+description: Suggest something kvoice could do.
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        kvoice keeps speech on your Mac and sends nothing unless you ask it
+        to. Ideas that need to send audio or text somewhere by default will
+        not fit, but alternatives are welcome.
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem
+      description: What are you trying to do, and what gets in the way today?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What you would like
+      description: How you imagine it working. Screenshots or sketches help.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives you considered
+  - type: dropdown
+    id: edition
+    attributes:
+      label: Edition you use
+      options:
+        - Direct download (DMG)
+        - Mac App Store
+        - Built from source

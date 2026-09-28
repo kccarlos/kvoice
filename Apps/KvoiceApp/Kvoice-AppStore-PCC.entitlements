@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- ADR-026's five keys, plus ADR-027's managed Private Cloud Compute
+	     entitlement. Used ONLY by Scripts/archive_app_store.sh with
+	     KVOICE_PCC_ENTITLEMENT=1, once Apple has assigned the capability to
+	     the team and it is enabled on the App ID: automatic signing then
+	     puts it in the Mac App Store provisioning profile. A local build
+	     (kvoice Local Signing, no profile) never signs with this file. -->
+	<key>com.apple.security.app-sandbox</key>
+	<true/>
+	<key>com.apple.security.device.audio-input</key>
+	<true/>
+	<key>com.apple.security.network.client</key>
+	<true/>
+	<key>com.apple.security.files.user-selected.read-write</key>
+	<true/>
+	<key>com.apple.security.files.bookmarks.app-scope</key>
+	<true/>
+	<key>com.apple.developer.private-cloud-compute</key>
+	<true/>
+</dict>
+</plist>

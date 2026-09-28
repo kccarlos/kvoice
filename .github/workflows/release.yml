@@ -6,7 +6,9 @@
 #                section is missing. No secrets.
 #   test         the unit suite. No secrets.
 #   developer-id the notarized direct-download DMG: Developer ID signature,
-#                notarization of the app and the DMG, stapled.
+#                notarization of the app and the DMG, stapled. Its steps are
+#                the composite action .github/actions/notarized-dmg, which
+#                preview.yml runs too, so a preview proves this path.
 #   app-store    the Mac App Store package: Apple Distribution + Mac
 #                Installer Distribution, the Mac App Store profile, uploaded
 #                to App Store Connect (TestFlight). Never submitted for
@@ -141,73 +143,20 @@ jobs:
           persist-credentials: false
       - name: Toolchain
         run: ./Scripts/ci_check_toolchain.sh 27
-      - name: The team
-        run: |
-          printf '%s' "$APPLE_TEAM_ID" | grep -Eq '^[A-Z0-9]{10}$' \
-            || { echo "::error::Set the repository variable APPLE_TEAM_ID to the 10-character Apple team ID"; exit 1; }
-
-      - name: Import the Developer ID identity
-        env:
-          DEVELOPER_ID_P12_BASE64: ${{ secrets.DEVELOPER_ID_P12_BASE64 }}
-          DEVELOPER_ID_P12_PASSWORD: ${{ secrets.DEVELOPER_ID_P12_PASSWORD }}
-        run: ./Scripts/ci_import_signing_identity.sh >> "$GITHUB_ENV"
-
-      # A public release is notarized or it is not published: a build signed
-      # any other way would make every user re-grant Accessibility and
-      # Microphone on the next update, or not open at all.
-      - name: Refuse anything but a Developer ID
-        run: |
-          if [ "${KVOICE_NOTARIZE:-false}" != "true" ]; then
-            echo "::error::No Developer ID identity was imported. Set DEVELOPER_ID_P12_BASE64 and DEVELOPER_ID_P12_PASSWORD in the release environment."
-            exit 1
-          fi
-          case "$KVOICE_CODE_SIGN_IDENTITY" in
-            *"($APPLE_TEAM_ID)") ;;
-            *) echo "::error::The Developer ID identity is not team $APPLE_TEAM_ID's"; exit 1 ;;
-          esac
-
-      - name: App Store Connect API key (notarization)
-        env:
-          ASC_API_KEY_P8_BASE64: ${{ secrets.ASC_API_KEY_P8_BASE64 }}
-          ASC_API_KEY_ID: ${{ secrets.ASC_API_KEY_ID }}
-          ASC_API_ISSUER_ID: ${{ secrets.ASC_API_ISSUER_ID }}
-        run: |
-          if [ -z "$ASC_API_KEY_P8_BASE64" ] || [ -z "$ASC_API_KEY_ID" ] || [ -z "$ASC_API_ISSUER_ID" ]; then
-            echo "::error::Set ASC_API_KEY_P8_BASE64, ASC_API_KEY_ID and ASC_API_ISSUER_ID in the release environment"
-            exit 1
-          fi
-          key="$RUNNER_TEMP/AuthKey_$ASC_API_KEY_ID.p8"
-          (umask 077 && printf '%s' "$ASC_API_KEY_P8_BASE64" | base64 --decode > "$key")
-          {
-            echo "NOTARY_API_KEY_PATH=$key"
-            echo "NOTARY_API_KEY_ID=$ASC_API_KEY_ID"
-            echo "NOTARY_API_ISSUER_ID=$ASC_API_ISSUER_ID"
-          } >> "$GITHUB_ENV"
-
-      - name: Release build
-        run: ./Scripts/build_app.sh Release
-
-      - name: Verify the signature
-        run: |
-          app=.build/xcode-derived/Build/Products/Release/kvoice.app
-          ./Scripts/check_release_signature.sh --developer-id "$app"
-          codesign -dvv "$app" 2>&1 | grep -E '^(Identifier|Authority|TeamIdentifier|Timestamp)='
-          codesign -dvv "$app" 2>&1 | grep -qx "TeamIdentifier=$APPLE_TEAM_ID" \
-            || { echo "::error::the app is not signed by team $APPLE_TEAM_ID"; exit 1; }
-          /usr/libexec/PlistBuddy -c 'Print CFBundleShortVersionString' "$app/Contents/Info.plist"
-          /usr/libexec/PlistBuddy -c 'Print CFBundleVersion' "$app/Contents/Info.plist"
-
-      # The app is notarized and stapled first, so the copy inside the DMG
-      # carries its own ticket and opens offline; then the DMG itself.
-      - name: Notarize and staple the app
-        run: ./Scripts/notarize.sh .build/xcode-derived/Build/Products/Release/kvoice.app
-
-      - name: Package the DMG
-        run: ./Scripts/make_dmg.sh Release "$KVOICE_MARKETING_VERSION" .build/release
-
-      - name: Notarize and staple the DMG
-        # Stapling rewrites the DMG; notarize.sh rewrites its .sha256 too.
-        run: ./Scripts/notarize.sh ".build/release/KVoice-$KVOICE_MARKETING_VERSION.dmg"
+      # Import the Developer ID, refuse any other identity, the notary key,
+      # build Release, check the signature (Developer ID authority, team
+      # APPLE_TEAM_ID), notarize and staple the app, package the DMG,
+      # notarize and staple the DMG. Shared with preview.yml.
+      - name: Notarized Developer ID DMG
+        uses: ./.github/actions/notarized-dmg
+        with:
+          configuration: Release
+          dmg-name: ${{ needs.version.outputs.version }}
+          developer-id-p12-base64: ${{ secrets.DEVELOPER_ID_P12_BASE64 }}
+          developer-id-p12-password: ${{ secrets.DEVELOPER_ID_P12_PASSWORD }}
+          asc-api-key-p8-base64: ${{ secrets.ASC_API_KEY_P8_BASE64 }}
+          asc-api-key-id: ${{ secrets.ASC_API_KEY_ID }}
+          asc-api-issuer-id: ${{ secrets.ASC_API_ISSUER_ID }}
 
       - name: Upload the DMG
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -222,7 +171,14 @@ jobs:
       - name: Remove the signing identity and the key
         if: always()
         run: |
-          ./Scripts/ci_remove_signing_identity.sh
+          if [ -n "${KVOICE_CI_KEYCHAIN:-}" ]; then
+            ./Scripts/ci_remove_signing_identity.sh
+          else
+            # The import failed before it wrote KVOICE_CI_KEYCHAIN.
+            for keychain in "$RUNNER_TEMP"/kvoice-signing.*/kvoice-ci.keychain-db; do
+              [ -f "$keychain" ] && security delete-keychain "$keychain"
+            done
+          fi
           rm -f "$RUNNER_TEMP"/AuthKey_*.p8
 
   app-store:

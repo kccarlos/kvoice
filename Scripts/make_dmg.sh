@@ -11,6 +11,11 @@
 # Usage: make_dmg.sh <configuration> <version> [output-dir]
 #   KVOICE_CODE_SIGN_IDENTITY  optional; the DMG's signing identity. Unset:
 #                              the app's own signing authority. "-": unsigned.
+#   KVOICE_DMG_VOLUME_NAME     optional; the mounted volume's name. Unset:
+#                              "KVoice <version>". The preview workflow names
+#                              its test builds with it.
+# The image is <output-dir>/KVoice-<version>.dmg: <version> may carry a
+# suffix (the preview workflow's "0.1.0-preview-<sha>-DeveloperID").
 set -eu
 cd "$(dirname "$0")/.."
 
@@ -44,7 +49,7 @@ ln -s /Applications "$staging/Applications"
 dmg="$output_dir/KVoice-$version.dmg"
 rm -f "$dmg"
 hdiutil create \
-    -volname "KVoice $version" \
+    -volname "${KVOICE_DMG_VOLUME_NAME:-KVoice $version}" \
     -srcfolder "$staging" \
     -fs HFS+ \
     -format UDZO \

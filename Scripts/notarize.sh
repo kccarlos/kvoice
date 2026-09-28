@@ -43,10 +43,19 @@ case "$target" in
 esac
 
 # 1. The signature. Notarization accepts only a Developer ID Application
-#    signature with the hardened runtime and a secure timestamp.
+#    signature with the hardened runtime and a secure timestamp. The
+#    edition's own check applies: the Developer ID edition's, unless
+#    Info.plist says appStore (the App Store edition signed with a
+#    Developer ID for a test DMG, the preview workflow).
 if [ "$kind" = app ]; then
-    "$script_dir/check_release_signature.sh" --developer-id "$target" \
-        || die "$target is not signed for notarization (above). Build it with ./Scripts/build_app.sh Release once the 'Developer ID Application' certificate is in the keychain (the release documentation, one-time setup)."
+    edition="$(/usr/libexec/PlistBuddy -c 'Print :KvoiceDistributionEdition' "$target/Contents/Info.plist" 2>/dev/null || true)"
+    if [ "$edition" = "appStore" ]; then
+        "$script_dir/check_app_store_signature.sh" --developer-id "$target" \
+            || die "$target is not signed for notarization (above). Build it with KVOICE_CODE_SIGN_IDENTITY set to the 'Developer ID Application' identity and ./Scripts/build_app.sh AppStore."
+    else
+        "$script_dir/check_release_signature.sh" --developer-id "$target" \
+            || die "$target is not signed for notarization (above). Build it with ./Scripts/build_app.sh Release once the 'Developer ID Application' certificate is in the keychain (the release documentation, one-time setup)."
+    fi
 else
     details="$(codesign -dvv "$target" 2>&1)" \
         || die "$target has no code signature. Package it with ./Scripts/make_dmg.sh, which signs the DMG with the app's identity."

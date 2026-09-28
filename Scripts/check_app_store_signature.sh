@@ -18,18 +18,38 @@
 # reaches an app only through one). Without --pcc that key is refused: a
 # local build signed with it and no profile is exactly what must not ship.
 #
-# Signing authority is not checked: a local sandbox build is signed with the
-# local identity; App Store Connect checks the archive's own signature.
+# With --developer-id (the App Store edition signed with a Developer ID for
+# a notarized test DMG, the preview workflow) every check above still
+# applies, and also what notarization requires: a "Developer ID
+# Application" authority, the hardened runtime, a secure timestamp on the
+# app and every nested code item, and no embedded provisioning profile
+# (none of the five entitlements needs one, and a Developer ID signature
+# does not use the store's). --developer-id and --pcc exclude each other:
+# the managed entitlement needs a profile.
 #
-# Usage: check_app_store_signature.sh [--pcc] <path/to/kvoice.app>
+# Without --developer-id the signing authority is not checked: a local
+# sandbox build is signed with the local identity; App Store Connect checks
+# the archive's own signature.
+#
+# Usage: check_app_store_signature.sh [--pcc | --developer-id] <path/to/kvoice.app>
 set -eu
 
+usage="usage: check_app_store_signature.sh [--pcc | --developer-id] <path/to/kvoice.app>"
 require_pcc=false
-if [ "${1:-}" = "--pcc" ]; then
-    require_pcc=true
-    shift
+require_developer_id=false
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --pcc) require_pcc=true; shift ;;
+        --developer-id) require_developer_id=true; shift ;;
+        -*) echo "check_app_store_signature: unknown option $1; $usage" >&2; exit 2 ;;
+        *) break ;;
+    esac
+done
+if [ "$require_pcc" = true ] && [ "$require_developer_id" = true ]; then
+    echo "check_app_store_signature: --pcc and --developer-id exclude each other (the Private Cloud Compute entitlement needs a provisioning profile; a Developer ID test build has none)" >&2
+    exit 2
 fi
-app="${1:?usage: check_app_store_signature.sh [--pcc] <path/to/kvoice.app>}"
+app="${1:?$usage}"
 [ -d "$app" ] || { echo "check_app_store_signature: no app bundle at $app" >&2; exit 2; }
 
 failures=0
@@ -72,12 +92,37 @@ esac
 edition="$(/usr/libexec/PlistBuddy -c 'Print :KvoiceDistributionEdition' "$app/Contents/Info.plist" 2>/dev/null || true)"
 [ "$edition" = "appStore" ] || fail "KvoiceDistributionEdition is '${edition}', expected appStore"
 
+if [ "$require_developer_id" = true ]; then
+    details="$(codesign -dvv "$app" 2>&1 || true)"
+    authority="$(printf '%s\n' "$details" | sed -n 's/^Authority=//p' | head -1)"
+    if printf '%s\n' "$details" | grep -q '^Signature=adhoc'; then
+        authority="(ad-hoc)"
+    fi
+    echo "check_app_store_signature: authority: ${authority:-none}"
+    case "$authority" in
+        "Developer ID Application: "*) ;;
+        *) fail "signed by '${authority:-nothing}', not a 'Developer ID Application' identity — notarization would reject it" ;;
+    esac
+    # `flags=0x10000(runtime)` under the hardened runtime.
+    printf '%s\n' "$details" | grep -q '^CodeDirectory .*flags=0x[0-9a-f]*(.*runtime' \
+        || fail "the hardened runtime is off (ENABLE_HARDENED_RUNTIME, inherited from Config/Release.xcconfig)"
+    [ ! -e "$app/Contents/embedded.provisionprofile" ] \
+        || fail "Contents/embedded.provisionprofile is present; a Developer ID build of this edition carries none"
+    for code in "$app" "$app"/Contents/Resources/*.bundle "$app"/Contents/MacOS/*.dylib "$app"/Contents/Frameworks/*; do
+        [ -e "$code" ] || continue
+        codesign -dvv "$code" 2>&1 | grep -q '^Timestamp=' \
+            || fail "no secure timestamp on ${code#"$app"/} (build_app.sh AppStore adds --timestamp for a Developer ID; needs the network at sign time)"
+    done
+fi
+
 if [ "$failures" -gt 0 ]; then
     echo "check_app_store_signature: $failures problem(s) in $app" >&2
     exit 1
 fi
 if [ "$require_pcc" = true ]; then
     echo "check_app_store_signature: OK — sandboxed, ADR-026 entitlements + Private Cloud Compute, provisioning profile embedded, edition appStore: $app"
+elif [ "$require_developer_id" = true ]; then
+    echo "check_app_store_signature: OK — sandboxed, ADR-026 entitlements, edition appStore, Developer ID, hardened runtime, timestamped, no profile: $app"
 else
     echo "check_app_store_signature: OK — sandboxed, ADR-026 entitlements, edition appStore: $app"
 fi

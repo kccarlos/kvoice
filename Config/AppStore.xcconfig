@@ -17,7 +17,9 @@ ENABLE_APP_SANDBOX = YES
 // Release: the App Store does not require the first and rejects a build
 // carrying the second. The store re-signs with Apple's own signature, so a
 // secure timestamp is not needed; Scripts/build_app.sh passes none for this
-// configuration, which keeps a local sandbox build signable offline.
+// configuration, which keeps a local sandbox build signable offline. The one
+// exception is a build signed with a Developer ID (a notarized test DMG of
+// this edition, the preview workflow): build_app.sh then adds --timestamp.
 OTHER_CODE_SIGN_FLAGS =
 
 // The Mac App Store provisioning profile, for a manually signed archive

@@ -1,5 +1,6 @@
 """Tests for the release scripts that run in the public repository's release
-workflow: release_notes.sh and release_version.sh.
+and preview workflows: release_notes.sh, release_version.sh, the argument
+handling of check_app_store_signature.sh, and the shipped CHANGELOG.md.
 
 Standard library only. Each release-notes test builds a throwaway git
 repository shaped like the public one (a CHANGELOG.md and `sync:` commits)
@@ -18,6 +19,13 @@ import unittest
 from pathlib import Path
 
 SCRIPTS = Path(__file__).resolve().parent
+ROOT = SCRIPTS.parent
+# The public tree's own file; in the development repository it lives in the
+# public overlay.
+SHIPPED_CHANGELOG = next(
+    (path for path in (ROOT / "CHANGELOG.md", ROOT / "Public" / "CHANGELOG.md") if path.is_file()),
+    ROOT / "CHANGELOG.md",
+)
 
 CHANGELOG = """# Changelog
 
@@ -150,6 +158,32 @@ class ReleaseNotesTests(unittest.TestCase):
         self.assertIn("notarized by Apple", result.stdout)
         self.assertNotIn("Open Anyway", result.stdout)
 
+    def test_an_empty_unreleased_section_above_the_release_is_ignored(self) -> None:
+        changelog = "# Changelog\n\n## Unreleased\n\n## 0.1.0\n\nThe first public version.\n\n- One thing.\n"
+        self.sync("aaaaaaa", changelog=changelog)
+        self.git("tag", "v0.1.0")
+        self.git("tag", "v0.2.0-rc.1")
+
+        release = self.notes("v0.1.0")
+        next_candidate = self.notes("v0.2.0-rc.1")
+
+        self.assertEqual(release.returncode, 0, release.stderr)
+        self.assertIn("The first public version.\n\n- One thing.", release.stdout)
+        self.assertNotIn("Pre-release", release.stdout)
+        # Nothing written for the next version yet: refused, not empty notes.
+        self.assertNotEqual(next_candidate.returncode, 0)
+        self.assertIn("no '## 0.2.0-rc.1' section", next_candidate.stderr)
+
+    def test_the_shipped_changelog_has_the_first_releases_notes(self) -> None:
+        self.sync("aaaaaaa", changelog=SHIPPED_CHANGELOG.read_text(encoding="utf-8"))
+        self.git("tag", "v0.1.0")
+
+        result = self.notes("v0.1.0")
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertTrue(result.stdout.startswith("## KVoice 0.1.0\n\nThe first public version."), result.stdout[:200])
+        self.assertNotIn("## Unreleased", result.stdout)
+
     def test_an_unknown_tag_is_refused(self) -> None:
         self.sync("aaaaaaa")
 
@@ -187,6 +221,83 @@ class ReleaseVersionTests(unittest.TestCase):
         for tag, build in (("1.2.3", "7"), ("v1.2", "7"), ("v1.2.3", "seven")):
             with self.subTest(tag=tag, build=build):
                 self.assertNotEqual(self.version(tag, build).returncode, 0)
+
+
+class CheckAppStoreSignatureArgumentTests(unittest.TestCase):
+    """The option handling, which refuses before any codesign call, so it
+    runs anywhere; the checks themselves need a signed bundle."""
+
+    def check(self, *args: str) -> subprocess.CompletedProcess[str]:
+        return run(["sh", str(SCRIPTS / "check_app_store_signature.sh"), *args], SCRIPTS)
+
+    def test_developer_id_and_pcc_exclude_each_other(self) -> None:
+        for order in (("--pcc", "--developer-id"), ("--developer-id", "--pcc")):
+            with self.subTest(order=order):
+                result = self.check(*order, "kvoice.app")
+                self.assertEqual(result.returncode, 2)
+                self.assertIn("exclude each other", result.stderr)
+
+    def test_an_unknown_option_is_refused(self) -> None:
+        result = self.check("--developer", "kvoice.app")
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("unknown option --developer", result.stderr)
+
+    def test_each_mode_still_needs_a_bundle(self) -> None:
+        for mode in ((), ("--pcc",), ("--developer-id",)):
+            with self.subTest(mode=mode):
+                result = self.check(*mode, "no-such.app")
+                self.assertEqual(result.returncode, 2)
+                self.assertIn("no app bundle at no-such.app", result.stderr)
+
+
+WORKFLOWS = next(
+    (path for path in (ROOT / ".github" / "workflows", ROOT / "Public" / ".github" / "workflows")
+     if (path / "preview.yml").is_file()),
+    ROOT / ".github" / "workflows",
+)
+
+
+class PreviewWorkflowTests(unittest.TestCase):
+    """preview.yml builds with the release's own steps and pins, by hand only,
+    behind the release environment. Text checks: standard library only."""
+
+    def text(self, name: str) -> str:
+        return (WORKFLOWS / name).read_text(encoding="utf-8")
+
+    def pins(self, text: str) -> set[str]:
+        return {line.split("uses:", 1)[1].strip() for line in text.splitlines()
+                if "uses:" in line and "@" in line}
+
+    def test_both_workflows_build_the_dmg_with_the_shared_action(self) -> None:
+        self.assertTrue((WORKFLOWS.parent / "actions" / "notarized-dmg" / "action.yml").is_file())
+        self.assertEqual(self.text("release.yml").count("uses: ./.github/actions/notarized-dmg"), 1)
+        preview = self.text("preview.yml")
+        self.assertEqual(preview.count("uses: ./.github/actions/notarized-dmg"), 2)
+        self.assertIn("configuration: Release", preview)
+        self.assertIn("configuration: AppStore", preview)
+
+    def test_the_preview_reuses_the_releases_action_pins(self) -> None:
+        preview = self.pins(self.text("preview.yml"))
+        self.assertTrue(preview)
+        self.assertLessEqual(preview, self.pins(self.text("release.yml")))
+
+    def test_the_preview_runs_by_hand_and_signs_only_behind_the_release_environment(self) -> None:
+        preview = self.text("preview.yml")
+        on = preview.split("\non:\n", 1)[1].split("\npermissions:", 1)[0]
+        self.assertIn("workflow_dispatch:", on)
+        for trigger in ("push:", "pull_request", "schedule:", "workflow_run:"):
+            self.assertNotIn(trigger, on)
+        self.assertEqual(preview.count("environment: release"), 2)
+        cleanup = "if: always()\n        run: |\n          if [ -n \"${KVOICE_CI_KEYCHAIN:-}\" ]; then\n            ./Scripts/ci_remove_signing_identity.sh"
+        self.assertEqual(preview.count(cleanup), 2)
+        self.assertEqual(preview.count("kvoice-signing.*/kvoice-ci.keychain-db"), 2, "the fallback cleanup")
+        self.assertEqual(self.text("release.yml").count(cleanup), 1)
+        self.assertIn("needs: [version, developer-id]", preview, "the editions are built one after the other")
+        self.assertIn("github.repository == 'kccarlos/kvoice'", preview)
+        self.assertIn("refs/heads/main", preview)
+        self.assertNotIn("KVOICE_PCC_ENTITLEMENT", preview)
+        self.assertNotIn("APPLE_DISTRIBUTION", preview)
+        self.assertNotIn("APP_STORE_PROFILE", preview)
 
 
 if __name__ == "__main__":

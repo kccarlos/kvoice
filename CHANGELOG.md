@@ -1,13 +1,15 @@
 # Changelog
 
 Notable changes to kvoice, for people who use it. Versions follow
-[Semantic Versioning](https://semver.org). The first release will be 0.1.0.
+[Semantic Versioning](https://semver.org). The first release is 0.1.0.
 
 Each release has a `## X.Y.Z — YYYY-MM-DD` section, written before the
 release is tagged; the release notes on GitHub are that section. A tag
 without one is refused.
 
 ## Unreleased
+
+## 0.1.0
 
 The first public version. It includes:
 

@@ -250,10 +250,59 @@ Its configuration, all in the repository settings:
 | `release` secret | `APP_STORE_PROFILE_BASE64` | The "Mac App Store Connect" provisioning profile for `io.github.kccarlos.kvoice` (base64 of the `.provisionprofile`). |
 | `release` secret | `ASC_API_KEY_P8_BASE64`, `ASC_API_KEY_ID`, `ASC_API_ISSUER_ID` | An App Store Connect API key (base64 of `AuthKey_<id>.p8`), its key ID and the issuer ID. Used to notarize and to upload. |
 
-The `release` environment requires a reviewer and is limited to `v*` tags, so
-no branch, pull request or fork can reach these secrets. The signing jobs
-delete their temporary keychain, key file and profile in `if: always()`
-steps.
+The `release` environment requires a reviewer and is limited to `v*` tags
+and the `main` branch (the preview builds below), so no other branch, pull
+request or fork can reach these secrets, and every run that reads them
+waits for a maintainer's approval. The signing jobs delete their temporary
+keychain, key file and profile in `if: always()` steps.
+
+The Developer ID DMG's steps (import the identity, build, check, notarize
+and staple the app, package, notarize and staple the DMG) are the composite
+action `.github/actions/notarized-dmg`, shared with the preview workflow.
+
+## Preview builds
+
+`.github/workflows/preview.yml` makes notarized DMGs of both editions from
+`main` without tagging or publishing anything, to try a build on another
+Mac before a release. It runs only when started by hand (Actions ›
+**Preview** › *Run workflow*, with an optional label), and its signing jobs
+wait in the `release` environment for a maintainer's approval, like a
+release. It produces two workflow artifacts, kept for 14 days, each holding
+a DMG and its SHA-256:
+
+| Artifact | What it is |
+| --- | --- |
+| `KVoice-<version>-preview-<sha>-DeveloperID.dmg` | The Developer ID edition, built exactly as a release builds it. |
+| `KVoice-<version>-preview-<sha>-AppStoreEdition.dmg` | The sandboxed App Store edition (the `AppStore` configuration), signed with the Developer ID instead of Apple Distribution so it can be notarized and opened outside the store. Its volume is named "KVoice App Store Edition TEST BUILD …". It carries the edition's sandbox entitlements, the hardened runtime and a secure timestamp, no provisioning profile (none of its entitlements needs one) and never the Private Cloud Compute entitlement, so Private Cloud Compute reports itself unavailable in it. It is not a store build and is never uploaded. |
+
+`<version>` is `MARKETING_VERSION` from `Config/Base.xcconfig`; the build
+number (`CFBundleVersion`) is the preview workflow's run number. Download
+from the run's page, or `gh run download <run-id> --repo <owner>/kvoice`.
+
+**Both editions have the same bundle identifier.** Do not install them side
+by side for the same macOS user: install one, test it, quit and delete it
+(and, for a clean start, its data), then install the other; or give each
+edition its own macOS user. Grant Accessibility and Microphone again after
+every switch, from a clean state: both preview DMGs are signed with the same
+Developer ID and identifier, so macOS may show an earlier edition's grant as
+already on while the new edition needs its own. Before installing the other
+edition, reset them with `tccutil reset All io.github.kccarlos.kvoice` — on
+the test Mac only: on a Mac that also has a development build installed, the
+same identifier resets that build's grants too.
+
+The App Store edition signed this way can be built locally too, without
+notarizing:
+
+```sh
+KVOICE_CODE_SIGN_IDENTITY="Developer ID Application: <name> (<team>)" \
+  ./Scripts/build_app.sh AppStore
+./Scripts/check_app_store_signature.sh --developer-id \
+  .build/xcode-derived/Build/Products/AppStore/kvoice.app
+```
+
+`build_app.sh` adds `--timestamp` to an `AppStore` build only when the
+identity is a Developer ID; `notarize.sh` checks an app with the check of
+the edition its `Info.plist` names.
 
 ## Editor tooling
 

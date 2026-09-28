@@ -38,6 +38,10 @@ derived_data_path="${KVOICE_DERIVED_DATA_PATH:-.build/xcode-derived}"
 # provisioning profile) is made by Scripts/archive_app_store.sh, never here.
 # Its bundle identifier is the Developer ID edition's, so never install it
 # over ~/Applications/kvoice.app (the release documentation, "Mac App Store edition").
+# With KVOICE_CODE_SIGN_IDENTITY set to a Developer ID it is the App Store
+# edition signed for a notarized test DMG: same sandbox entitlements, no
+# provisioning profile (none of them is a restricted entitlement), checked
+# by check_app_store_signature.sh --developer-id.
 local_signing_identity="kvoice Local Signing"
 developer_id_team="${KVOICE_DEVELOPER_ID_TEAM:-${APPLE_TEAM_ID:-}}"
 case "$developer_id_team" in
@@ -83,9 +87,19 @@ esac
 # the bundle carries one. Without the network a real identity then fails
 # to sign; ad-hoc ignores the flag. Bench is never distributed and keeps
 # signing offline.
+#
+# AppStore signs offline too (Config/AppStore.xcconfig: the store re-signs),
+# except when KVOICE_CODE_SIGN_IDENTITY names a Developer ID: that is the
+# App Store edition built as a notarized test DMG (the preview workflow),
+# and notarization needs the timestamp exactly as for Release.
 sign_flags=""
 case "$configuration" in
     Release) sign_flags="--timestamp" ;;
+    AppStore)
+        case "$code_sign_identity" in
+            "Developer ID Application: "*) sign_flags="--timestamp" ;;
+        esac
+        ;;
 esac
 
 # A release build takes its version from the tag and its build number from

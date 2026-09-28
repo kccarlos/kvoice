@@ -1,0 +1,244 @@
+# Preview: notarized DMGs of both editions from main, started by hand, to
+# try on another Mac before a release is tagged. Nothing is published: the
+# DMGs are workflow artifacts of the run, kept for 14 days.
+#
+#   version            MARKETING_VERSION from Config/Base.xcconfig, the build
+#                      number from this workflow's run number, and the DMG
+#                      names. No secrets.
+#   developer-id       the Developer ID edition, exactly the release path
+#                      (.github/actions/notarized-dmg, as release.yml):
+#                      KVoice-<version>-preview-<sha>-DeveloperID.dmg
+#   app-store-edition  the sandboxed App Store edition (the AppStore
+#                      configuration), signed with the Developer ID instead
+#                      of Apple Distribution so it can be notarized and
+#                      opened outside the store: sandbox entitlements,
+#                      hardened runtime, secure timestamp, no provisioning
+#                      profile, never the Private Cloud Compute entitlement,
+#                      never uploaded to App Store Connect:
+#                      KVoice-<version>-preview-<sha>-AppStoreEdition.dmg
+#   summary            what was built, and how to install it.
+#
+# Both editions share one bundle identifier. Install one DMG at a time on a
+# given macOS user: install, test, delete it, then the other (or use two
+# macOS users); macOS asks for Accessibility and Microphone again after a
+# switch (Docs/Build.md, "Preview builds").
+#
+# The signing jobs use the protected `release` environment, so a maintainer
+# approves every run, and the environment's deployment policy must allow
+# the `main` branch as well as `v*` tags. No unit-test job: main's CI
+# already ran the suite on this commit.
+#
+# Runner: see ci.yml. The signing jobs honour KVOICE_MACOS_RUNNER too.
+name: Preview
+run-name: Preview${{ inputs.label != '' && format(' ({0})', inputs.label) || '' }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      label:
+        description: "Optional label for this run (letters, digits, . _ -)"
+        required: false
+        default: ""
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: preview-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  version:
+    name: Version
+    # A fork does not try to sign (it would fail at the missing
+    # environment); a fork that wants its own previews changes this line.
+    if: github.repository == 'kccarlos/kvoice'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      build: ${{ steps.version.outputs.build }}
+      short-sha: ${{ steps.version.outputs.short-sha }}
+      label: ${{ steps.version.outputs.label }}
+    steps:
+      - name: Only main
+        env:
+          REF: ${{ github.ref }}
+        run: |
+          [ "$REF" = "refs/heads/main" ] \
+            || { echo "::error::Preview builds are made from main only, not $REF"; exit 1; }
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Version, build number and label
+        id: version
+        env:
+          RUN_NUMBER: ${{ github.run_number }}
+          LABEL: ${{ inputs.label }}
+        run: |
+          marketing="$(sed -n 's/^MARKETING_VERSION = \([^ ]*\) *$/\1/p' Config/Base.xcconfig)"
+          # The release's own validation: MAJOR.MINOR.PATCH, an integer build.
+          values="$(./Scripts/release_version.sh "v$marketing" "$RUN_NUMBER")"
+          printf '%s\n' "$values"
+          get() { printf '%s\n' "$values" | sed -n "s/^$1=//p"; }
+          case "$LABEL" in
+            *[!A-Za-z0-9._-]*) echo "::error::the label may contain only letters, digits, '.', '_' and '-'"; exit 1 ;;
+          esac
+          [ "${#LABEL}" -le 40 ] || { echo "::error::the label is longer than 40 characters"; exit 1; }
+          {
+            echo "version=$(get KVOICE_MARKETING_VERSION)"
+            echo "build=$(get KVOICE_BUILD_NUMBER)"
+            echo "short-sha=$(printf '%.7s' "$GITHUB_SHA")"
+            echo "label=$LABEL"
+          } >> "$GITHUB_OUTPUT"
+
+  developer-id:
+    name: Developer ID edition DMG
+    needs: version
+    runs-on: ${{ vars.KVOICE_MACOS_RUNNER || 'xcode-27' }}
+    environment: release
+    timeout-minutes: 120
+    env:
+      DEVELOPER_DIR: ${{ vars.KVOICE_DEVELOPER_DIR || '/Applications/Xcode_27.0.app/Contents/Developer' }}
+      KVOICE_MARKETING_VERSION: ${{ needs.version.outputs.version }}
+      KVOICE_BUILD_NUMBER: ${{ needs.version.outputs.build }}
+      APPLE_TEAM_ID: ${{ vars.APPLE_TEAM_ID }}
+      DMG_NAME: ${{ needs.version.outputs.version }}-preview-${{ needs.version.outputs.short-sha }}-DeveloperID
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Toolchain
+        run: ./Scripts/ci_check_toolchain.sh 27
+
+      - name: Notarized Developer ID DMG
+        uses: ./.github/actions/notarized-dmg
+        with:
+          configuration: Release
+          dmg-name: ${{ env.DMG_NAME }}
+          volume-name: KVoice ${{ env.DMG_NAME }}
+          developer-id-p12-base64: ${{ secrets.DEVELOPER_ID_P12_BASE64 }}
+          developer-id-p12-password: ${{ secrets.DEVELOPER_ID_P12_PASSWORD }}
+          asc-api-key-p8-base64: ${{ secrets.ASC_API_KEY_P8_BASE64 }}
+          asc-api-key-id: ${{ secrets.ASC_API_KEY_ID }}
+          asc-api-issuer-id: ${{ secrets.ASC_API_ISSUER_ID }}
+
+      - name: Upload the DMG
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: KVoice-${{ env.DMG_NAME }}.dmg
+          path: |
+            .build/release/KVoice-${{ env.DMG_NAME }}.dmg
+            .build/release/KVoice-${{ env.DMG_NAME }}.dmg.sha256
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Remove the signing identity and the key
+        if: always()
+        run: |
+          if [ -n "${KVOICE_CI_KEYCHAIN:-}" ]; then
+            ./Scripts/ci_remove_signing_identity.sh
+          else
+            # The import failed before it wrote KVOICE_CI_KEYCHAIN.
+            for keychain in "$RUNNER_TEMP"/kvoice-signing.*/kvoice-ci.keychain-db; do
+              [ -f "$keychain" ] && security delete-keychain "$keychain"
+            done
+          fi
+          rm -f "$RUNNER_TEMP"/AuthKey_*.p8
+
+  app-store-edition:
+    name: App Store edition test DMG
+    # After the Developer ID edition, not beside it: one notarization at a
+    # time, one runner at a time, and a signing or notarization failure
+    # shows once instead of twice. Costs the second job's wall time.
+    needs: [version, developer-id]
+    runs-on: ${{ vars.KVOICE_MACOS_RUNNER || 'xcode-27' }}
+    environment: release
+    timeout-minutes: 120
+    env:
+      DEVELOPER_DIR: ${{ vars.KVOICE_DEVELOPER_DIR || '/Applications/Xcode_27.0.app/Contents/Developer' }}
+      KVOICE_MARKETING_VERSION: ${{ needs.version.outputs.version }}
+      KVOICE_BUILD_NUMBER: ${{ needs.version.outputs.build }}
+      APPLE_TEAM_ID: ${{ vars.APPLE_TEAM_ID }}
+      DMG_NAME: ${{ needs.version.outputs.version }}-preview-${{ needs.version.outputs.short-sha }}-AppStoreEdition
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Toolchain
+        run: ./Scripts/ci_check_toolchain.sh 27
+
+      # The AppStore configuration signed with the Developer ID: build_app.sh
+      # adds the secure timestamp for it, check_app_store_signature.sh
+      # --developer-id checks it, notarize.sh picks that check from the
+      # edition in Info.plist. No Apple Distribution identity, no profile.
+      - name: Notarized App Store edition test DMG
+        uses: ./.github/actions/notarized-dmg
+        with:
+          configuration: AppStore
+          dmg-name: ${{ env.DMG_NAME }}
+          volume-name: KVoice App Store Edition TEST BUILD ${{ needs.version.outputs.version }}-preview-${{ needs.version.outputs.short-sha }}
+          developer-id-p12-base64: ${{ secrets.DEVELOPER_ID_P12_BASE64 }}
+          developer-id-p12-password: ${{ secrets.DEVELOPER_ID_P12_PASSWORD }}
+          asc-api-key-p8-base64: ${{ secrets.ASC_API_KEY_P8_BASE64 }}
+          asc-api-key-id: ${{ secrets.ASC_API_KEY_ID }}
+          asc-api-issuer-id: ${{ secrets.ASC_API_ISSUER_ID }}
+
+      - name: Upload the DMG
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: KVoice-${{ env.DMG_NAME }}.dmg
+          path: |
+            .build/release/KVoice-${{ env.DMG_NAME }}.dmg
+            .build/release/KVoice-${{ env.DMG_NAME }}.dmg.sha256
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Remove the signing identity and the key
+        if: always()
+        run: |
+          if [ -n "${KVOICE_CI_KEYCHAIN:-}" ]; then
+            ./Scripts/ci_remove_signing_identity.sh
+          else
+            # The import failed before it wrote KVOICE_CI_KEYCHAIN.
+            for keychain in "$RUNNER_TEMP"/kvoice-signing.*/kvoice-ci.keychain-db; do
+              [ -f "$keychain" ] && security delete-keychain "$keychain"
+            done
+          fi
+          rm -f "$RUNNER_TEMP"/AuthKey_*.p8
+
+  summary:
+    name: Preview summary
+    needs: [version, developer-id, app-store-edition]
+    if: always() && needs.version.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: What was built, and how to install it
+        env:
+          VERSION: ${{ needs.version.outputs.version }}
+          BUILD: ${{ needs.version.outputs.build }}
+          SHORT_SHA: ${{ needs.version.outputs.short-sha }}
+          LABEL: ${{ needs.version.outputs.label }}
+          DEVELOPER_ID: ${{ needs.developer-id.result }}
+          APP_STORE_EDITION: ${{ needs.app-store-edition.result }}
+        run: |
+          {
+            echo "## KVoice $VERSION preview ($SHORT_SHA, build $BUILD)${LABEL:+ — $LABEL}"
+            echo
+            echo "| Edition | Artifact | Result |"
+            echo "| --- | --- | --- |"
+            echo "| Developer ID (notarized) | \`KVoice-$VERSION-preview-$SHORT_SHA-DeveloperID.dmg\` | $DEVELOPER_ID |"
+            echo "| App Store edition, Developer ID-signed test build (notarized) | \`KVoice-$VERSION-preview-$SHORT_SHA-AppStoreEdition.dmg\` | $APP_STORE_EDITION |"
+            echo
+            echo "Download the artifacts from this run's page (or \`gh run download $GITHUB_RUN_ID --repo $GITHUB_REPOSITORY\`); each holds the DMG and its SHA-256. Kept for 14 days."
+            echo
+            echo "**Both editions have the same bundle identifier.** On one macOS user, install one at a time: install, test, quit and delete it, then install the other (or use a second macOS user). macOS asks for Accessibility and Microphone again after a switch. Never install either over a development build."
+          } >> "$GITHUB_STEP_SUMMARY"
+          if [ "$DEVELOPER_ID" != "success" ] || [ "$APP_STORE_EDITION" != "success" ]; then
+            echo "::error::An edition did not build (Developer ID: $DEVELOPER_ID, App Store edition: $APP_STORE_EDITION)"
+            exit 1
+          fi

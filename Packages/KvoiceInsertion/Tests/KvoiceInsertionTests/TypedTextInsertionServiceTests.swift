@@ -2,6 +2,7 @@ import Foundation
 import XCTest
 @testable import KvoiceDomain
 @testable import KvoiceInsertion
+import KvoiceTestSupport
 
 /// ADR-026: the App Store edition's insertion — typed events only, no
 /// Accessibility element, the clipboard only when typing is unavailable
@@ -56,7 +57,7 @@ final class TypedTextInsertionServiceTests: XCTestCase {
     func testWithoutThePostEventGrantItCopiesAndPostsNothing() async throws {
         let poster = TypedOnlyPoster()
         let clipboard = TypedOnlyClipboard()
-        let diagnostics = TypedOnlyDiagnostics()
+        let diagnostics = RecordingDiagnosticLog()
         let service = makeService(granted: false, poster: poster, clipboard: clipboard, diagnostics: diagnostics)
         let outcome = try await service.insert("hi", into: target, jobID: UUID())
         XCTAssertEqual(outcome, .copiedToClipboard(reason: .permissionNotGranted))
@@ -254,7 +255,7 @@ final class TypedTextInsertionServiceTests: XCTestCase {
     }
 
     func testCompletedInsertionLogsTheTypedStrategyOnly() async throws {
-        let diagnostics = TypedOnlyDiagnostics()
+        let diagnostics = RecordingDiagnosticLog()
         let service = makeService(diagnostics: diagnostics)
         _ = try await service.insert("secret words", into: target, jobID: UUID())
         let completed = await diagnostics.events(named: .insertionCompleted)
@@ -266,7 +267,7 @@ final class TypedTextInsertionServiceTests: XCTestCase {
     /// ADR-022 item 9: a clipboard write that fails inside the fallback is
     /// the one `insertion.failed` line, naming the gate that fell back.
     func testFailedFallbackCopyIsLoggedOnceWithItsGate() async throws {
-        let diagnostics = TypedOnlyDiagnostics()
+        let diagnostics = RecordingDiagnosticLog()
         let service = makeService(
             granted: false,
             clipboard: TypedOnlyClipboard(failure: KVoiceError(code: .clipboardWriteFailed)),
@@ -470,18 +471,3 @@ final class TypedOnlyClipboard: ClipboardWriting, @unchecked Sendable {
     }
 }
 
-private actor TypedOnlyDiagnostics: DiagnosticLogging {
-    private var events: [DiagnosticEvent] = []
-
-    func log(_ event: DiagnosticEvent) async {
-        events.append(event)
-    }
-
-    func events(named name: DiagnosticEventName) async -> [DiagnosticEvent] {
-        for _ in 0..<20 where !events.contains(where: { $0.name == name }) {
-            await Task.yield()
-            try? await Task.sleep(for: .milliseconds(5))
-        }
-        return events.filter { $0.name == name }
-    }
-}

@@ -477,7 +477,11 @@ final class WhisperTranscriptionEngineTests: XCTestCase {
     }
 
     func testComputeUnitsChangeIsRefusedWhileAPassIsRunning() async throws {
-        let runtime = ScriptedRuntime(result: makeRuntimeResult(text: "slow"), detachedDelay: .milliseconds(300))
+        // The pass is held on a gate the test opens, not a 300 ms delay that
+        // a loaded machine could outlast before the change arrives.
+        let gate = WarmUpGate()
+        let runtime = ScriptedRuntime(result: makeRuntimeResult(text: "slow"))
+        await runtime.setTranscribeGate(gate)
         let factory = ScriptedFactory(steps: [.runtime(runtime)])
         let package = makePackage(id: "primary")
         let engine = makeEngine(factory: factory, trustedPackages: [package])
@@ -490,16 +494,14 @@ final class WhisperTranscriptionEngineTests: XCTestCase {
         }
         // Wait for the pass to own the runtime rather than sleeping a fixed
         // time, so a loaded machine cannot let the change in first.
-        for _ in 0..<2_000 {
-            if case .inference = await engine.state { break }
-            await Task.yield()
-        }
+        await runtime.waitUntilTranscribing(count: 1)
         do {
             try await engine.setComputeUnits(.cpuOnly)
             XCTFail("A change during inference must be refused")
         } catch {
             XCTAssertEqual(error as? WhisperTranscriptionError, .inferenceInProgress(jobID))
         }
+        await gate.open()
         _ = try await pass.value
         let configurations = await factory.configurations
         XCTAssertEqual(configurations.count, 1)
@@ -975,7 +977,6 @@ private actor ReentrantFactory: WhisperRuntimeFactory {
 
 private actor ScriptedRuntime: WhisperRuntime {
     let result: WhisperRuntimeResult
-    let detachedDelay: Duration?
     private(set) var transcriptionCallCount = 0
     private(set) var cancellationObserved = false
     private(set) var unloadCallCount = 0
@@ -1020,9 +1021,8 @@ private actor ScriptedRuntime: WhisperRuntime {
     /// Simulated runtime cap; nil models a runtime without a prompt.
     let promptLimit: Int?
 
-    init(result: WhisperRuntimeResult, detachedDelay: Duration? = nil, promptLimit: Int? = 111) {
+    init(result: WhisperRuntimeResult, promptLimit: Int? = 111) {
         self.result = result
-        self.detachedDelay = detachedDelay
         self.promptLimit = promptLimit
     }
 
@@ -1039,12 +1039,6 @@ private actor ScriptedRuntime: WhisperRuntime {
         lastTranscribeSamples = samples
         if let transcribeGate {
             await transcribeGate.waitUntilOpen()
-        }
-        if let detachedDelay {
-            let sleeper = Task.detached {
-                try? await Task.sleep(for: detachedDelay)
-            }
-            _ = await sleeper.value
         }
         cancellationObserved = cancellationObserved || Task.isCancelled
         return result

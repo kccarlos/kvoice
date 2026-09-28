@@ -69,10 +69,14 @@ final class WhisperTranscriptionEngineStreamingTests: XCTestCase {
         XCTAssertEqual(partials, ["hello", "hello world"], "no partial after the batch pass")
     }
 
+    /// The pass in flight at Escape is held until after the cancel, then
+    /// allowed to *return a result* — the worst case: a runtime that
+    /// finishes anyway. The engine must discard it.
     func testCancelDropsTheSessionAndNothingIsPublishedAfterwards() async throws {
+        let gate = RuntimeGate()
         let runtime = QueuedRuntime(
             results: [makeResult(segments: [(0, 1, "late")])],
-            delay: .milliseconds(150)
+            gate: gate
         )
         let package = StreamingTestFixtures.makePackage(tracker: &temporaryPackageURLs)
         let engine = makeEngine(runtime: runtime, package: package)
@@ -84,24 +88,30 @@ final class WhisperTranscriptionEngineStreamingTests: XCTestCase {
             await sink.append(event)
         }
         await engine.appendStreamingAudio(chunk(seconds: 1.5), jobID: jobID)
-        try await waitUntil { await runtime.callCount == 1 }
+        await gate.entered()
 
         // Escape while the pass is in flight.
         await engine.cancel(jobID: jobID)
         let live = await engine.streamingPartialText
         XCTAssertNil(live)
-        try await Task.sleep(for: .milliseconds(300))
+        XCTAssertTrue(gate.sawCancellation, "the runtime pass saw task cancellation")
+        gate.release()
+        await engine.cancelledStreamingWorker?.value
         let partials = await sink.partials
         XCTAssertTrue(partials.isEmpty, "a pass that finishes after Escape must not publish")
-        let observed = await runtime.cancellationObserved
-        XCTAssertTrue(observed, "the runtime pass saw task cancellation")
+        let calls = await runtime.callCount
+        XCTAssertEqual(calls, 1, "the cancelled worker starts no further pass")
     }
 
+    /// The runtime ignores cancellation (it returns only when the test
+    /// releases it), and is released only once `endStreaming` has cancelled
+    /// the worker — so `endStreaming` can return with the pass unwound only
+    /// if it waited for it.
     func testEndStreamingWaitsForTheInFlightPassBeforeReturning() async throws {
+        let gate = RuntimeGate()
         let runtime = QueuedRuntime(
             results: [makeResult(segments: [(0, 1, "slow")])],
-            delay: .milliseconds(150),
-            ignoresCancellation: true
+            gate: gate
         )
         let package = StreamingTestFixtures.makePackage(tracker: &temporaryPackageURLs)
         let engine = makeEngine(runtime: runtime, package: package)
@@ -113,10 +123,17 @@ final class WhisperTranscriptionEngineStreamingTests: XCTestCase {
             await sink.append(event)
         }
         await engine.appendStreamingAudio(chunk(seconds: 2), jobID: jobID)
-        try await waitUntil { await runtime.inFlight }
+        await gate.entered()
+        let inFlightAtStart = await runtime.inFlight
+        XCTAssertTrue(inFlightAtStart)
 
-        await engine.endStreaming(jobID: jobID)
-        let stillInFlight = await runtime.inFlight
+        let ending = Task {
+            await engine.endStreaming(jobID: jobID)
+            return await runtime.inFlight
+        }
+        await gate.cancellationSeen()
+        gate.release()
+        let stillInFlight = await ending.value
         XCTAssertFalse(stillInFlight, "endStreaming returns only after the runtime pass unwound")
         let partials = await sink.partials
         XCTAssertTrue(partials.isEmpty)
@@ -148,9 +165,14 @@ final class WhisperTranscriptionEngineStreamingTests: XCTestCase {
             AudioSampleChunk(samples: ContiguousArray(repeating: 0, count: 48_000), sampleRate: 48_000),
             jobID: jobID
         )
-        try await Task.sleep(for: .milliseconds(150))
-        let calls = await runtime.callCount
-        XCTAssertEqual(calls, 0, "audio for another job or in the wrong format never reaches the runtime")
+        // A positive witness instead of waiting and seeing nothing: once a
+        // valid chunk for this job produces a pass, that pass must contain
+        // exactly the valid chunk's samples — the rejected audio never
+        // reached the session, so it can never reach the runtime.
+        await engine.appendStreamingAudio(chunk(seconds: 2), jobID: jobID)
+        try await waitUntil { await runtime.callCount == 1 }
+        let windows = await runtime.sampleCounts
+        XCTAssertEqual(windows, [32_000], "audio for another job or in the wrong format never reaches the runtime")
         await engine.endStreaming(jobID: jobID)
     }
 
@@ -178,8 +200,11 @@ final class WhisperTranscriptionEngineStreamingTests: XCTestCase {
         )
     }
 
+    /// Polls the condition (the engine's worker checks for audio on its own
+    /// 50 ms cadence, so there is no event to await). The deadline is a hang
+    /// guard, not a timing assumption: a passing condition returns at once.
     private func waitUntil(
-        timeout: Duration = .seconds(3),
+        timeout: Duration = .seconds(30),
         _ condition: @escaping @Sendable () async -> Bool
     ) async throws {
         let deadline = ContinuousClock.now + timeout
@@ -221,19 +246,18 @@ private struct SingleRuntimeFactory: WhisperRuntimeFactory {
 /// Returns scripted results in call order; the last result repeats.
 private actor QueuedRuntime: WhisperRuntime {
     private var results: [WhisperRuntimeResult]
-    private let delay: Duration?
-    private let ignoresCancellation: Bool
+    private let gate: RuntimeGate?
     private(set) var callCount = 0
     private(set) var inFlight = false
-    private(set) var cancellationObserved = false
+    /// The window length of each pass, in order.
+    private(set) var sampleCounts: [Int] = []
     private(set) var languageHints: [String?] = []
     /// ADR-018: the prompt tokens of each pass, in order.
     private(set) var promptTokensReceived: [[Int]?] = []
 
-    init(results: [WhisperRuntimeResult], delay: Duration? = nil, ignoresCancellation: Bool = false) {
+    init(results: [WhisperRuntimeResult], gate: RuntimeGate? = nil) {
         self.results = results
-        self.delay = delay
-        self.ignoresCancellation = ignoresCancellation
+        self.gate = gate
     }
 
     func promptTokenLimit() async -> Int? { 111 }
@@ -246,23 +270,10 @@ private actor QueuedRuntime: WhisperRuntime {
         callCount += 1
         inFlight = true
         defer { inFlight = false }
+        sampleCounts.append(samples.count)
         languageHints.append(languageHint)
         promptTokensReceived.append(promptTokens)
-        if let delay {
-            if ignoresCancellation {
-                // A non-cooperative runtime: sleeps on a detached clock.
-                let sleeper = Task.detached { try? await Task.sleep(for: delay) }
-                _ = await sleeper.value
-            } else {
-                do {
-                    try await Task.sleep(for: delay)
-                } catch {
-                    cancellationObserved = true
-                    throw CancellationError()
-                }
-            }
-        }
-        cancellationObserved = cancellationObserved || Task.isCancelled
+        await gate?.hold()
         let result = results.count > 1 ? results.removeFirst() : results[0]
         return result
     }
@@ -276,6 +287,116 @@ private actor QueuedRuntime: WhisperRuntime {
     }
 
     func unload() async {}
+}
+
+/// Holds a runtime pass until the test releases it — a non-cooperative
+/// runtime that notices cancellation but finishes anyway, as WhisperKit may
+/// between checkpoints. Replaces fixed delays: the test decides when the
+/// pass ends, and can wait for the moment the pass was cancelled.
+final class RuntimeGate: @unchecked Sendable {
+    private enum Condition { case entered, cancelled }
+
+    private let lock = NSLock()
+    private var released = false
+    private var cancelled = false
+    private var entries = 0
+    private var held: CheckedContinuation<Void, Never>?
+    private var nextWaiterID: UInt64 = 0
+    /// Test waits, each resumed exactly once: `true` by the gate when its
+    /// condition holds, `false` by its hang guard. Whoever removes it resumes it.
+    private var waiters: [(id: UInt64, condition: Condition, continuation: CheckedContinuation<Bool, Never>)] = []
+
+    var sawCancellation: Bool {
+        lock.withLock { cancelled }
+    }
+
+    /// Called by the runtime inside a pass.
+    func hold() async {
+        await withTaskCancellationHandler {
+            await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+                lock.lock()
+                entries += 1
+                let ready = takeWaiters(.entered)
+                if released {
+                    lock.unlock()
+                    ready.forEach { $0.resume(returning: true) }
+                    continuation.resume()
+                    return
+                }
+                held = continuation
+                lock.unlock()
+                ready.forEach { $0.resume(returning: true) }
+            }
+        } onCancel: {
+            lock.lock()
+            cancelled = true
+            let ready = takeWaiters(.cancelled)
+            lock.unlock()
+            ready.forEach { $0.resume(returning: true) }
+        }
+    }
+
+    func release() {
+        lock.lock()
+        released = true
+        let continuation = held
+        held = nil
+        lock.unlock()
+        continuation?.resume()
+    }
+
+    /// Resumes once a pass is being held.
+    func entered(file: StaticString = #filePath, line: UInt = #line) async {
+        await wait(for: .entered, "a runtime pass was never held", file: file, line: line)
+    }
+
+    /// Resumes once the held pass's task was cancelled.
+    func cancellationSeen(file: StaticString = #filePath, line: UInt = #line) async {
+        await wait(for: .cancelled, "the held pass never saw cancellation", file: file, line: line)
+    }
+
+    /// The 30 s bound is a hang guard, never reached on a pass: a
+    /// regression fails with `message` instead of hanging the suite.
+    private func wait(for condition: Condition, _ message: String, file: StaticString, line: UInt) async {
+        let id = lock.withLock { () -> UInt64 in
+            nextWaiterID &+= 1
+            return nextWaiterID
+        }
+        let hangGuard = Task { [weak self] in
+            do { try await Task.sleep(for: .seconds(30)) } catch { return }
+            self?.abandonWaiter(id)
+        }
+        let satisfied = await withCheckedContinuation { (continuation: CheckedContinuation<Bool, Never>) in
+            lock.lock()
+            let holds = condition == .entered ? entries > 0 : cancelled
+            if holds {
+                lock.unlock()
+                continuation.resume(returning: true)
+                return
+            }
+            waiters.append((id, condition, continuation))
+            lock.unlock()
+        }
+        hangGuard.cancel()
+        if !satisfied {
+            XCTFail(message, file: file, line: line)
+        }
+    }
+
+    /// Called with the lock held.
+    private func takeWaiters(_ condition: Condition) -> [CheckedContinuation<Bool, Never>] {
+        let ready = waiters.filter { $0.condition == condition }.map(\.continuation)
+        waiters.removeAll { $0.condition == condition }
+        return ready
+    }
+
+    private func abandonWaiter(_ id: UInt64) {
+        lock.lock()
+        let index = waiters.firstIndex { $0.id == id }
+        let waiter = index.map { waiters.remove(at: $0) }
+        lock.unlock()
+        waiter?.continuation.resume(returning: false)
+    }
 }
 
 enum StreamingTestFixtures {

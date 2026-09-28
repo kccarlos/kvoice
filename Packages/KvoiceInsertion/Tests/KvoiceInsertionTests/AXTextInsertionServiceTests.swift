@@ -2,6 +2,7 @@ import Foundation
 import XCTest
 @testable import KvoiceInsertion
 import KvoiceDomain
+import KvoiceTestSupport
 
 final class AXTextInsertionServiceTests: XCTestCase {
     func testCommittedTextEditFixturesUseDirectMutationOrExactFallback() async throws {
@@ -42,7 +43,8 @@ final class AXTextInsertionServiceTests: XCTestCase {
                 workspace: workspace,
                 axClient: ax,
                 trust: FakeTrust(isTrusted: true),
-                clipboard: clipboard
+                clipboard: clipboard,
+                clock: ParkingClock()
             )
 
             let outcome = try await service.insert(
@@ -153,7 +155,8 @@ final class AXTextInsertionServiceTests: XCTestCase {
             workspace: FakeWorkspace.repeating(frontmost(pid: 901, bundle: "com.apple.TextEdit")),
             axClient: ax,
             trust: FakeTrust(isTrusted: true),
-            clipboard: clipboard
+            clipboard: clipboard,
+            clock: ParkingClock()
         )
         let target = target(pid: 901, bundle: "com.apple.TextEdit", name: "TextEdit")
 
@@ -179,7 +182,8 @@ final class AXTextInsertionServiceTests: XCTestCase {
             workspace: FakeWorkspace(sequence: []),
             axClient: ax,
             trust: FakeTrust(isTrusted: true),
-            clipboard: clipboard
+            clipboard: clipboard,
+            clock: ParkingClock()
         )
 
         try await service.copyToClipboard("exact fallback", jobID: UUID())
@@ -202,7 +206,8 @@ final class AXTextInsertionServiceTests: XCTestCase {
             workspace: FakeWorkspace(sequence: [frontmost(pid: 200, bundle: "com.apple.TextEdit")]),
             axClient: ax,
             trust: FakeTrust(isTrusted: true),
-            clipboard: clipboard
+            clipboard: clipboard,
+            clock: ParkingClock()
         )
         let outcome = try await service.insert(
             "new text",
@@ -233,7 +238,8 @@ final class AXTextInsertionServiceTests: XCTestCase {
             workspace: FakeWorkspace(sequence: [original, original, switched]),
             axClient: ax,
             trust: FakeTrust(isTrusted: true),
-            clipboard: clipboard
+            clipboard: clipboard,
+            clock: ParkingClock()
         )
 
         let outcome = try await service.insert(
@@ -259,7 +265,8 @@ final class AXTextInsertionServiceTests: XCTestCase {
             workspace: FakeWorkspace.repeating(frontmost(pid: 211, bundle: "com.apple.TextEdit")),
             axClient: ax,
             trust: FakeTrust(isTrusted: true),
-            clipboard: clipboard
+            clipboard: clipboard,
+            clock: ParkingClock()
         )
         let target = TargetApplicationSnapshot(
             processIdentifier: 211,
@@ -292,7 +299,8 @@ final class AXTextInsertionServiceTests: XCTestCase {
             ),
             axClient: ax,
             trust: FakeTrust(isTrusted: true),
-            clipboard: clipboard
+            clipboard: clipboard,
+            clock: ParkingClock()
         )
 
         let outcome = try await service.insert(
@@ -318,7 +326,8 @@ final class AXTextInsertionServiceTests: XCTestCase {
             workspace: FakeWorkspace.repeating(frontmost(pid: 108, bundle: "com.apple.TextEdit")),
             axClient: ax,
             trust: FakeTrust(isTrusted: true),
-            clipboard: clipboard
+            clipboard: clipboard,
+            clock: ParkingClock()
         )
         let outcome = try await service.insert(
             "secret",
@@ -346,7 +355,8 @@ final class AXTextInsertionServiceTests: XCTestCase {
             workspace: FakeWorkspace.repeating(frontmost(pid: 109, bundle: "com.apple.TextEdit")),
             axClient: ax,
             trust: FakeTrust(isTrusted: true),
-            clipboard: clipboard
+            clipboard: clipboard,
+            clock: ParkingClock()
         )
 
         let outcome = try await service.insert(
@@ -376,7 +386,8 @@ final class AXTextInsertionServiceTests: XCTestCase {
                 entered: trustEntered,
                 release: releaseTrust
             ),
-            clipboard: clipboard
+            clipboard: clipboard,
+            clock: ParkingClock()
         )
         let capturedTarget = Self.target(pid: 110, bundle: "com.apple.TextEdit", name: "TextEdit")
         let task = Task {
@@ -387,7 +398,7 @@ final class AXTextInsertionServiceTests: XCTestCase {
             )
         }
 
-        XCTAssertEqual(trustEntered.wait(timeout: .now() + 1), .success)
+        await awaitSignal(trustEntered, "the trust check was never entered")
         task.cancel()
         releaseTrust.signal()
 
@@ -411,7 +422,8 @@ final class AXTextInsertionServiceTests: XCTestCase {
             workspace: FakeWorkspace.repeating(frontmost(pid: 301, bundle: "com.apple.TextEdit")),
             axClient: untrustedAX,
             trust: FakeTrust(isTrusted: false),
-            clipboard: untrustedClipboard
+            clipboard: untrustedClipboard,
+            clock: ParkingClock()
         )
         let untrustedOutcome = try await untrustedService.insert(
             "copy me",
@@ -440,7 +452,8 @@ final class AXTextInsertionServiceTests: XCTestCase {
             trust: FakeTrust(isTrusted: true),
             clipboard: unsupportedClipboard,
             keyPoster: unsupportedPoster,
-            typedInsertionEnabled: false
+            typedInsertionEnabled: false,
+            clock: ParkingClock()
         )
         let unsupportedOutcome = try await unsupportedService.insert(
             "copy me",
@@ -465,7 +478,8 @@ final class AXTextInsertionServiceTests: XCTestCase {
             workspace: FakeWorkspace.repeating(frontmost(pid: 303, bundle: "com.apple.TextEdit")),
             axClient: ax,
             trust: FakeTrust(isTrusted: true),
-            clipboard: clipboard
+            clipboard: clipboard,
+            clock: ParkingClock()
         )
 
         let outcome = try await service.insert(
@@ -491,7 +505,8 @@ final class AXTextInsertionServiceTests: XCTestCase {
             workspace: FakeWorkspace(sequence: [nil]),
             axClient: ax,
             trust: FakeTrust(isTrusted: true),
-            clipboard: clipboard
+            clipboard: clipboard,
+            clock: ParkingClock()
         )
 
         let outcome = try await service.insert(
@@ -517,7 +532,8 @@ final class AXTextInsertionServiceTests: XCTestCase {
             workspace: FakeWorkspace.repeating(frontmost(pid: 401, bundle: "com.apple.TextEdit")),
             axClient: ax,
             trust: FakeTrust(isTrusted: true),
-            clipboard: clipboard
+            clipboard: clipboard,
+            clock: ParkingClock()
         )
 
         let outcome = try await service.insert(
@@ -543,7 +559,8 @@ final class AXTextInsertionServiceTests: XCTestCase {
             workspace: FakeWorkspace.repeating(frontmost(pid: 402, bundle: "com.apple.TextEdit")),
             axClient: ax,
             trust: FakeTrust(isTrusted: true),
-            clipboard: clipboard
+            clipboard: clipboard,
+            clock: ParkingClock()
         )
         let oversized = String(repeating: "x", count: AXInsertionLimits.maxUTF8Bytes + 1)
 
@@ -571,7 +588,8 @@ final class AXTextInsertionServiceTests: XCTestCase {
             workspace: FakeWorkspace.repeating(frontmost(pid: 403, bundle: "com.apple.TextEdit")),
             axClient: oversizedValueAX,
             trust: FakeTrust(isTrusted: true),
-            clipboard: oversizedValueClipboard
+            clipboard: oversizedValueClipboard,
+            clock: ParkingClock()
         )
 
         let oversizedValueOutcome = try await oversizedValueService.insert(
@@ -594,7 +612,8 @@ final class AXTextInsertionServiceTests: XCTestCase {
             workspace: FakeWorkspace.repeating(frontmost(pid: 404, bundle: "com.apple.TextEdit")),
             axClient: oversizedRangeAX,
             trust: FakeTrust(isTrusted: true),
-            clipboard: oversizedRangeClipboard
+            clipboard: oversizedRangeClipboard,
+            clock: ParkingClock()
         )
 
         let oversizedRangeOutcome = try await oversizedRangeService.insert(
@@ -608,27 +627,33 @@ final class AXTextInsertionServiceTests: XCTestCase {
     }
 
     func testSelectedTextSetFailureIsUncertainAndDoesNotFallbackOrSplice() async throws {
+        let setBlock = AXCallBlock()
         let ax = FakeAXClient(
             processIdentifier: 405,
             value: "before",
             selectedRange: AXTextRange(location: 6, length: 0),
-            delayedSetDuration: .milliseconds(180)
+            setBlock: setBlock
         )
         let clipboard = FakeClipboard(value: "sentinel", changeCount: 93)
+        let clock = ParkingClock()
+        let executor = SerialAXExecutor(timeout: .milliseconds(20), clock: clock)
         let service = AXTextInsertionService(
             workspace: FakeWorkspace.repeating(frontmost(pid: 405, bundle: "com.apple.TextEdit")),
             axClient: ax,
             trust: FakeTrust(isTrusted: true),
             clipboard: clipboard,
-            timeout: .milliseconds(20)
+            executor: executor
         )
+        let capturedTarget = Self.target(pid: 405, bundle: "com.apple.TextEdit", name: "TextEdit")
+        let task = Task { try await service.insert("!", into: capturedTarget, jobID: UUID()) }
+
+        // The set has reached the target and is stuck; the timeout fires.
+        await setBlock.entered()
+        await clock.waitForSleepers(1)
+        clock.advance(by: .milliseconds(20))
 
         do {
-            _ = try await service.insert(
-                "!",
-                into: target(pid: 405, bundle: "com.apple.TextEdit", name: "TextEdit"),
-                jobID: UUID()
-            )
+            _ = try await task.value
             XCTFail("a timed-out in-flight mutation must be reported as uncertain")
         } catch let error as KVoiceError {
             XCTAssertEqual(error.code, .accessibilityVerifyFailed)
@@ -637,55 +662,67 @@ final class AXTextInsertionServiceTests: XCTestCase {
 
         XCTAssertEqual(clipboard.writeCount, 0)
         XCTAssertEqual(ax.setOperations, [.selectedText])
-        try await Task.sleep(for: .milliseconds(220))
+        // The late set lands after the caller was told "uncertain".
+        setBlock.release()
+        await setBlock.returned()
+        _ = try await executor.run { () }
         XCTAssertEqual(ax.valueText, "before!")
+        XCTAssertEqual(clock.pendingSleepCount, 0, "every finished operation cancels its timer")
     }
 
     func testLateSetAfterTimeoutIsSuppressedByOperationGate() async throws {
+        let rangeReadBlock = AXCallBlock()
         let ax = FakeAXClient(
             processIdentifier: 406,
             value: "before",
             selectedRange: AXTextRange(location: 6, length: 0),
-            blockedValueDuration: .milliseconds(180)
+            rangeReadBlock: rangeReadBlock
         )
         let clipboard = FakeClipboard(value: "sentinel", changeCount: 94)
+        let clock = ParkingClock()
+        let executor = SerialAXExecutor(timeout: .milliseconds(20), clock: clock)
         let service = AXTextInsertionService(
             workspace: FakeWorkspace.repeating(frontmost(pid: 406, bundle: "com.apple.TextEdit")),
             axClient: ax,
             trust: FakeTrust(isTrusted: true),
             clipboard: clipboard,
-            timeout: .milliseconds(20)
+            executor: executor
         )
+        let capturedTarget = Self.target(pid: 406, bundle: "com.apple.TextEdit", name: "TextEdit")
+        let task = Task { try await service.insert("!", into: capturedTarget, jobID: UUID()) }
 
-        let outcome = try await service.insert(
-            "!",
-            into: target(pid: 406, bundle: "com.apple.TextEdit", name: "TextEdit"),
-            jobID: UUID()
-        )
+        await rangeReadBlock.entered()
+        await clock.waitForSleepers(1)
+        clock.advance(by: .milliseconds(20))
+        let outcome = try await task.value
 
         XCTAssertEqual(outcome, .copiedToClipboard(reason: .timeout))
         XCTAssertEqual(clipboard.writeCount, 1)
-        try await Task.sleep(for: .milliseconds(220))
+        // Let the stuck read return and the rest of the stale operation run
+        // to the end of the queue: the invalidated gate must refuse its set.
+        rangeReadBlock.release()
+        _ = try await executor.run { () }
         XCTAssertTrue(ax.setOperations.isEmpty)
         XCTAssertEqual(ax.valueText, "before")
     }
 
     func testCancellationDuringBlockedAXOperationDoesNotWriteClipboard() async throws {
-        let focusStarted = DispatchSemaphore(value: 0)
+        let focusBlock = AXCallBlock()
         let ax = FakeAXClient(
             processIdentifier: 408,
             value: "before",
             selectedRange: AXTextRange(location: 6, length: 0),
-            blockedFocusDuration: .milliseconds(180),
-            focusStarted: focusStarted
+            focusBlock: focusBlock
         )
         let clipboard = FakeClipboard(value: "sentinel", changeCount: 96)
+        // The clock is never advanced: only cancellation can end the call.
+        let executor = SerialAXExecutor(timeout: .seconds(1), clock: ParkingClock())
         let service = AXTextInsertionService(
             workspace: FakeWorkspace.repeating(frontmost(pid: 408, bundle: "com.apple.TextEdit")),
             axClient: ax,
             trust: FakeTrust(isTrusted: true),
             clipboard: clipboard,
-            timeout: .seconds(1)
+            executor: executor
         )
         let capturedTarget = Self.target(pid: 408, bundle: "com.apple.TextEdit", name: "TextEdit")
         let task = Task {
@@ -696,7 +733,7 @@ final class AXTextInsertionServiceTests: XCTestCase {
             )
         }
 
-        XCTAssertEqual(focusStarted.wait(timeout: .now() + 1), .success)
+        await focusBlock.entered()
         task.cancel()
 
         do {
@@ -706,38 +743,84 @@ final class AXTextInsertionServiceTests: XCTestCase {
             // Expected.
         }
         XCTAssertEqual(clipboard.writeCount, 0)
-        try await Task.sleep(for: .milliseconds(220))
+        focusBlock.release()
+        _ = try await executor.run { () }
         XCTAssertTrue(ax.setOperations.isEmpty)
     }
 
+    /// The first attempt's timer is armed at t0 (deadline t0+100). Attempt 1
+    /// fails with `cannotComplete` at t0+50 and the retry arms its own timer
+    /// (deadline t0+150). Time then moves to t0+120 while the retry is still
+    /// running — past the first deadline, short of the second. A stale first
+    /// timer would fire here and invalidate the shared gate; the retry must
+    /// still be able to begin its mutation.
     func testCannotCompleteRetryDoesNotLoseGateNearFirstTimeout() async throws {
-        let executor = SerialAXExecutor(timeout: .milliseconds(100))
+        let clock = ParkingClock()
+        let executor = SerialAXExecutor(timeout: .milliseconds(100), clock: clock)
         let gate = AXOperationGate()
-        let firstAttemptStarted = DispatchSemaphore(value: 0)
+        let firstAttempt = AXCallBlock()
+        let secondAttempt = AXCallBlock()
         let attempts = AttemptCounter()
 
-        let result = try await executor.runWithCannotCompleteRetry(gate: gate) {
-            let attempt = attempts.next()
-
-            if attempt == 1 {
-                firstAttemptStarted.signal()
-                Thread.sleep(forTimeInterval: 0.05)
-                throw AXClientError.cannotComplete
+        let task = Task {
+            try await executor.runWithCannotCompleteRetry(gate: gate) {
+                let attempt = attempts.next()
+                if attempt == 1 {
+                    firstAttempt.enterAndWaitForRelease()
+                    throw AXClientError.cannotComplete
+                }
+                secondAttempt.enterAndWaitForRelease()
+                guard gate.beginMutation() else {
+                    throw AXOperationGateError.invalidated
+                }
+                return "retried"
             }
-
-            // This overlaps the first invocation's original deadline. A
-            // stale first timer would invalidate the shared gate here.
-            Thread.sleep(forTimeInterval: 0.07)
-            guard gate.beginMutation() else {
-                throw AXOperationGateError.invalidated
-            }
-            return "retried"
         }
 
-        XCTAssertEqual(firstAttemptStarted.wait(timeout: .now() + 1), .success)
+        await firstAttempt.entered()
+        await clock.waitForSleepers(1)
+        clock.advance(by: .milliseconds(50))
+        firstAttempt.release()
+
+        await secondAttempt.entered()
+        await clock.waitForSleepers(1)
+        XCTAssertEqual(clock.pendingSleepCount, 1, "the first attempt's timer was cancelled; only the retry's is armed")
+        clock.advance(by: .milliseconds(70))
+        secondAttempt.release()
+
+        let result = try await task.value
         XCTAssertEqual(result, "retried")
         XCTAssertEqual(attempts.value, 2)
         XCTAssertTrue(gate.isMutationStarted)
+    }
+
+    /// The timer fires when the clock passes the deadline, even though the
+    /// operation never returns on its own — and not one tick before.
+    func testExecutorTimeoutFiresOnlyWhenTheClockPassesTheDeadline() async throws {
+        let clock = ParkingClock()
+        let executor = SerialAXExecutor(timeout: .milliseconds(100), clock: clock)
+        let gate = AXOperationGate()
+        let block = AXCallBlock()
+        let task = Task {
+            try await executor.run(gate: gate) { block.enterAndWaitForRelease() }
+        }
+
+        await block.entered()
+        await clock.waitForSleepers(1)
+        XCTAssertEqual(clock.pendingDurations, [.milliseconds(100)])
+        clock.advance(by: .milliseconds(99))
+        XCTAssertEqual(clock.pendingSleepCount, 1, "one tick short of the deadline, still waiting")
+        clock.advance(by: .milliseconds(1))
+
+        do {
+            try await task.value
+            XCTFail("expected the executor timeout")
+        } catch AXExecutionError.timeout {
+            // Expected.
+        }
+        XCTAssertFalse(gate.beginMutation(), "a timeout invalidates the gate")
+        block.release()
+        _ = try await executor.run { () }
     }
 
     func testTextEditCaretFailureAfterValueWriteNeverCopiesToClipboard() async throws {
@@ -753,7 +836,8 @@ final class AXTextInsertionServiceTests: XCTestCase {
             workspace: FakeWorkspace.repeating(frontmost(pid: 407, bundle: "com.apple.TextEdit")),
             axClient: ax,
             trust: FakeTrust(isTrusted: true),
-            clipboard: clipboard
+            clipboard: clipboard,
+            clock: ParkingClock()
         )
 
         do {
@@ -786,7 +870,8 @@ final class AXTextInsertionServiceTests: XCTestCase {
             axClient: ax,
             trust: FakeTrust(isTrusted: true),
             clipboard: clipboard,
-            timeout: .milliseconds(100)
+            timeout: .milliseconds(100),
+            clock: ParkingClock()
         )
 
         let outcome = try await service.insert(
@@ -814,7 +899,8 @@ final class AXTextInsertionServiceTests: XCTestCase {
             axClient: ax,
             trust: FakeTrust(isTrusted: true),
             clipboard: clipboard,
-            timeout: .milliseconds(100)
+            timeout: .milliseconds(100),
+            clock: ParkingClock()
         )
 
         let outcome = try await service.insert(
@@ -829,33 +915,41 @@ final class AXTextInsertionServiceTests: XCTestCase {
         XCTAssertEqual(clipboard.writeCount, 1)
     }
 
+    /// "Bounded" is proven by ordering, not by a stopwatch: the outcome
+    /// arrives while the blocked AX call is still stuck, because the test
+    /// releases that call only afterwards.
     func testTimeoutIsBoundedAndCopiesWithoutWaitingForBlockedAXCall() async throws {
+        let focusBlock = AXCallBlock()
         let ax = FakeAXClient(
             processIdentifier: 503,
             value: "before",
             selectedRange: AXTextRange(location: 0, length: 0),
-            blockedFocusDuration: .milliseconds(180)
+            focusBlock: focusBlock
         )
         let clipboard = FakeClipboard(value: "sentinel", changeCount: 12)
+        let clock = ParkingClock()
+        let executor = SerialAXExecutor(timeout: .milliseconds(20), clock: clock)
         let service = AXTextInsertionService(
             workspace: FakeWorkspace.repeating(frontmost(pid: 503, bundle: "com.apple.TextEdit")),
             axClient: ax,
             trust: FakeTrust(isTrusted: true),
             clipboard: clipboard,
-            timeout: .milliseconds(20)
+            executor: executor
         )
-        let started = ContinuousClock().now
+        let capturedTarget = Self.target(pid: 503, bundle: "com.apple.TextEdit", name: "TextEdit")
+        let task = Task { try await service.insert("!", into: capturedTarget, jobID: UUID()) }
 
-        let outcome = try await service.insert(
-            "!",
-            into: target(pid: 503, bundle: "com.apple.TextEdit", name: "TextEdit"),
-            jobID: UUID()
-        )
-        let elapsed = started.duration(to: ContinuousClock().now)
+        await focusBlock.entered()
+        await clock.waitForSleepers(1)
+        clock.advance(by: .milliseconds(20))
+        let outcome = try await task.value
 
         XCTAssertEqual(outcome, .copiedToClipboard(reason: .timeout))
-        XCTAssertLessThan(elapsed, .milliseconds(120))
         XCTAssertTrue(ax.setOperations.isEmpty)
+        XCTAssertEqual(clipboard.writeCount, 1)
+        focusBlock.release()
+        _ = try await executor.run { () }
+        XCTAssertTrue(ax.setOperations.isEmpty, "the unblocked stale operation never mutates")
         XCTAssertEqual(clipboard.writeCount, 1)
     }
 
@@ -870,7 +964,8 @@ final class AXTextInsertionServiceTests: XCTestCase {
             workspace: FakeWorkspace.repeating(frontmost(pid: 601, bundle: "com.apple.TextEdit")),
             axClient: ax,
             trust: FakeTrust(isTrusted: true),
-            clipboard: clipboard
+            clipboard: clipboard,
+            clock: ParkingClock()
         )
 
         let outcome = try await service.insert(
@@ -950,7 +1045,7 @@ final class AXTextInsertionServiceTests: XCTestCase {
         )
         let clipboard = FakeClipboard(value: "sentinel", changeCount: 11)
         let poster = FakeKeyPoster()
-        let diagnostics = RecordingDiagnostics()
+        let diagnostics = RecordingDiagnosticLog()
         let service = AXTextInsertionService(
             workspace: FakeWorkspace.repeating(frontmost(pid: 700, bundle: "com.apple.Terminal")),
             axClient: ax,
@@ -958,7 +1053,8 @@ final class AXTextInsertionServiceTests: XCTestCase {
             clipboard: clipboard,
             diagnostics: diagnostics,
             keyPoster: poster,
-            typedChunkPacing: .zero
+            typedChunkPacing: .zero,
+            clock: ParkingClock()
         )
 
         let text = "echo hello from kvoice — 你好 👋 done"
@@ -1007,7 +1103,8 @@ final class AXTextInsertionServiceTests: XCTestCase {
             trust: FakeTrust(isTrusted: true),
             clipboard: clipboard,
             keyPoster: poster,
-            typedChunkPacing: .zero
+            typedChunkPacing: .zero,
+            clock: ParkingClock()
         )
 
         let outcome = try await service.insert(
@@ -1040,7 +1137,8 @@ final class AXTextInsertionServiceTests: XCTestCase {
             trust: FakeTrust(isTrusted: true),
             clipboard: FakeClipboard(value: "", changeCount: 0),
             keyPoster: FakeKeyPoster(),
-            typedChunkPacing: .zero
+            typedChunkPacing: .zero,
+            clock: ParkingClock()
         )
         await service.setTypedInsertionEnabled(false)
 
@@ -1071,7 +1169,8 @@ final class AXTextInsertionServiceTests: XCTestCase {
             trust: FakeTrust(isTrusted: true),
             clipboard: FakeClipboard(value: nil, changeCount: 0),
             keyPoster: poster,
-            typedChunkPacing: .zero
+            typedChunkPacing: .zero,
+            clock: ParkingClock()
         )
 
         let outcome = try await service.insert(
@@ -1108,7 +1207,8 @@ final class AXTextInsertionServiceTests: XCTestCase {
             trust: FakeTrust(isTrusted: true),
             clipboard: clipboard,
             keyPoster: poster,
-            typedChunkPacing: .zero
+            typedChunkPacing: .zero,
+            clock: ParkingClock()
         )
 
         let outcome = try await service.insert(
@@ -1142,7 +1242,8 @@ final class AXTextInsertionServiceTests: XCTestCase {
             trust: FakeTrust(isTrusted: true),
             clipboard: clipboard,
             keyPoster: poster,
-            typedChunkPacing: .zero
+            typedChunkPacing: .zero,
+            clock: ParkingClock()
         )
 
         let outcome = try await service.insert(
@@ -1183,7 +1284,8 @@ final class AXTextInsertionServiceTests: XCTestCase {
             trust: FakeTrust(isTrusted: true),
             clipboard: clipboard,
             keyPoster: poster,
-            typedChunkPacing: .zero
+            typedChunkPacing: .zero,
+            clock: ParkingClock()
         )
 
         let outcome = try await service.insert(
@@ -1216,7 +1318,8 @@ final class AXTextInsertionServiceTests: XCTestCase {
             trust: FakeTrust(isTrusted: true),
             clipboard: clipboard,
             keyPoster: poster,
-            typedChunkPacing: .zero
+            typedChunkPacing: .zero,
+            clock: ParkingClock()
         )
         XCTAssertTrue(service.isTypedInsertionEnabled, "default is on")
         service.setTypedInsertionEnabled(false)
@@ -1250,7 +1353,8 @@ final class AXTextInsertionServiceTests: XCTestCase {
             trust: FakeTrust(isTrusted: true),
             clipboard: FakeClipboard(value: nil, changeCount: 0),
             keyPoster: poster,
-            typedChunkPacing: .zero
+            typedChunkPacing: .zero,
+            clock: ParkingClock()
         )
 
         let outcome = try await service.insert(
@@ -1284,7 +1388,8 @@ final class AXTextInsertionServiceTests: XCTestCase {
                 trust: FakeTrust(isTrusted: true),
                 clipboard: clipboard,
                 keyPoster: poster,
-                typedChunkPacing: .zero
+                typedChunkPacing: .zero,
+                clock: ParkingClock()
             )
 
             let outcome = try await service.insert(
@@ -1318,7 +1423,8 @@ final class AXTextInsertionServiceTests: XCTestCase {
             trust: FakeTrust(isTrusted: true),
             clipboard: clipboard,
             keyPoster: poster,
-            typedChunkPacing: .zero
+            typedChunkPacing: .zero,
+            clock: ParkingClock()
         )
 
         do {
@@ -1354,7 +1460,8 @@ final class AXTextInsertionServiceTests: XCTestCase {
             trust: FakeTrust(isTrusted: true),
             clipboard: clipboard,
             keyPoster: poster,
-            typedChunkPacing: .zero
+            typedChunkPacing: .zero,
+            clock: ParkingClock()
         )
 
         do {
@@ -1384,13 +1491,14 @@ final class AXTextInsertionServiceTests: XCTestCase {
                 selectedTextSettable: false, valueSettable: false, rangeSettable: false,
                 role: "AXTextArea", subrole: nil
             )
-            let diagnostics = RecordingDiagnostics()
+            let diagnostics = RecordingDiagnosticLog()
             let service = AXTextInsertionService(
                 workspace: FakeWorkspace.repeating(frontmost(pid: 709, bundle: "com.apple.Terminal")),
                 axClient: ax, trust: FakeTrust(isTrusted: true),
                 clipboard: FakeClipboard(value: "sentinel", changeCount: 3),
                 diagnostics: diagnostics,
-                keyPoster: FakeKeyPoster(failAtChunkIndex: 1), typedChunkPacing: .zero
+                keyPoster: FakeKeyPoster(failAtChunkIndex: 1), typedChunkPacing: .zero,
+                clock: ParkingClock()
             )
             do {
                 _ = try await service.insert(String(repeating: "a", count: 45), into: target(pid: 709, bundle: "com.apple.Terminal", name: "Terminal"), jobID: UUID())
@@ -1403,7 +1511,7 @@ final class AXTextInsertionServiceTests: XCTestCase {
             XCTAssertEqual(uncertain.first?.errorCode, .accessibilityVerifyFailed)
             XCTAssertEqual(uncertain.first?.attributes.site?.rawValue, "typedPoster")
             XCTAssertEqual(uncertain.first?.attributes.reason?.rawValue, "mutationUnverified")
-            let failed = await diagnostics.events(named: .insertionFailed)
+            let failed = await diagnostics.eventsAfterSettling(named: .insertionFailed)
             XCTAssertTrue(failed.isEmpty, "one line, not two")
         }
         // 2. TextEdit splice: the value write lands, the caret write fails.
@@ -1412,12 +1520,13 @@ final class AXTextInsertionServiceTests: XCTestCase {
                 processIdentifier: 405, value: "before", selectedRange: AXTextRange(location: 6, length: 0),
                 selectedTextSettable: false, rangeSetFailure: .cannotComplete
             )
-            let diagnostics = RecordingDiagnostics()
+            let diagnostics = RecordingDiagnosticLog()
             let service = AXTextInsertionService(
                 workspace: FakeWorkspace.repeating(frontmost(pid: 405, bundle: "com.apple.TextEdit")),
                 axClient: ax, trust: FakeTrust(isTrusted: true),
                 clipboard: FakeClipboard(value: "sentinel", changeCount: 3),
-                diagnostics: diagnostics
+                diagnostics: diagnostics,
+                clock: ParkingClock()
             )
             do {
                 _ = try await service.insert("!", into: target(pid: 405, bundle: "com.apple.TextEdit", name: "TextEdit"), jobID: UUID())
@@ -1429,36 +1538,46 @@ final class AXTextInsertionServiceTests: XCTestCase {
         }
         // 3. A mutation still in flight at the timeout.
         do {
+            let setBlock = AXCallBlock()
             let ax = FakeAXClient(
                 processIdentifier: 405, value: "before", selectedRange: AXTextRange(location: 6, length: 0),
-                delayedSetDuration: .milliseconds(180)
+                setBlock: setBlock
             )
-            let diagnostics = RecordingDiagnostics()
+            let diagnostics = RecordingDiagnosticLog()
+            let clock = ParkingClock()
+            let executor = SerialAXExecutor(timeout: .milliseconds(20), clock: clock)
             let service = AXTextInsertionService(
                 workspace: FakeWorkspace.repeating(frontmost(pid: 405, bundle: "com.apple.TextEdit")),
                 axClient: ax, trust: FakeTrust(isTrusted: true),
                 clipboard: FakeClipboard(value: "sentinel", changeCount: 3),
-                timeout: .milliseconds(20), diagnostics: diagnostics
+                executor: executor, diagnostics: diagnostics
             )
+            let capturedTarget = Self.target(pid: 405, bundle: "com.apple.TextEdit", name: "TextEdit")
+            let task = Task { try await service.insert("!", into: capturedTarget, jobID: UUID()) }
+            await setBlock.entered()
+            await clock.waitForSleepers(1)
+            clock.advance(by: .milliseconds(20))
             do {
-                _ = try await service.insert("!", into: target(pid: 405, bundle: "com.apple.TextEdit", name: "TextEdit"), jobID: UUID())
+                _ = try await task.value
                 XCTFail("expected an uncertain-mutation error")
             } catch is KVoiceError {}
             let uncertain = await diagnostics.events(named: .insertionUncertain)
             XCTAssertEqual(uncertain.count, 1)
             XCTAssertEqual(uncertain.first?.attributes.site?.rawValue, "executorTimeoutAfterMutation")
-            try await Task.sleep(for: .milliseconds(220)) // let the late set unwind
+            setBlock.release() // let the late set unwind
+            _ = try await executor.run { () }
         }
         // 4. The clipboard fallback itself cannot write: `insertion.failed`
         //    names the gate that fell back, so both facts are in one line.
         do {
             let ax = FakeAXClient(processIdentifier: 304, value: "unchanged", selectedRange: AXTextRange(location: 0, length: 0))
-            let diagnostics = RecordingDiagnostics()
+            let diagnostics = RecordingDiagnosticLog()
             let service = AXTextInsertionService(
                 workspace: FakeWorkspace(sequence: [nil]),
                 axClient: ax, trust: FakeTrust(isTrusted: true),
                 clipboard: FakeClipboard(value: "sentinel", changeCount: 4, writeFailure: KVoiceError(code: .clipboardWriteFailed)),
-                diagnostics: diagnostics
+                diagnostics: diagnostics,
+                clock: ParkingClock()
             )
             do {
                 _ = try await service.insert("copy me", into: target(pid: 304, bundle: "com.apple.TextEdit", name: "TextEdit"), jobID: UUID())
@@ -1481,12 +1600,8 @@ final class AXTextInsertionServiceTests: XCTestCase {
                 try await service.copyToClipboard("copy me", jobID: UUID())
                 XCTFail("expected the clipboard failure to propagate")
             } catch is KVoiceError {}
-            var direct = await diagnostics.events(named: .insertionFailed)
             // Fire-and-forget emission: wait for the second line to land.
-            for _ in 0..<40 where direct.count < 2 {
-                try await Task.sleep(for: .milliseconds(5))
-                direct = await diagnostics.events(named: .insertionFailed)
-            }
+            let direct = await diagnostics.events(named: .insertionFailed, count: 2)
             XCTAssertEqual(direct.count, 2)
             XCTAssertEqual(direct.last?.attributes.site?.rawValue, "directClipboardCopy")
         }
@@ -1512,14 +1627,17 @@ final class AXTextInsertionServiceTests: XCTestCase {
             trust: FakeTrust(isTrusted: true),
             clipboard: clipboard,
             keyPoster: poster,
-            typedChunkPacing: .milliseconds(50)
+            // Long enough that only cancellation can end the pause after
+            // the first chunk: the outcome never depends on machine speed.
+            typedChunkPacing: .seconds(60),
+            clock: ParkingClock()
         )
         let target = target(pid: 710, bundle: "com.apple.Terminal", name: "Terminal")
 
         let task = Task {
             try await service.insert(String(repeating: "b", count: 200), into: target, jobID: UUID())
         }
-        XCTAssertEqual(firstChunkPosted.wait(timeout: .now() + 2), .success)
+        await awaitSignal(firstChunkPosted, "the first chunk was never posted")
         task.cancel()
 
         do {
@@ -1528,7 +1646,7 @@ final class AXTextInsertionServiceTests: XCTestCase {
         } catch let error as KVoiceError {
             XCTAssertEqual(error.code, .accessibilityVerifyFailed)
         }
-        XCTAssertLessThan(poster.posted.count, 10, "typing must stop once cancelled")
+        XCTAssertEqual(poster.posted.count, 1, "typing must stop once cancelled")
         XCTAssertEqual(clipboard.writeCount, 0)
     }
 
@@ -1551,7 +1669,8 @@ final class AXTextInsertionServiceTests: XCTestCase {
             trust: FakeTrust(isTrusted: true),
             clipboard: clipboard,
             keyPoster: poster,
-            typedChunkPacing: .zero
+            typedChunkPacing: .zero,
+            clock: ParkingClock()
         )
 
         let outcome = try await service.insert(
@@ -1831,10 +1950,11 @@ private final class FakeAXClient: AXElementClient, @unchecked Sendable {
     private let valueSettable: Bool
     private let rangeSettable: Bool
     private var focusFailures: [AXClientError]
-    private let blockedFocusDuration: Duration?
-    private let focusStarted: DispatchSemaphore?
-    private let blockedValueDuration: Duration?
-    private let delayedSetDuration: Duration?
+    /// Where a call blocks on the AX queue until the test releases it — the
+    /// stand-in for a hung target app. No call ever sleeps for real time.
+    private let focusBlock: AXCallBlock?
+    private let rangeReadBlock: AXCallBlock?
+    private let setBlock: AXCallBlock?
     private let rangeSetFailure: AXClientError?
     private let selectedTextSetFailure: AXClientError?
     private let secureMetadataOverride: AXSecureMetadata?
@@ -1859,10 +1979,9 @@ private final class FakeAXClient: AXElementClient, @unchecked Sendable {
         valueSettable: Bool = true,
         rangeSettable: Bool = true,
         focusFailures: [AXClientError] = [],
-        blockedFocusDuration: Duration? = nil,
-        focusStarted: DispatchSemaphore? = nil,
-        blockedValueDuration: Duration? = nil,
-        delayedSetDuration: Duration? = nil,
+        focusBlock: AXCallBlock? = nil,
+        rangeReadBlock: AXCallBlock? = nil,
+        setBlock: AXCallBlock? = nil,
         rangeSetFailure: AXClientError? = nil,
         selectedTextSetFailure: AXClientError? = nil,
         secureMetadataOverride: AXSecureMetadata? = nil,
@@ -1878,10 +1997,9 @@ private final class FakeAXClient: AXElementClient, @unchecked Sendable {
         self.valueSettable = valueSettable
         self.rangeSettable = rangeSettable
         self.focusFailures = focusFailures
-        self.blockedFocusDuration = blockedFocusDuration
-        self.focusStarted = focusStarted
-        self.blockedValueDuration = blockedValueDuration
-        self.delayedSetDuration = delayedSetDuration
+        self.focusBlock = focusBlock
+        self.rangeReadBlock = rangeReadBlock
+        self.setBlock = setBlock
         self.rangeSetFailure = rangeSetFailure
         self.selectedTextSetFailure = selectedTextSetFailure
         self.secureMetadataOverride = secureMetadataOverride
@@ -1892,10 +2010,7 @@ private final class FakeAXClient: AXElementClient, @unchecked Sendable {
     }
 
     func focusedElement() throws -> AXElementHandle? {
-        focusStarted?.signal()
-        if let blockedFocusDuration {
-            Thread.sleep(forTimeInterval: blockedFocusDuration.timeInterval)
-        }
+        focusBlock?.enterAndWaitForRelease()
         lock.lock()
         defer { lock.unlock() }
         focusedCallCount += 1
@@ -1937,8 +2052,8 @@ private final class FakeAXClient: AXElementClient, @unchecked Sendable {
         _ attribute: AXAttribute,
         of _: AXElementHandle
     ) throws -> AXAttributeValue? {
-        if attribute == .selectedTextRange, let blockedValueDuration {
-            Thread.sleep(forTimeInterval: blockedValueDuration.timeInterval)
+        if attribute == .selectedTextRange {
+            rangeReadBlock?.enterAndWaitForRelease()
         }
         lock.lock()
         defer { lock.unlock() }
@@ -1966,9 +2081,10 @@ private final class FakeAXClient: AXElementClient, @unchecked Sendable {
         setOperations.append(attribute)
         lock.unlock()
 
-        if let delayedSetDuration {
-            Thread.sleep(forTimeInterval: delayedSetDuration.timeInterval)
-        }
+        // A set that is slow to land: it has already reached the target
+        // (recorded above) and applies once the test releases it.
+        setBlock?.enterAndWaitForRelease()
+        defer { setBlock?.markReturned() }
 
         lock.lock()
         defer { lock.unlock() }
@@ -2036,27 +2152,54 @@ private final class FakeKeyPoster: KeyboardEventPosting, @unchecked Sendable {
     }
 }
 
-private actor RecordingDiagnostics: DiagnosticLogging {
-    private var events: [DiagnosticEvent] = []
+/// A fake AX call that blocks the serial AX queue until the test releases
+/// it. The fake calls `enterAndWaitForRelease()` on the AX queue; the test
+/// awaits `entered()`, decides what happens while the call is stuck (usually:
+/// advance the clock past the timeout), then `release()`s it.
+private final class AXCallBlock: @unchecked Sendable {
+    private let enteredSignal = DispatchSemaphore(value: 0)
+    private let releaseSignal = DispatchSemaphore(value: 0)
+    private let returnedSignal = DispatchSemaphore(value: 0)
 
-    func log(_ event: DiagnosticEvent) async {
-        events.append(event)
+    func enterAndWaitForRelease() {
+        enteredSignal.signal()
+        // A hang guard, never reached on a pass: a test that forgets to
+        // release fails on its own assertions instead of wedging the queue.
+        _ = releaseSignal.wait(timeout: .now() + 30)
     }
 
-    func events(named name: DiagnosticEventName) async -> [DiagnosticEvent] {
-        // Emission is fire-and-forget; yield so the logging task lands first.
-        for _ in 0..<20 where !events.contains(where: { $0.name == name }) {
-            await Task.yield()
-            try? await Task.sleep(for: .milliseconds(5))
-        }
-        return events.filter { $0.name == name }
+    func markReturned() {
+        returnedSignal.signal()
+    }
+
+    func release() {
+        releaseSignal.signal()
+    }
+
+    func entered() async {
+        await awaitSignal(enteredSignal, "the blocked AX call was never entered")
+    }
+
+    func returned() async {
+        await awaitSignal(returnedSignal, "the blocked AX call never returned")
     }
 }
 
-private extension Duration {
-    var timeInterval: TimeInterval {
-        let components = self.components
-        return TimeInterval(components.seconds)
-            + TimeInterval(components.attoseconds) / 1_000_000_000_000_000_000
+/// Waits for a semaphore off the concurrency pool. The bound is a hang
+/// guard, not a timing assumption: every signal it waits for is one the
+/// test itself causes.
+private func awaitSignal(
+    _ semaphore: DispatchSemaphore,
+    _ message: String,
+    file: StaticString = #filePath,
+    line: UInt = #line
+) async {
+    let result = await withCheckedContinuation { (continuation: CheckedContinuation<DispatchTimeoutResult, Never>) in
+        DispatchQueue.global().async {
+            continuation.resume(returning: semaphore.wait(timeout: .now() + 30))
+        }
+    }
+    if result == .timedOut {
+        XCTFail(message, file: file, line: line)
     }
 }

@@ -213,7 +213,7 @@ let package = Package(
         ),
         .testTarget(
             name: "KvoiceInsertionTests",
-            dependencies: ["KvoiceInsertion", "KvoiceDomain"],
+            dependencies: ["KvoiceInsertion", "KvoiceDomain", "KvoiceTestSupport"],
             path: "Packages/KvoiceInsertion/Tests/KvoiceInsertionTests"
         ),
         .testTarget(

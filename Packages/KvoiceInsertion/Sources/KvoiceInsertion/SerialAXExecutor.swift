@@ -1,22 +1,29 @@
 import Foundation
+import KvoiceDomain
 
 /// A single queue for all native Accessibility messages.
 ///
 /// AXUIElement messaging is synchronous IPC.  Keeping every operation on one
 /// private serial queue makes ordering deterministic and prevents two
 /// concurrent insertion attempts from interleaving reads and writes.  The
-/// timeout races the queue operation from a separate timer queue; native AX
-/// calls also receive the same bound in `NativeAXElementClient`.
+/// timeout races the queue operation from a separate task sleeping on the
+/// injected `KvoiceClock` (production: `SystemKvoiceClock`, the continuous
+/// clock; tests: a clock they advance by hand, so a timeout fires when the
+/// test says and never because the machine was slow).  Native AX calls also
+/// receive the same bound in `NativeAXElementClient`.
 public final class SerialAXExecutor: @unchecked Sendable {
     private let queue: DispatchQueue
     private let timeoutNanoseconds: UInt64
+    private let clock: any KvoiceClock
 
     public init(
         label: String = "io.github.kccarlos.kvoice.accessibility",
-        timeout: Duration = .seconds(1)
+        timeout: Duration = .seconds(1),
+        clock: any KvoiceClock = SystemKvoiceClock()
     ) {
         queue = DispatchQueue(label: label, qos: .userInitiated)
         timeoutNanoseconds = Self.nanoseconds(for: timeout)
+        self.clock = clock
     }
 
     public var timeout: Duration {
@@ -49,7 +56,17 @@ public final class SerialAXExecutor: @unchecked Sendable {
 
                 // Do not put the timer on the AX queue: a blocked native
                 // message must not prevent the timeout from being delivered.
-                let timeoutItem = DispatchWorkItem {
+                // The timer is a detached task, so it runs on the concurrency
+                // pool whatever the AX queue is doing.
+                let clock = self.clock
+                let timeout = self.timeout
+                let timeoutTask = Task.detached(priority: .utility) {
+                    do {
+                        try await clock.sleep(for: timeout)
+                    } catch {
+                        // Cancelled: the invocation finished first.
+                        return
+                    }
                     // Invalidate before publishing timeout.  The operation may
                     // remain on the serial queue after this caller returns,
                     // but every later mutation attempt will now be rejected.
@@ -57,11 +74,7 @@ public final class SerialAXExecutor: @unchecked Sendable {
                         gate?.invalidateForTimeout()
                     }
                 }
-                state.installTimeout(timeoutItem)
-                DispatchQueue.global(qos: .utility).asyncAfter(
-                    deadline: .now() + .nanoseconds(Self.signedNanoseconds(timeoutNanoseconds)),
-                    execute: timeoutItem
-                )
+                state.installTimeout(timeoutTask)
             }
         }, onCancel: {
             // Cancellation has the same fence semantics as timeout: a
@@ -103,16 +116,13 @@ public final class SerialAXExecutor: @unchecked Sendable {
         return min(UInt64.max, nanosFromSeconds &+ nanosFromAttoseconds)
     }
 
-    private static func signedNanoseconds(_ value: UInt64) -> Int {
-        Int(min(value, UInt64(Int.max)))
-    }
 }
 
 private final class InvocationState<Value: Sendable>: @unchecked Sendable {
     private let lock = NSLock()
     private var continuation: CheckedContinuation<Value, Error>?
     private var workItem: DispatchWorkItem?
-    private var timeoutItem: DispatchWorkItem?
+    private var timeoutTask: Task<Void, Never>?
     private var finished = false
 
     var isFinished: Bool {
@@ -141,14 +151,14 @@ private final class InvocationState<Value: Sendable>: @unchecked Sendable {
         self.workItem = workItem
     }
 
-    func installTimeout(_ timeoutItem: DispatchWorkItem) {
+    func installTimeout(_ timeoutTask: Task<Void, Never>) {
         lock.lock()
         defer { lock.unlock() }
         guard !finished else {
-            timeoutItem.cancel()
+            timeoutTask.cancel()
             return
         }
-        self.timeoutItem = timeoutItem
+        self.timeoutTask = timeoutTask
     }
 
     func cancelWorkItem() {
@@ -179,12 +189,12 @@ private final class InvocationState<Value: Sendable>: @unchecked Sendable {
         self.continuation = nil
         let workItem = self.workItem
         self.workItem = nil
-        let timeoutItem = self.timeoutItem
-        self.timeoutItem = nil
+        let timeoutTask = self.timeoutTask
+        self.timeoutTask = nil
         lock.unlock()
 
         workItem?.cancel()
-        timeoutItem?.cancel()
+        timeoutTask?.cancel()
 
         switch result {
         case .success(let value): continuation?.resume(returning: value)

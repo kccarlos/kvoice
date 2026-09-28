@@ -49,7 +49,8 @@ public final class AXTextInsertionService: TextInsertionService, SelectionReadin
         typedInsertionEnabled: Bool = true,
         typedChunkPacing: Duration = .milliseconds(2),
         focusRetryCount: Int = 4,
-        focusRetryDelay: Duration = .milliseconds(60)
+        focusRetryDelay: Duration = .milliseconds(60),
+        clock: any KvoiceClock = SystemKvoiceClock()
     ) {
         self.workspace = workspace
         self.trust = trust
@@ -59,7 +60,9 @@ public final class AXTextInsertionService: TextInsertionService, SelectionReadin
             workspace: workspace, axClient: axClient,
             focusRetryCount: focusRetryCount, focusRetryDelay: focusRetryDelay
         )
-        self.executor = executor ?? SerialAXExecutor(timeout: timeout)
+        // `clock` times the executor's per-operation timeout; tests inject
+        // a clock they advance so a timeout never depends on machine speed.
+        self.executor = executor ?? SerialAXExecutor(timeout: timeout, clock: clock)
         clipboardFallback = ClipboardFallback(writer: clipboard)
         self.diagnostics = diagnostics
         self.keyPoster = keyPoster

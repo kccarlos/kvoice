@@ -559,6 +559,7 @@ public actor WhisperTranscriptionEngine: StreamingTranscriptionEngine {
     public func cancel(jobID: JobID) {
         if let streaming, streaming.jobID == jobID {
             streaming.worker.cancel()
+            cancelledStreamingWorker = streaming.worker
             self.streaming = nil
         }
         guard activeJobID == jobID else { return }
@@ -581,6 +582,11 @@ public actor WhisperTranscriptionEngine: StreamingTranscriptionEngine {
 
     /// The last streaming session's encoded prompt, for tests.
     public private(set) var streamingPromptTokens: [Int]?
+
+    /// The worker the last `cancel(jobID:)` dropped. `cancel` cannot wait
+    /// for it (it is synchronous), so a test awaits this to know the late
+    /// pass has unwound before asserting it published nothing.
+    private(set) var cancelledStreamingWorker: Task<Void, Never>?
 
     private var streamingGeneration: UInt64 = 0
 

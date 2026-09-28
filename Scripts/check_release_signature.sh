@@ -74,6 +74,8 @@ keys="$(printf '%s' "$entitlements" | grep -o '<key>[^<]*</key>' | sed 's/<[^>]*
 
 edition="$(/usr/libexec/PlistBuddy -c 'Print :KvoiceDistributionEdition' "$app/Contents/Info.plist" 2>/dev/null || true)"
 [ "$edition" = "developerID" ] || fail "KvoiceDistributionEdition is '${edition}', expected developerID (ADR-026)"
+package_type="$(/usr/libexec/PlistBuddy -c 'Print :CFBundlePackageType' "$app/Contents/Info.plist" 2>/dev/null || true)"
+[ "$package_type" = "APPL" ] || fail "CFBundlePackageType is '${package_type}', expected APPL (Gatekeeper rejects the bundle as 'not an app' without it)"
 
 if [ "$authority" != "(ad-hoc)" ]; then
     # The app, then every nested code item: the SwiftPM resource bundles

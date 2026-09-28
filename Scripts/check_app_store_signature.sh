@@ -11,6 +11,7 @@
 #     provisioning profile is embedded, the application- and
 #     team-identifier keys signing with it adds);
 #   - Info.plist says KvoiceDistributionEdition = appStore.
+#   - Info.plist says CFBundlePackageType = APPL.
 #
 # With --pcc (ADR-027: an archive made with KVOICE_PCC_ENTITLEMENT=1) the
 # set must also contain `com.apple.developer.private-cloud-compute` = true,
@@ -91,6 +92,8 @@ esac
 
 edition="$(/usr/libexec/PlistBuddy -c 'Print :KvoiceDistributionEdition' "$app/Contents/Info.plist" 2>/dev/null || true)"
 [ "$edition" = "appStore" ] || fail "KvoiceDistributionEdition is '${edition}', expected appStore"
+package_type="$(/usr/libexec/PlistBuddy -c 'Print :CFBundlePackageType' "$app/Contents/Info.plist" 2>/dev/null || true)"
+[ "$package_type" = "APPL" ] || fail "CFBundlePackageType is '${package_type}', expected APPL (Gatekeeper rejects the bundle as 'not an app' without it)"
 
 if [ "$require_developer_id" = true ]; then
     details="$(codesign -dvv "$app" 2>&1 || true)"

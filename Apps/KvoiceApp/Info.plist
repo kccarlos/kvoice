@@ -14,6 +14,8 @@
 	<string>en</string>
 	<key>CFBundleIdentifier</key>
 	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
 	<!--
 		Generated from Resources/AppIcon.svg by Scripts/make_app_icon.sh. Even
 		though LSUIElement hides the Dock icon by default, this is what appears

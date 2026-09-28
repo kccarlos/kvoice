@@ -258,6 +258,9 @@ final class DistributionSigningConfigTests: XCTestCase {
     func testInfoPlistCarriesTheEditionAndTheStoreMetadata() throws {
         let info = try plist("Apps/KvoiceApp/Info.plist")
         XCTAssertEqual(info["KvoiceDistributionEdition"] as? String, "$(KVOICE_DISTRIBUTION_EDITION)")
+        // Without it Gatekeeper (spctl) rejects the notarized bundle as
+        // "valid but does not seem to be an app", and App Store validation fails.
+        XCTAssertEqual(info["CFBundlePackageType"] as? String, "APPL")
         XCTAssertEqual(info["LSApplicationCategoryType"] as? String, "public.app-category.productivity")
         XCTAssertEqual(info["ITSAppUsesNonExemptEncryption"] as? Bool, false)
     }

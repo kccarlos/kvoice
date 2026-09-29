@@ -1,55 +1,69 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-label="kvoice">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024" role="img" aria-label="kvoice">
   <!--
     Source of truth for the app icon. Regenerate AppIcon.icns after editing:
 
         ./Scripts/make_app_icon.sh
 
-    To change the colour, edit the two gradient stops below and regenerate.
-    Nothing else in the design depends on them.
+    The design: an ink squircle, orange sound waves, a white microphone and
+    a blue text cursor. Voice in, text out.
+
+    This file draws every size from 64 px up. The 16 and 32 px entries of
+    the iconset come from AppIcon-16.svg and AppIcon-32.svg beside it:
+    hand-tuned artwork with fewer, thicker shapes on a whole-pixel grid,
+    because this artwork scaled down that far smudges the waves and loses
+    the cursor. Change the design here and in those two files together.
 
     Geometry follows Apple's macOS icon grid: on a 1024 canvas the icon body is
-    824x824 inset by 100 on every side, with a corner radius of 824 * 0.225.
-    The surrounding margin is intentional; macOS expects it and the Dock does
-    not add its own.
+    824x824 inset by 100 on every side, a continuous-corner squircle with a
+    radius of 824 * 0.225. The surrounding margin is intentional; macOS expects
+    it, the drop shadow falls into it, and the Dock adds neither.
+
+    The colours: tile #26304F to #0C1022, waves #FFB02E to #FF6A2B, cursor
+    #3D8BFF. The README banner, the social preview and the App Store
+    screenshots use the same palette (StoreScreenshotTests.swift).
+
+    The tile's middle stop (#29335F at 42 percent) stands in for the soft
+    radial glow of the original concept. A radial glow is rendered with
+    dithering noise that PNG cannot compress: it took AppIcon.icns from
+    about 0.45 MB to 1.05 MB, over the public export's 1 MB limit per file.
+    A vertical gradient has no such cost. Keep the tile fill vertical.
 
     Note for editors: an XML comment may not contain a double hyphen. Using one
     makes NSImage reject the whole file, and it fails silently.
   -->
   <defs>
-    <linearGradient id="background" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#5B54F0"/>
-      <stop offset="1" stop-color="#2B2775"/>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="125%">
+      <feDropShadow dx="0" dy="10" stdDeviation="12" flood-color="#000" flood-opacity="0.30"/>
+    </filter>
+    <clipPath id="body"><path d="M 383.41 100.00 L 640.59 100.00 C 722.19 100.00 763.00 100.00 799.79 112.14 L 806.92 113.89 C 854.88 131.34 892.66 169.12 910.11 217.08 L 911.86 224.21 C 924.00 261.00 924.00 301.81 924.00 383.41 L 924.00 640.59 C 924.00 722.19 924.00 763.00 911.86 799.79 L 910.11 806.92 C 892.66 854.88 854.88 892.66 806.92 910.11 L 799.79 911.86 C 763.00 924.00 722.19 924.00 640.59 924.00 L 383.41 924.00 C 301.81 924.00 261.00 924.00 224.21 911.86 L 217.08 910.11 C 169.12 892.66 131.34 854.88 113.89 806.92 L 112.14 799.79 C 100.00 763.00 100.00 722.19 100.00 640.59 L 100.00 383.41 C 100.00 301.81 100.00 261.00 112.14 224.21 L 113.89 217.08 C 131.34 169.12 169.12 131.34 217.08 113.89 L 224.21 112.14 C 261.00 100.00 301.81 100.00 383.41 100.00 Z"/></clipPath>
+    <linearGradient id="tile" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#26304F"/>
+      <stop offset="0.42" stop-color="#29335F"/>
+      <stop offset="1" stop-color="#0C1022"/>
+    </linearGradient>
+    <linearGradient id="wave" gradientUnits="userSpaceOnUse" x1="0" y1="371" x2="0" y2="591">
+      <stop offset="0" stop-color="#FFB02E"/>
+      <stop offset="1" stop-color="#FF6A2B"/>
     </linearGradient>
   </defs>
-
-  <rect x="100" y="100" width="824" height="824" rx="185.4" fill="url(#background)"/>
-
-  <!--
-    The same artwork as MenuBarLogo.svg, in its original coordinates, scaled to
-    60% of the body width and centred on the body. The transform maps the art's
-    own centre (735.5, 546) onto the canvas centre (512, 512).
-  -->
-  <g fill="#fff" transform="translate(139.0, 235.1) scale(0.5071)">
-    <rect x="248" y="508" width="68" height="132" rx="34"/>
-    <rect x="349" y="440" width="68" height="261" rx="34"/>
-    <rect x="452" y="350" width="72" height="422" rx="36"/>
-    <rect x="568" y="458" width="62" height="218" rx="31"/>
-
-    <path d="M815 217
-             C739 217 678 278 678 354
-             V567
-             C678 668 741 741 815 741
-             C889 741 951 668 951 567
-             V354
-             C951 278 890 217 815 217Z"/>
-
-    <rect x="786" y="716" width="58" height="116" rx="29"/>
-    <rect x="665" y="814" width="295" height="61" rx="31"/>
-
-    <rect x="996" y="460" width="62" height="214" rx="31"/>
-
-    <rect x="1120" y="387" width="70" height="356" rx="35"/>
-    <rect x="1087" y="387" width="136" height="43" rx="21.5"/>
-    <rect x="1087" y="700" width="136" height="43" rx="21.5"/>
+  <path d="M 383.41 100.00 L 640.59 100.00 C 722.19 100.00 763.00 100.00 799.79 112.14 L 806.92 113.89 C 854.88 131.34 892.66 169.12 910.11 217.08 L 911.86 224.21 C 924.00 261.00 924.00 301.81 924.00 383.41 L 924.00 640.59 C 924.00 722.19 924.00 763.00 911.86 799.79 L 910.11 806.92 C 892.66 854.88 854.88 892.66 806.92 910.11 L 799.79 911.86 C 763.00 924.00 722.19 924.00 640.59 924.00 L 383.41 924.00 C 301.81 924.00 261.00 924.00 224.21 911.86 L 217.08 910.11 C 169.12 892.66 131.34 854.88 113.89 806.92 L 112.14 799.79 C 100.00 763.00 100.00 722.19 100.00 640.59 L 100.00 383.41 C 100.00 301.81 100.00 261.00 112.14 224.21 L 113.89 217.08 C 131.34 169.12 169.12 131.34 217.08 113.89 L 224.21 112.14 C 261.00 100.00 301.81 100.00 383.41 100.00 Z" fill="url(#tile)" filter="url(#shadow)"/>
+  <path d="M 383.41 100.00 L 640.59 100.00 C 722.19 100.00 763.00 100.00 799.79 112.14 L 806.92 113.89 C 854.88 131.34 892.66 169.12 910.11 217.08 L 911.86 224.21 C 924.00 261.00 924.00 301.81 924.00 383.41 L 924.00 640.59 C 924.00 722.19 924.00 763.00 911.86 799.79 L 910.11 806.92 C 892.66 854.88 854.88 892.66 806.92 910.11 L 799.79 911.86 C 763.00 924.00 722.19 924.00 640.59 924.00 L 383.41 924.00 C 301.81 924.00 261.00 924.00 224.21 911.86 L 217.08 910.11 C 169.12 892.66 131.34 854.88 113.89 806.92 L 112.14 799.79 C 100.00 763.00 100.00 722.19 100.00 640.59 L 100.00 383.41 C 100.00 301.81 100.00 261.00 112.14 224.21 L 113.89 217.08 C 131.34 169.12 169.12 131.34 217.08 113.89 L 224.21 112.14 C 261.00 100.00 301.81 100.00 383.41 100.00 Z" fill="none" stroke="#FFFFFF" stroke-opacity="0.14" stroke-width="4" clip-path="url(#body)"/>
+  <g transform="translate(512 512) scale(1.12) translate(-593 -474.5)">
+    <g fill="url(#wave)" opacity="1.0">
+      <path d="M349 466.5 A16.5 16.5 0 0 1 382 466.5 V503.5 A16.5 16.5 0 0 1 349 503.5 Z"/>
+      <path d="M403 435.0 A17.0 17.0 0 0 1 437 435.0 V534.0 A17.0 17.0 0 0 1 403 534.0 Z"/>
+      <path d="M459 389.0 A18.0 18.0 0 0 1 495 389.0 V573.0 A18.0 18.0 0 0 1 459 573.0 Z"/>
+    </g>
+    <g fill="#FFFFFF">
+      <path d="M573 367.5 A68.5 68.5 0 0 1 710 367.5 V473.5 A68.5 68.5 0 0 1 573 473.5 Z"/>
+      <rect x="627" y="585" width="29" height="40"/>
+      <path d="M580.0 618 H702.0 A16.0 16.0 0 0 1 702.0 650 H580.0 A16.0 16.0 0 0 1 580.0 618 Z"/>
+    </g>
+    <path d="M533 437 V482 A108 108 0 0 0 749 482 V437" fill="none" stroke="#FFFFFF" stroke-width="31" stroke-linecap="round"/>
+    <g fill="#3D8BFF" stroke="#3D8BFF" stroke-linecap="round">
+      <rect x="800" y="395" width="26" height="176" stroke="none"/>
+      <line x1="789" y1="401" x2="837" y2="401" stroke-width="20"/>
+      <line x1="789" y1="566" x2="837" y2="566" stroke-width="20"/>
+    </g>
   </g>
 </svg>

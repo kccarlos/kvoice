@@ -11,7 +11,8 @@ import KvoiceUI
 ///
 /// Both images come from the same SVG viewBox, so the glyph never changes size
 /// when the glow appears; the halo bleeds into margin that is already there. See
-/// the comments in `Resources/MenuBarLogo.svg`.
+/// the comments in `Resources/MenuBarLogo.svg`. Loading and sizing them is
+/// `StatusItemArtwork` (KvoiceUI, unit-tested).
 ///
 /// Cost model: `apply(_:)` is called from a 60 ms poll and returns immediately
 /// when the appearance is unchanged. A real change does one frame calculation
@@ -19,11 +20,6 @@ import KvoiceUI
 /// render server with no per-frame work in the app.
 @MainActor
 final class StatusItemIconController {
-    /// Height of the image in points. The artwork occupies 658/838 of the
-    /// viewBox height, so a 20pt image draws a ~15.7pt glyph, which matches the
-    /// weight of Apple's own menu-bar glyphs in a 22pt menu bar.
-    private static let imageHeight: CGFloat = 20
-
     private static let pulseAnimationKey = "kvoice.glow.pulse"
 
     private let button: NSButton
@@ -44,7 +40,7 @@ final class StatusItemIconController {
         badge.autoresizingMask = [.minXMargin, .minYMargin]
         self.badgeView = badge
 
-        guard let glyph = Self.loadImage(named: "MenuBarLogo") else {
+        guard let glyph = Self.loadImage(named: StatusItemArtwork.glyphResourceName) else {
             self.glowView = nil
             button.image = nil
             button.title = "KVoice"
@@ -52,19 +48,15 @@ final class StatusItemIconController {
             return
         }
 
-        glyph.isTemplate = true
-        glyph.size = Self.scaled(glyph.size)
         button.image = glyph
         button.imagePosition = .imageOnly
         button.title = ""
 
-        guard let halo = Self.loadImage(named: "MenuBarLogoGlow") else {
+        guard let halo = Self.loadImage(named: StatusItemArtwork.haloResourceName) else {
             self.glowView = nil
             button.addSubview(badge)
             return
         }
-        halo.isTemplate = true
-        halo.size = Self.scaled(halo.size)
 
         let overlay = GlowOverlayView(image: halo)
         overlay.wantsLayer = true
@@ -149,7 +141,7 @@ final class StatusItemIconController {
         }
         // Top-right corner of the glyph, overlapping it slightly so the dot
         // reads as attached to the icon rather than floating in the bar.
-        let glyphSize = button.image?.size ?? NSSize(width: Self.imageHeight, height: Self.imageHeight)
+        let glyphSize = button.image?.size ?? NSSize(width: StatusItemArtwork.imageHeight, height: StatusItemArtwork.imageHeight)
         let bounds = button.bounds
         let glyphOrigin = NSPoint(
             x: (bounds.width - glyphSize.width) / 2,
@@ -167,21 +159,14 @@ final class StatusItemIconController {
 
     // MARK: Assets
 
-    private static func scaled(_ size: NSSize) -> NSSize {
-        guard size.height > 0 else { return size }
-        return NSSize(
-            width: (size.width / size.height) * imageHeight,
-            height: imageHeight
-        )
-    }
-
     /// Looked up by explicit URL rather than `NSImage(named:)`, which does not
-    /// reliably resolve a bare `.svg` in the bundle's Resources.
+    /// reliably resolve a bare `.svg` in the bundle's Resources. Returned as a
+    /// template at menu-bar size.
     private static func loadImage(named name: String) -> NSImage? {
         guard let url = Bundle.main.url(forResource: name, withExtension: "svg") else {
             return nil
         }
-        return NSImage(contentsOf: url)
+        return StatusItemArtwork.templateImage(contentsOf: url)
     }
 
     private static func color(for tint: StatusItemAppearance.Tint) -> NSColor {

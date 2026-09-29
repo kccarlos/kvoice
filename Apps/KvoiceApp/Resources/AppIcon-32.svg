@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32" role="img" aria-label="kvoice">
+  <!--
+    The 32 px entries of the app icon (Scripts/make_app_icon.sh picks this
+    file up by its name for every iconset image that is exactly 32 pixels).
+    AppIcon.svg is the design; this is the same design redrawn for 32 px:
+    two wave bars instead of three, each 2 px wide; a mic body 5 px wide with
+    a 1.5 px cup; a cursor 2 px wide with full-width serifs, in a brighter
+    blue that holds up against the ink.
+    The tile is the same squircle, scaled; its top is lighter than the large
+    icon's so the white and orange still separate from it. No drop shadow or
+    glow: at this size they only blur the edge.
+
+    Note for editors: an XML comment may not contain a double hyphen. Using one
+    makes NSImage reject the whole file, and it fails silently.
+  -->
+  <defs>
+    <linearGradient id="tile" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3A4878"/>
+      <stop offset="1" stop-color="#111830"/>
+    </linearGradient>
+    <linearGradient id="wave" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFB02E"/>
+      <stop offset="1" stop-color="#FF6A2B"/>
+    </linearGradient>
+  </defs>
+  <path transform="scale(0.03125)" d="M 383.41 100.00 L 640.59 100.00 C 722.19 100.00 763.00 100.00 799.79 112.14 L 806.92 113.89 C 854.88 131.34 892.66 169.12 910.11 217.08 L 911.86 224.21 C 924.00 261.00 924.00 301.81 924.00 383.41 L 924.00 640.59 C 924.00 722.19 924.00 763.00 911.86 799.79 L 910.11 806.92 C 892.66 854.88 854.88 892.66 806.92 910.11 L 799.79 911.86 C 763.00 924.00 722.19 924.00 640.59 924.00 L 383.41 924.00 C 301.81 924.00 261.00 924.00 224.21 911.86 L 217.08 910.11 C 169.12 892.66 131.34 854.88 113.89 806.92 L 112.14 799.79 C 100.00 763.00 100.00 722.19 100.00 640.59 L 100.00 383.41 C 100.00 301.81 100.00 261.00 112.14 224.21 L 113.89 217.08 C 131.34 169.12 169.12 131.34 217.08 113.89 L 224.21 112.14 C 261.00 100.00 301.81 100.00 383.41 100.00 Z" fill="url(#tile)"/>
+  <g fill="url(#wave)">
+    <rect x="5" y="13" width="2" height="6" rx="1"/>
+    <rect x="8" y="10" width="2" height="12" rx="1"/>
+  </g>
+  <g fill="#FFFFFF">
+    <rect x="13.5" y="6" width="5" height="10" rx="2.5"/>
+    <rect x="15.25" y="18" width="1.5" height="4"/>
+    <rect x="12.5" y="21.5" width="7" height="1.75" rx="0.875"/>
+  </g>
+  <path d="M11.75 12 V13.5 A4.25 4.25 0 0 0 20.25 13.5 V12" fill="none" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round"/>
+  <g fill="#4C95FF">
+    <rect x="23" y="8" width="2" height="15.5"/>
+    <rect x="21.5" y="8" width="5" height="1.75" rx="0.875"/>
+    <rect x="21.5" y="21.75" width="5" height="1.75" rx="0.875"/>
+  </g>
+</svg>

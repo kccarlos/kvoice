@@ -11,6 +11,7 @@ without one is refused.
 
 ## 0.1.3
 
+- New app icon and menu-bar icon.
 - On a Mac with macOS 26 or later, a new setup now starts with Apple Speech
   when it supports your language: it is ready in seconds, with nothing large
   to download. Whisper is one click away in the setup window, which says what

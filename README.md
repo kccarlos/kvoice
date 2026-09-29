@@ -15,6 +15,11 @@
   <a href="https://github.com/kccarlos/kvoice/stargazers"><img src="https://img.shields.io/github/stars/kccarlos/kvoice?style=social" alt="GitHub stars"></a>
 </p>
 
+<p align="center">
+  <a href="https://github.com/kccarlos/kvoice"><b>⭐ Star on GitHub</b></a>
+  to follow new releases. It is free, and it helps other Mac users find KVoice.
+</p>
+
 **Dictation and AI actions in one step.** Hold your shortcut, speak, let
 go, and KVoice types finished text where your cursor is: cleaned up,
 polished, turned into an email, a message, notes or a TODO list,
@@ -27,6 +32,11 @@ transcribed **on your Mac**.
 - Talk through your week → a **TODO list** of actionable tasks.
 
 Want plain dictation? That works too, with no AI at all.
+
+<!--
+  Demo GIF slot: Docs/assets/kvoice-demo.gif, about 15 seconds, 800 px wide,
+  under 5 MB. Add it here as a centred img at width 720 once it exists.
+-->
 
 <p align="center">
   <img src="Docs/assets/screenshots/kvoice-1-dictate.jpg" alt="Hold a key, speak, and it's typed: the recorder under the menu bar shows the live transcript and the Clean Up action while the text goes into a document" width="720">
@@ -266,11 +276,15 @@ Bug reports, ideas, translations, docs and code are all welcome. See
 [Code of Conduct](CODE_OF_CONDUCT.md), and report security issues privately
 ([SECURITY.md](SECURITY.md)).
 
-If KVoice saves you some typing, a star on GitHub helps other people find it.
-
 ## License
 
 [MIT](LICENSE). Dependency and model licenses are in
 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). Every code dependency is MIT
 or Apache-2.0. Speech models are downloaded, not bundled, and carry their own
 licenses.
+
+---
+
+<p align="center">
+  If KVoice saves you typing, a <a href="https://github.com/kccarlos/kvoice">⭐ star on GitHub</a> helps others find it.
+</p>

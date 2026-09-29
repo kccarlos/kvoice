@@ -1,11 +1,13 @@
 #!/bin/sh
 set -eu
 
-# Regenerates Apps/KvoiceApp/Resources/AppIcon.icns from AppIcon.svg.
+# Regenerates Apps/KvoiceApp/Resources/AppIcon.icns from AppIcon.svg, with
+# the 16 and 32 px images drawn from the hand-tuned AppIcon-16.svg and
+# AppIcon-32.svg beside it (see Scripts/AppIconRenderer.swift).
 #
 # The .icns is committed so an ordinary build needs no rasterizer, but it is
-# generated output: edit the SVG and re-run this, never hand-edit the .icns.
-# To change the icon's colour, edit the two gradient stops in AppIcon.svg.
+# generated output: edit the SVGs and re-run this, never hand-edit the .icns.
+# The palette is listed in AppIcon.svg's header comment.
 
 DEVELOPER_DIR="${DEVELOPER_DIR:-/Applications/Xcode.app/Contents/Developer}"
 export DEVELOPER_DIR

@@ -7,6 +7,11 @@ import AppKit
 // filters, so no external rasterizer is needed.
 //
 // Usage: AppIconRenderer <input.svg> <output.iconset directory>
+//
+// Small-size artwork: an image that is exactly N pixels is drawn from
+// `<input>-N.svg` beside the input when that file exists (AppIcon-16.svg,
+// AppIcon-32.svg), and from the input otherwise. A design scaled down to 16
+// or 32 px smudges; those sizes are redrawn by hand on a whole-pixel grid.
 
 func die(_ message: String) -> Never {
     FileHandle.standardError.write(Data("error: \(message)\n".utf8))
@@ -39,10 +44,23 @@ guard let image = NSImage(contentsOf: inputURL) else {
         """)
 }
 
+/// The hand-tuned artwork for an exact pixel size, if there is one.
+func smallArtwork(pixels: Int) -> (NSImage, String)? {
+    let stem = inputURL.deletingPathExtension().lastPathComponent
+    let url = inputURL.deletingLastPathComponent()
+        .appendingPathComponent("\(stem)-\(pixels).svg")
+    guard FileManager.default.fileExists(atPath: url.path) else { return nil }
+    guard let small = NSImage(contentsOf: url) else {
+        die("could not load \(url.path) (see the note on malformed XML above)")
+    }
+    return (small, url.lastPathComponent)
+}
+
 try? FileManager.default.createDirectory(at: outputURL, withIntermediateDirectories: true)
 
 for variant in variants {
     let pixels = variant.points * variant.scale
+    let (source, sourceName) = smallArtwork(pixels: pixels) ?? (image, inputURL.lastPathComponent)
     guard let bitmap = NSBitmapImageRep(
         bitmapDataPlanes: nil,
         pixelsWide: pixels,
@@ -68,7 +86,7 @@ for variant in variants {
     }
     NSGraphicsContext.current = context
     context.imageInterpolation = .high
-    image.draw(
+    source.draw(
         in: NSRect(x: 0, y: 0, width: pixels, height: pixels),
         from: .zero,
         operation: .sourceOver,
@@ -87,5 +105,5 @@ for variant in variants {
     } catch {
         die("could not write \(name): \(error.localizedDescription)")
     }
-    print("  \(name) (\(pixels)x\(pixels))")
+    print("  \(name) (\(pixels)x\(pixels)) from \(sourceName)")
 }

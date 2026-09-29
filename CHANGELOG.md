@@ -9,6 +9,14 @@ without one is refused.
 
 ## Unreleased
 
+## 0.1.1
+
+The first Mac App Store build, and the same app as 0.1.0 for everyone else.
+
+- The Mac App Store edition is now packaged correctly for upload.
+- More reliable automated tests on slower build machines; no change to how
+  the app behaves.
+
 ## 0.1.0
 
 The first public version. It includes:

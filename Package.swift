@@ -256,8 +256,10 @@ let package = Package(
         .testTarget(
             name: "KvoiceUITests",
             // KvoiceAppCore only for DomainCopyTests, which checks that its
-            // user-facing sentences have translations in KvoiceUI's catalog.
-            dependencies: ["KvoiceUI", "KvoiceDomain", "KvoiceAppCore"],
+            // user-facing sentences have translations in KvoiceUI's catalog;
+            // KvoiceTestSupport for `ParkingClock`, which drives the view
+            // models' timers without real sleeps.
+            dependencies: ["KvoiceUI", "KvoiceDomain", "KvoiceAppCore", "KvoiceTestSupport"],
             path: "Packages/KvoiceUI/Tests/KvoiceUITests"
         ),
         .testTarget(

@@ -313,8 +313,10 @@ actor LifecycleRecordingLoader: ModelRuntimeLoader {
 }
 
 extension XCTestCase {
+    /// The 30 s deadline is a hang guard, not a timing assumption: a
+    /// passing condition returns at once.
     func waitUntilTrue(
-        timeout: Duration = .seconds(5),
+        timeout: Duration = .seconds(30),
         _ condition: @escaping @Sendable () async -> Bool
     ) async throws {
         let deadline = ContinuousClock.now + timeout

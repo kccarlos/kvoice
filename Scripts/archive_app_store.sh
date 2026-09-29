@@ -122,10 +122,20 @@ if [ -n "$profile" ]; then
     # cannot take one.
     signing_settings="CODE_SIGN_STYLE=Manual"
     provisioning_flags=""
+    # Apple issues the installer certificate under either name: the older
+    # "3rd Party Mac Developer Installer: …" or "Mac Installer Distribution:
+    # …". exportArchive matches the name literally, so use whichever this
+    # keychain holds (the v0.1.0 run failed on the literal newer name).
+    installer_identity="$(security find-identity -v -p basic 2>/dev/null \
+        | grep -oE '"(3rd Party Mac Developer Installer|Mac Installer Distribution): ' \
+        | head -n 1 | sed -e 's/^"//' -e 's/: $//')"
+    [ -n "$installer_identity" ] \
+        || { echo "archive_app_store: no Mac Installer Distribution / 3rd Party Mac Developer Installer identity in the keychain" >&2; exit 2; }
+    echo "archive_app_store: installer identity '$installer_identity'"
     /usr/libexec/PlistBuddy \
         -c 'Set :signingStyle manual' \
         -c 'Add :signingCertificate string Apple Distribution' \
-        -c 'Add :installerSigningCertificate string Mac Installer Distribution' \
+        -c "Add :installerSigningCertificate string $installer_identity" \
         -c 'Add :provisioningProfiles dict' \
         -c "Add :provisioningProfiles:$bundle_id string $profile_uuid" \
         "$options"

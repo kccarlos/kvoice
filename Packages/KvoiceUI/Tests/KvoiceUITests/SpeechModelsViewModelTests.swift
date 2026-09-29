@@ -1,6 +1,7 @@
 import XCTest
 import KvoiceAppCore
 @testable import KvoiceDomain
+import KvoiceTestSupport
 @testable import KvoiceUI
 
 /// ADR-017: the catalog half of the Models section derives its cards, offers
@@ -148,6 +149,30 @@ final class SpeechModelsViewModelTests: XCTestCase {
         await recorder.waitForCount(3)
         let later = await recorder.actions
         XCTAssertEqual(later, [.download("high"), .use("high"), .delete("standard")])
+    }
+
+    func testAPendingActionExpiresWhenTheShellNeverReacts() async throws {
+        let clock = ParkingClock()
+        let model = SpeechModelsViewModel(
+            snapshot: snapshot(states: ["standard": .ready(summary("standard")), "high": .absent], resident: "standard"),
+            pendingActionTimeout: .milliseconds(40),
+            snapshotProvider: { nil },
+            perform: { _ in },
+            clock: clock
+        )
+
+        model.perform(.download, on: model.cards[1])
+        XCTAssertTrue(model.isPending("high"))
+
+        await clock.waitForSleepers(1)
+        XCTAssertEqual(clock.pendingDurations, [.milliseconds(40)])
+        let expiry = try XCTUnwrap(model.pendingTasks["high"])
+        clock.advance(by: .milliseconds(39))
+        XCTAssertTrue(model.isPending("high"), "the marker holds until the timeout has elapsed")
+        clock.advance(by: .milliseconds(1))
+        await awaitTask(expiry, "the pending-action timer never finished after its deadline")
+        XCTAssertFalse(model.isPending("high"), "a shell that never answers must not lock the card for good")
+        XCTAssertTrue(model.isEnabled(.download, for: model.cards[1]))
     }
 
     func testMutationsAreLockedWhileDictationIsActive() {
@@ -314,9 +339,21 @@ private actor ActionRecorder {
 
     /// Forwarding happens on a detached-from-the-caller `Task`; wait for it
     /// rather than assuming one yield is enough.
-    func waitForCount(_ count: Int, timeout: Duration = .seconds(2)) async {
+    /// The 30 s deadline is a hang guard, not a timing assumption: a passing
+    /// wait returns as soon as the action lands (a 2 s bound here could
+    /// expire on a loaded CI runner).
+    func waitForCount(
+        _ count: Int,
+        timeout: Duration = .seconds(30),
+        file: StaticString = #filePath,
+        line: UInt = #line
+    ) async {
         let deadline = ContinuousClock.now + timeout
-        while actions.count < count, ContinuousClock.now < deadline {
+        while actions.count < count {
+            guard ContinuousClock.now < deadline else {
+                XCTFail("\(count) action(s) never reached the shell (\(actions.count) did)", file: file, line: line)
+                return
+            }
             try? await Task.sleep(for: .milliseconds(5))
         }
     }

@@ -69,7 +69,9 @@ final class HotkeySemanticsTests: XCTestCase {
         )
 
         watchdog.arm()
-        await fulfillment(of: [expectation], timeout: 1)
+        // The injected sleep returns at once; the timeout is only a hang
+        // guard (1 s could expire on a loaded runner before the hop lands).
+        await fulfillment(of: [expectation], timeout: 30)
         XCTAssertFalse(watchdog.isArmed)
     }
 

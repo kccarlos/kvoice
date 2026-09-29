@@ -257,6 +257,21 @@ WORKFLOWS = next(
 )
 
 
+class ArchiveAppStoreScriptTests(unittest.TestCase):
+    """The installer identity is found, not assumed.
+
+    Apple issues it as "3rd Party Mac Developer Installer" or "Mac Installer
+    Distribution", and exportArchive matches the name literally; the v0.1.0
+    release failed on a hard-coded "Mac Installer Distribution".
+    """
+
+    def test_installer_identity_is_detected_from_the_keychain(self) -> None:
+        script = (SCRIPTS / "archive_app_store.sh").read_text(encoding="utf-8")
+        self.assertNotIn("installerSigningCertificate string Mac Installer Distribution", script)
+        self.assertIn("installerSigningCertificate string $installer_identity", script)
+        self.assertIn("3rd Party Mac Developer Installer|Mac Installer Distribution", script)
+
+
 class PreviewWorkflowTests(unittest.TestCase):
     """preview.yml builds with the release's own steps and pins, by hand only,
     behind the release environment. Text checks: standard library only."""

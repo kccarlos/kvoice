@@ -368,14 +368,19 @@ final class ModelPackageManagerTests: XCTestCase {
         return false
     }
 
+    /// The 30 s deadline is a hang guard, not a timing assumption: a
+    /// passing condition returns at once. (It was 100 polls of 10 ms, about
+    /// a second, which a loaded runner can outlast.)
     private func waitUntil(
+        timeout: Duration = .seconds(30),
         _ condition: @escaping @Sendable () async -> Bool
     ) async throws {
-        for _ in 0..<100 {
+        let deadline = ContinuousClock.now + timeout
+        while ContinuousClock.now < deadline {
             if await condition() { return }
             try await Task.sleep(for: .milliseconds(10))
         }
-        XCTFail("condition did not become true")
+        XCTFail("condition did not become true within \(timeout)")
     }
 }
 

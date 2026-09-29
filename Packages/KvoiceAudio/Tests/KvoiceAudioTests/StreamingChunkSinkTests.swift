@@ -116,8 +116,10 @@ final class StreamingChunkSinkTests: XCTestCase {
         _ = try await service.stop(jobID: jobID)
     }
 
+    /// The 30 s deadline is a hang guard, not a timing assumption: a
+    /// passing condition returns at once.
     private func waitUntil(
-        timeout: Duration = .seconds(2),
+        timeout: Duration = .seconds(30),
         _ condition: @escaping @Sendable () async -> Bool
     ) async throws {
         let deadline = ContinuousClock.now + timeout

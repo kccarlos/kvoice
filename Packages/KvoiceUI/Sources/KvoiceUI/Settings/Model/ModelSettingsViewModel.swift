@@ -192,7 +192,10 @@ public final class ModelSettingsViewModel {
     private let onAction: @MainActor (ModelSettingsAction) -> Void
     private let modelSpaceEstimate: @MainActor () async -> ModelSpaceEstimate?
     private let pendingActionTimeout: Duration
-    @ObservationIgnored private var pendingActionTask: Task<Void, Never>?
+    /// Internal (not private) so tests can await the timer they advanced.
+    @ObservationIgnored private(set) var pendingActionTask: Task<Void, Never>?
+    /// Times the pending-action expiry; tests inject a `ParkingClock`.
+    private let clock: any KvoiceClock
 
     public init(
         state: ModelLifecycleState = .absent,
@@ -202,8 +205,10 @@ public final class ModelSettingsViewModel {
         modelSpaceEstimate: @escaping @MainActor () async -> ModelSpaceEstimate? = { nil },
         speechModels: SpeechModelsViewModel = SpeechModelsViewModel(),
         runtime: RuntimeCardViewModel = RuntimeCardViewModel(),
-        memoryPressure: MemoryPressureViewModel = MemoryPressureViewModel()
+        memoryPressure: MemoryPressureViewModel = MemoryPressureViewModel(),
+        clock: any KvoiceClock = SystemKvoiceClock()
     ) {
+        self.clock = clock
         self.state = state
         self.descriptor = descriptor
         self.pendingActionTimeout = pendingActionTimeout
@@ -261,8 +266,8 @@ public final class ModelSettingsViewModel {
         if action.awaitsStateChange {
             pendingAction = action
             pendingActionTask?.cancel()
-            pendingActionTask = Task { [weak self, pendingActionTimeout] in
-                try? await Task.sleep(for: pendingActionTimeout)
+            pendingActionTask = Task { [weak self, pendingActionTimeout, clock] in
+                try? await clock.sleep(for: pendingActionTimeout)
                 guard !Task.isCancelled, let self, self.pendingAction == action else { return }
                 self.clearPendingAction()
             }

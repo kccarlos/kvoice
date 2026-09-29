@@ -203,10 +203,14 @@ public final class HistoryViewModel {
     private let undoWindow: Duration
     private let statusMessageDuration: Duration
     private let now: () -> Date
+    /// Times the undo window and the status-message expiry; tests inject a
+    /// `ParkingClock` and advance it instead of sleeping.
+    private let clock: any KvoiceClock
     private var hasMorePages = true
     private var loadedOnce = false
-    private var undoExpiryTask: Task<Void, Never>?
-    private var statusMessageTask: Task<Void, Never>?
+    /// Internal (not private) so tests can await the timer they advanced.
+    private(set) var undoExpiryTask: Task<Void, Never>?
+    private(set) var statusMessageTask: Task<Void, Never>?
     private var waveformTask: Task<Void, Never>?
 
     public init(
@@ -217,7 +221,8 @@ public final class HistoryViewModel {
         pageSize: Int = 50,
         undoWindow: Duration = .seconds(10),
         statusMessageDuration: Duration = .seconds(4),
-        now: @escaping () -> Date = { Date() }
+        now: @escaping () -> Date = { Date() },
+        clock: any KvoiceClock = SystemKvoiceClock()
     ) {
         self.repository = repository
         self.copier = copier ?? PasteboardHistoryCopying()
@@ -227,6 +232,7 @@ public final class HistoryViewModel {
         self.undoWindow = undoWindow
         self.statusMessageDuration = statusMessageDuration
         self.now = now
+        self.clock = clock
     }
 
     /// Closure-based initializer for app shells that want to provide a copy
@@ -476,8 +482,8 @@ public final class HistoryViewModel {
     private func showStatusMessage(_ message: String) {
         statusMessageTask?.cancel()
         statusMessage = message
-        statusMessageTask = Task { [weak self, statusMessageDuration] in
-            try? await Task.sleep(for: statusMessageDuration)
+        statusMessageTask = Task { [weak self, statusMessageDuration, clock] in
+            try? await clock.sleep(for: statusMessageDuration)
             guard !Task.isCancelled, let self, self.statusMessage == message else { return }
             self.statusMessage = nil
             self.statusMessageTask = nil
@@ -499,8 +505,8 @@ public final class HistoryViewModel {
             + TimeInterval(undoWindow.components.attoseconds) / 1e18
         let pending = PendingDeletion(entry: entry, index: index, expiresAt: now().addingTimeInterval(seconds))
         pendingUndo = pending
-        undoExpiryTask = Task { [weak self, undoWindow] in
-            try? await Task.sleep(for: undoWindow)
+        undoExpiryTask = Task { [weak self, undoWindow, clock] in
+            try? await clock.sleep(for: undoWindow)
             guard !Task.isCancelled, let self, self.pendingUndo == pending else { return }
             self.pendingUndo = nil
             self.undoExpiryTask = nil

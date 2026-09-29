@@ -1,5 +1,6 @@
 import XCTest
 @testable import KvoiceDomain
+import KvoiceTestSupport
 @testable import KvoiceUI
 
 @MainActor
@@ -115,11 +116,19 @@ final class OnboardingViewModelTests: XCTestCase {
     }
 
     func testModelPendingGapTimesOutWhenTheShellNeverAnswers() async throws {
-        let model = OnboardingViewModel()
+        let clock = ParkingClock()
+        let model = OnboardingViewModel(clock: clock)
         model.advance()
         model.handleModelAction(.download)
         XCTAssertTrue(model.modelActionPending)
-        try await Task.sleep(for: OnboardingViewModel.modelActionPendingTimeout + .milliseconds(300))
+
+        await clock.waitForSleepers(1)
+        XCTAssertEqual(clock.pendingDurations, [OnboardingViewModel.modelActionPendingTimeout])
+        let timeout = try XCTUnwrap(model.modelActionPendingTask)
+        clock.advance(by: OnboardingViewModel.modelActionPendingTimeout - .milliseconds(1))
+        XCTAssertTrue(model.modelActionPending, "the gap holds until the timeout has elapsed")
+        clock.advance(by: .milliseconds(1))
+        await awaitTask(timeout, "the pending-action timeout never finished after its deadline")
         XCTAssertFalse(model.modelActionPending)
         XCTAssertEqual(model.actionBar.primaryTitle, "Download Model")
         XCTAssertTrue(model.actionBar.primaryIsEnabled)

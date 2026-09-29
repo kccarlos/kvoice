@@ -144,7 +144,10 @@ public final class OnboardingViewModel {
     private var accessibilityWasSkipped = false
     private var shortcutWasSkipped = false
     private var accessibilityPromptWasRequested = false
-    private var modelActionPendingTask: Task<Void, Never>?
+    /// Internal (not private) so tests can await the timer they advanced.
+    private(set) var modelActionPendingTask: Task<Void, Never>?
+    /// Times the pending-action timeout; tests inject a `ParkingClock`.
+    private let clock: any KvoiceClock
 
     /// ADR-026: which distribution this is — the Accessibility step and the
     /// shortcut help describe what the edition's permission does.
@@ -173,8 +176,10 @@ public final class OnboardingViewModel {
         accessibilityPermission: any AccessibilityPermissionProviding = UnavailableAccessibilityPermissionProvider(),
         edition: DistributionEdition = .developerID,
         onIntent: @escaping @MainActor (OnboardingIntent) -> Void = { _ in },
-        onFinished: @escaping @MainActor () -> Void = {}
+        onFinished: @escaping @MainActor () -> Void = {},
+        clock: any KvoiceClock = SystemKvoiceClock()
     ) {
+        self.clock = clock
         self.stage = stage
         self.modelState = modelState
         self.modelEntry = modelEntry
@@ -818,9 +823,9 @@ public final class OnboardingViewModel {
     private func beginPendingModelAction() {
         modelActionPending = true
         modelActionPendingTask?.cancel()
-        modelActionPendingTask = Task { [weak self] in
+        modelActionPendingTask = Task { [weak self, clock] in
             do {
-                try await Task.sleep(for: Self.modelActionPendingTimeout)
+                try await clock.sleep(for: Self.modelActionPendingTimeout)
             } catch {
                 return
             }

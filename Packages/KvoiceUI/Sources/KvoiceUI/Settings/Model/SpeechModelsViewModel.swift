@@ -241,7 +241,10 @@ public final class SpeechModelsViewModel {
     private let snapshotProvider: @MainActor () async -> SpeechModelsSnapshot?
     private let performer: @MainActor (SpeechModelAction) async -> Void
     private let pendingActionTimeout: Duration
-    @ObservationIgnored private var pendingTasks: [ModelID: Task<Void, Never>] = [:]
+    /// Internal (not private) so tests can await the timer they advanced.
+    @ObservationIgnored private(set) var pendingTasks: [ModelID: Task<Void, Never>] = [:]
+    /// Times the pending-action expiry; tests inject a `ParkingClock`.
+    private let clock: any KvoiceClock
     /// The language the language names are shown in. Defaults to the
     /// interface language; tests pin English so they do not follow the
     /// machine's own language.
@@ -252,8 +255,10 @@ public final class SpeechModelsViewModel {
         snapshot: SpeechModelsSnapshot? = nil,
         pendingActionTimeout: Duration = .seconds(5),
         snapshotProvider: @escaping @MainActor () async -> SpeechModelsSnapshot? = { await SpeechModelsHooks.snapshot() },
-        perform: @escaping @MainActor (SpeechModelAction) async -> Void = { await SpeechModelsHooks.perform($0) }
+        perform: @escaping @MainActor (SpeechModelAction) async -> Void = { await SpeechModelsHooks.perform($0) },
+        clock: any KvoiceClock = SystemKvoiceClock()
     ) {
+        self.clock = clock
         self.host = host
         self.snapshot = snapshot
         self.pendingActionTimeout = pendingActionTimeout
@@ -477,8 +482,8 @@ public final class SpeechModelsViewModel {
     private func markPending(_ id: ModelID, _ action: ModelCardAction) {
         pendingActions[id] = action
         pendingTasks[id]?.cancel()
-        pendingTasks[id] = Task { [weak self, pendingActionTimeout] in
-            try? await Task.sleep(for: pendingActionTimeout)
+        pendingTasks[id] = Task { [weak self, pendingActionTimeout, clock] in
+            try? await clock.sleep(for: pendingActionTimeout)
             guard !Task.isCancelled, let self, self.pendingActions[id] == action else { return }
             self.clearPending(id)
         }

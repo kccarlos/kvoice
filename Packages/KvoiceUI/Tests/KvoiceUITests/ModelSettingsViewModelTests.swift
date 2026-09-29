@@ -1,5 +1,6 @@
 import XCTest
 @testable import KvoiceDomain
+import KvoiceTestSupport
 @testable import KvoiceUI
 
 /// The Model tab offers only the actions that make sense for the lifecycle
@@ -129,16 +130,24 @@ final class ModelSettingsViewModelTests: XCTestCase {
     }
 
     func testAPendingActionExpiresWhenTheShellNeverReacts() async throws {
+        let clock = ParkingClock()
         let model = ModelSettingsViewModel(
             state: .ready(summary),
             descriptor: external,
-            pendingActionTimeout: .milliseconds(40)
+            pendingActionTimeout: .milliseconds(40),
+            clock: clock
         )
 
         model.perform(.forget)
         XCTAssertEqual(model.pendingAction, .forget)
 
-        try await Task.sleep(for: .milliseconds(200))
+        await clock.waitForSleepers(1)
+        XCTAssertEqual(clock.pendingDurations, [.milliseconds(40)])
+        let expiry = try XCTUnwrap(model.pendingActionTask)
+        clock.advance(by: .milliseconds(39))
+        XCTAssertEqual(model.pendingAction, .forget, "the lock holds until the timeout has elapsed")
+        clock.advance(by: .milliseconds(1))
+        await awaitTask(expiry, "the pending-action timer never finished after its deadline")
         XCTAssertNil(model.pendingAction)
         XCTAssertTrue(model.isEnabled(.forget))
     }

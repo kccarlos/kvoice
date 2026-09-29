@@ -1,6 +1,7 @@
 import AppKit
 import XCTest
 @testable import KvoiceDomain
+import KvoiceTestSupport
 @testable import KvoiceUI
 
 @MainActor
@@ -659,11 +660,21 @@ final class HUDViewStateTests: XCTestCase {
     }
 
     func testAutoDismissedStateIsNotReshownUntilStateChanges() async throws {
-        let controller = HUDController(announce: { _ in })
+        let clock = ParkingClock()
+        let controller = HUDController(announce: { _ in }, clock: clock)
         let done = HUDViewState(phase: .completed(HUDCompletionState(kind: .success)))
+        let delay = try XCTUnwrap(done.autoDismissAfter(timings: controller.dismissTimings))
+        XCTAssertEqual(delay, .milliseconds(900), "the compiled success exit")
         controller.show(done)
         XCTAssertTrue(controller.isVisible)
-        try await Task.sleep(for: .milliseconds(1_200))
+
+        await clock.waitForSleepers(1)
+        XCTAssertEqual(clock.pendingDurations, [delay])
+        let dismissal = try XCTUnwrap(controller.dismissalTask)
+        clock.advance(by: delay - .milliseconds(1))
+        XCTAssertTrue(controller.isVisible, "the panel stays up for the whole exit delay")
+        clock.advance(by: .milliseconds(1))
+        await awaitTask(dismissal, "the auto-dismiss timer never finished after its deadline")
         XCTAssertFalse(controller.isVisible, "success auto-hides after 900 ms")
 
         controller.show(done)

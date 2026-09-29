@@ -2,6 +2,7 @@ import Foundation
 import XCTest
 import KvoiceAppCore
 @testable import KvoiceDomain
+import KvoiceTestSupport
 @testable import KvoiceUI
 
 @MainActor
@@ -254,9 +255,11 @@ final class HistoryViewTests: XCTestCase {
 
     func testUndoWindowExpiresOnItsOwn() async throws {
         let entry = makeEntry(createdAt: Date(), rawText: "fleeting")
+        let clock = ParkingClock()
         let model = HistoryViewModel(
             repository: TestHistoryRepository(entries: [entry]),
-            undoWindow: .milliseconds(50)
+            undoWindow: .milliseconds(50),
+            clock: clock
         )
         await model.load()
 
@@ -265,10 +268,13 @@ final class HistoryViewTests: XCTestCase {
         let expiresIn = try XCTUnwrap(model.pendingUndo?.expiresAt.timeIntervalSinceNow)
         XCTAssertLessThanOrEqual(expiresIn, 0.05)
 
-        let deadline = Date().addingTimeInterval(2)
-        while model.pendingUndo != nil, Date() < deadline {
-            try await Task.sleep(for: .milliseconds(10))
-        }
+        await clock.waitForSleepers(1)
+        XCTAssertEqual(clock.pendingDurations, [.milliseconds(50)], "the timer runs for the undo window")
+        let expiry = try XCTUnwrap(model.undoExpiryTask)
+        clock.advance(by: .milliseconds(49))
+        XCTAssertNotNil(model.pendingUndo, "the window stays open until it has elapsed")
+        clock.advance(by: .milliseconds(1))
+        await awaitTask(expiry, "the undo-window timer never finished after its deadline")
         XCTAssertNil(model.pendingUndo, "the window closes without user action")
 
         await model.undoDelete()
@@ -423,34 +429,56 @@ final class HistoryViewTests: XCTestCase {
 
     func testStatusMessageClearsItselfAfterItsDuration() async throws {
         let entry = makeEntry(createdAt: Date(), rawText: "copy me")
+        let clock = ParkingClock()
         let model = HistoryViewModel(
             repository: TestHistoryRepository(entries: [entry]),
             copier: HistoryCopySpy(),
-            statusMessageDuration: .milliseconds(40)
+            statusMessageDuration: .milliseconds(40),
+            clock: clock
         )
 
         model.copyFinal(entry)
         XCTAssertEqual(model.statusMessage, "Final output copied.")
 
-        try await Task.sleep(for: .milliseconds(200))
+        await clock.waitForSleepers(1)
+        XCTAssertEqual(clock.pendingDurations, [.milliseconds(40)])
+        let expiry = try XCTUnwrap(model.statusMessageTask)
+        clock.advance(by: .milliseconds(39))
+        XCTAssertEqual(model.statusMessage, "Final output copied.", "the message stays up for its whole duration")
+        clock.advance(by: .milliseconds(1))
+        await awaitTask(expiry, "the status-message timer never finished after its deadline")
         XCTAssertNil(model.statusMessage)
     }
 
     func testANewerStatusMessageRestartsTheClock() async throws {
         let entry = makeEntry(createdAt: Date(), rawText: "copy me")
+        let clock = ParkingClock()
         let model = HistoryViewModel(
             repository: TestHistoryRepository(entries: [entry]),
             copier: HistoryCopySpy(),
-            statusMessageDuration: .milliseconds(120)
+            statusMessageDuration: .milliseconds(120),
+            clock: clock
         )
 
         model.copyFinal(entry)
-        try await Task.sleep(for: .milliseconds(80))
+        await clock.waitForSleepers(1)
+        let firstTimer = try XCTUnwrap(model.statusMessageTask)
+        clock.advance(by: .milliseconds(80))
+
         model.copyRaw(entry)
-        try await Task.sleep(for: .milliseconds(80))
+        // The first timer is cancelled (its sleep leaves the clock at once)
+        // and a fresh 120 ms timer parks in its place.
+        await awaitTask(firstTimer, "the first status-message timer was never cancelled")
+        await clock.waitForSleepers(1)
+        XCTAssertEqual(clock.pendingSleepCount, 1, "the first timer must be gone, not merely outrun")
+        let secondTimer = try XCTUnwrap(model.statusMessageTask)
+
+        // 160 ms after the first message: past its 120 ms, inside the second's.
+        clock.advance(by: .milliseconds(80))
         XCTAssertEqual(model.statusMessage, "Raw transcript copied.", "The first timer must not clear the second message")
 
-        try await Task.sleep(for: .milliseconds(150))
+        clock.advance(by: .milliseconds(40))
+        await awaitTask(secondTimer, "the second status-message timer never finished after its deadline")
         XCTAssertNil(model.statusMessage)
     }
 

@@ -50,7 +50,10 @@ public final class HUDController {
     /// so the two never disagree.
     public let dismissTimings: HUDDismissTimings
 
-    private var dismissalTask: Task<Void, Never>?
+    /// Internal (not private) so tests can await the timer they advanced.
+    private(set) var dismissalTask: Task<Void, Never>?
+    /// Times the auto-dismissal; tests inject a `ParkingClock`.
+    private let clock: any KvoiceClock
     private var renderGeneration = 0
     private var feedbackFilter = HUDRecordingFeedbackFilter()
     private let announce: @MainActor (String) -> Void
@@ -59,10 +62,12 @@ public final class HUDController {
     /// an `announcementRequested` notification when VoiceOver is running.
     public init(
         announce: (@MainActor (String) -> Void)? = nil,
-        dismissTimings: HUDDismissTimings = .compiled
+        dismissTimings: HUDDismissTimings = .compiled,
+        clock: any KvoiceClock = SystemKvoiceClock()
     ) {
         self.announce = announce ?? Self.postVoiceOverAnnouncement
         self.dismissTimings = dismissTimings
+        self.clock = clock
     }
 
     isolated deinit {
@@ -130,9 +135,9 @@ public final class HUDController {
 
         guard let duration = rendered.autoDismissAfter(timings: dismissTimings) else { return }
         let generation = renderGeneration
-        dismissalTask = Task { [weak self] in
+        dismissalTask = Task { [weak self, clock] in
             do {
-                try await Task.sleep(for: duration)
+                try await clock.sleep(for: duration)
             } catch {
                 return
             }

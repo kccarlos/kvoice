@@ -54,7 +54,11 @@ final class URLSessionModelDownloadClientTests: XCTestCase {
         } catch {
             XCTFail("expected CancellationError, got \(error)")
         }
-        XCTAssertLessThan(ContinuousClock.now - cancelledAt, .seconds(2), "must not wait for the transfer")
+        // The stub never answers, so a client that waited for the transfer
+        // would only return at URLSession's 60 s request timeout (and with a
+        // timeout error, not CancellationError). 20 s separates the two
+        // outcomes without failing on a loaded runner; 2 s did not.
+        XCTAssertLessThan(ContinuousClock.now - cancelledAt, .seconds(20), "must not wait for the transfer")
         try await waitUntilTrue { StallingURLProtocol.stoppedCount == 1 }
 
         // The client is reusable afterwards: a second download starts a new

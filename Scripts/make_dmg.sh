@@ -48,14 +48,27 @@ ln -s /Applications "$staging/Applications"
 
 dmg="$output_dir/KVoice-$version.dmg"
 rm -f "$dmg"
-hdiutil create \
+# hdiutil fails now and then with "Resource busy" on CI runners (a
+# background scanner holding the new image; it failed the v0.1.2 release
+# once). Retry a few times with a pause before giving up.
+attempt=1
+until hdiutil create \
     -volname "${KVOICE_DMG_VOLUME_NAME:-KVoice $version}" \
     -srcfolder "$staging" \
     -fs HFS+ \
     -format UDZO \
     -imagekey zlib-level=9 \
     -ov \
-    "$dmg" >/dev/null
+    "$dmg" >/dev/null; do
+    if [ "$attempt" -ge 4 ]; then
+        echo "make_dmg: hdiutil create failed $attempt times" >&2
+        exit 1
+    fi
+    echo "make_dmg: hdiutil create failed (attempt $attempt); retrying" >&2
+    attempt=$((attempt + 1))
+    rm -f "$dmg"
+    sleep $((attempt * 5))
+done
 
 # The DMG is signed with the app's identity: KVOICE_CODE_SIGN_IDENTITY when
 # the caller names one (the workflows), otherwise the leaf authority of the

@@ -170,6 +170,7 @@ if [ "$signing_settings" = "CODE_SIGN_STYLE=Manual" ]; then
         CODE_SIGN_STYLE=Manual \
         CODE_SIGN_IDENTITY="Apple Distribution" \
         KVOICE_APP_STORE_PROFILE_SPECIFIER="$profile_name" \
+        CODE_SIGN_INJECT_BASE_ENTITLEMENTS=YES \
         DEVELOPMENT_TEAM="$team" \
         $version_overrides \
         $entitlement_override \
@@ -187,6 +188,7 @@ else
         CODE_SIGNING_ALLOWED=YES \
         CODE_SIGNING_REQUIRED=YES \
         CODE_SIGN_STYLE=Automatic \
+        CODE_SIGN_INJECT_BASE_ENTITLEMENTS=YES \
         DEVELOPMENT_TEAM="$team" \
         $version_overrides \
         $entitlement_override \
@@ -200,8 +202,18 @@ check_flags=""
 if [ "${KVOICE_PCC_ENTITLEMENT:-0}" = "1" ]; then
     check_flags="--pcc"
 fi
+# A store archive must carry the profile and the identity entitlements it
+# grants (application and team identifier); check_app_store_signature.sh
+# requires both once the profile is embedded. Release.xcconfig turns off
+# base-entitlement injection so the notarized DMG never carries
+# get-task-allow; the archive above turns it back on, because without it the
+# signature lacks the application identifier and App Store Connect refuses
+# the build for TestFlight (the v0.1.1 upload warning).
+archived_app="$archive/Products/Applications/kvoice.app"
+[ -f "$archived_app/Contents/embedded.provisionprofile" ] \
+    || { echo "archive_app_store: the archived app embeds no provisioning profile; App Store Connect needs one" >&2; exit 1; }
 # shellcheck disable=SC2086
-./Scripts/check_app_store_signature.sh $check_flags "$archive/Products/Applications/kvoice.app"
+./Scripts/check_app_store_signature.sh $check_flags "$archived_app"
 
 # shellcheck disable=SC2086
 xcodebuild \

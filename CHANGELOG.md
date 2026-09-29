@@ -9,6 +9,14 @@ without one is refused.
 
 ## Unreleased
 
+## 0.1.2
+
+The first build accepted for the Mac App Store; the app is otherwise the same
+as 0.1.1.
+
+- The Mac App Store package now carries everything App Store Connect checks
+  for (verified with Apple's validation before release).
+
 ## 0.1.1
 
 The first Mac App Store build, and the same app as 0.1.0 for everyone else.

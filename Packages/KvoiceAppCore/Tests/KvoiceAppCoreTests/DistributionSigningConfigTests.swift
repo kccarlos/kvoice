@@ -261,6 +261,11 @@ final class DistributionSigningConfigTests: XCTestCase {
         // Without it Gatekeeper (spctl) rejects the notarized bundle as
         // "valid but does not seem to be an app", and App Store validation fails.
         XCTAssertEqual(info["CFBundlePackageType"] as? String, "APPL")
+        // App Store Connect refuses a package whose app lacks these
+        // ("Bad Bundle Executable", 90259), although macOS runs it.
+        XCTAssertEqual(info["CFBundleExecutable"] as? String, "$(EXECUTABLE_NAME)")
+        XCTAssertEqual(info["CFBundleName"] as? String, "$(PRODUCT_NAME)")
+        XCTAssertEqual(info["CFBundleInfoDictionaryVersion"] as? String, "6.0")
         XCTAssertEqual(info["LSApplicationCategoryType"] as? String, "public.app-category.productivity")
         XCTAssertEqual(info["ITSAppUsesNonExemptEncryption"] as? Bool, false)
     }

@@ -137,6 +137,7 @@ public enum DiagnosticsReport {
         case .verifying(let done, let total): return "verifying \(done)/\(total) files"
         case .installing: return "installing"
         case .loading: return "loading"
+        case .optimizing: return "optimizing"
         case .ready(let summary): return "ready \(describe(summary))"
         case .inference(let summary, _): return "inference \(describe(summary))"
         case .corrupt(let failure): return "corrupt code=\(failure.code)"

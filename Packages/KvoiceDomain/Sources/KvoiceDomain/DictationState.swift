@@ -39,6 +39,14 @@ public struct BlockReason: Sendable, Equatable {
         code: KVoiceErrorCode.appBusy.rawValue,
         message: "The transcription model is still loading. Try again in a moment."
     )
+    /// 2026-09-29: the default model is `.optimizing` — its first Core ML
+    /// build on this Mac, minutes rather than a moment. Same code as
+    /// `modelLoading` (the HUD's mapping is unchanged); the sentence tells
+    /// the truth about the wait, once.
+    public static let modelOptimizing = Self(
+        code: KVoiceErrorCode.appBusy.rawValue,
+        message: "Optimizing the speech model for this Mac — first time only, this can take a few minutes. Try again when it finishes."
+    )
 
     // MARK: System-managed models (ADR-025 amendment, 2026-09-16)
 

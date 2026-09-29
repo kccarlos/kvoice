@@ -298,10 +298,25 @@ public struct OnboardingView: View {
                             .foregroundStyle(.secondary)
                             .accessibilityLabel("Runtime and download size: \(detail)")
                     }
-                    Text("Downloaded once, verified against the manifest bundled with this release, and used only on this Mac.")
+                    Text(viewModel.modelSourceNote)
                         .font(.callout)
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
+                    if let alternativeTitle = viewModel.alternativeModelTitle,
+                       let alternativeNote = viewModel.alternativeModelNote {
+                        // 2026-09-29: the other model, one click away, with
+                        // what choosing it costs said up front.
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(alternativeNote)
+                                .font(.callout)
+                                .foregroundStyle(.secondary)
+                                .fixedSize(horizontal: false, vertical: true)
+                            Button(alternativeTitle) {
+                                viewModel.useAlternativeModel()
+                            }
+                            .controlSize(.small)
+                        }
+                    }
                     Text("Choose a different model in Settings › Speech Models.")
                         .font(.callout)
                         .foregroundStyle(.secondary)
@@ -353,6 +368,13 @@ public struct OnboardingView: View {
                             .accessibilityElement(children: .combine)
                             .accessibilityLabel(activity)
                         }
+                    }
+
+                    if let notice = viewModel.modelNotice {
+                        StatusLabel(notice, symbol: "hourglass", tone: .neutral)
+                            .font(.callout)
+                            .labelStyle(.titleAndIcon)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
 
                     if let failure = viewModel.modelFailureMessage {

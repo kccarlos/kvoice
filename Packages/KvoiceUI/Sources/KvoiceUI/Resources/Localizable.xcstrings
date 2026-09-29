@@ -74,6 +74,16 @@
         }
       }
     },
+    "%@ also runs on this Mac: ready in seconds, with nothing large to download.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ 也可在这台 Mac 上运行：几秒即可就绪，无需下载大文件。"
+          }
+        }
+      }
+    },
     "%@ contains no audio.": {
       "localizations": {
         "zh-Hans": {
@@ -236,6 +246,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "%@ · 可用 %@"
+          }
+        }
+      }
+    },
+    "%@ · Built into macOS": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ · macOS 内置"
           }
         }
       }
@@ -2011,6 +2031,16 @@
         }
       }
     },
+    "Checking which speech model suits this Mac…": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在确认哪个语音模型适合这台 Mac…"
+          }
+        }
+      }
+    },
     "Choose": {
       "localizations": {
         "zh-Hans": {
@@ -3519,6 +3549,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "只下载一次，对照此版本随附的清单验证，并只在这台 Mac 上使用。"
+          }
+        }
+      }
+    },
+    "Downloaded once, verified against the manifest bundled with this release, and used only on this Mac. The first time it loads, it is optimized for your Mac, which can take a few minutes.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "只需下载一次，按此版本附带的清单校验，仅在这台 Mac 上使用。首次加载时会为这台 Mac 进行优化，可能需要几分钟。"
           }
         }
       }
@@ -5137,6 +5177,16 @@
         }
       }
     },
+    "Install Model": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "安装模型"
+          }
+        }
+      }
+    },
     "Installed": {
       "localizations": {
         "zh-Hans": {
@@ -5677,22 +5727,22 @@
         }
       }
     },
-    "Loading model into the Neural Engine. The first load compiles the model and can take a few minutes.": {
+    "Loading the model. Wait for it to finish.": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "正在把模型加载到神经网络引擎。首次加载需要编译模型，可能需要几分钟。"
+            "value": "正在加载模型，请等待完成。"
           }
         }
       }
     },
-    "Loading the model into the Neural Engine. The first load can take a few minutes.": {
+    "Loading the model…": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "正在把模型加载到神经网络引擎。首次加载可能需要几分钟。"
+            "value": "正在加载模型…"
           }
         }
       }
@@ -7073,6 +7123,36 @@
         }
       }
     },
+    "Optimizing for your Mac — first time only, this can take a few minutes. You can continue setup meanwhile.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在为这台 Mac 优化——仅首次，可能需要几分钟。你可以同时继续设置。"
+          }
+        }
+      }
+    },
+    "Optimizing for your Mac — first time only, this can take a few minutes…": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在为这台 Mac 优化——仅首次，可能需要几分钟…"
+          }
+        }
+      }
+    },
+    "Optimizing the model for your Mac. This happens only the first time and can take a few minutes; model changes are available when it finishes.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在为这台 Mac 优化模型。仅首次需要，可能需要几分钟；完成后即可更改模型。"
+          }
+        }
+      }
+    },
     "Optional": {
       "localizations": {
         "zh-Hans": {
@@ -7465,6 +7545,22 @@
         }
       }
     },
+    "Prefer %@? It downloads %@ once, and the first time it loads it is optimized for your Mac, which can take a few minutes.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Prefer %1$@? It downloads %2$@ once, and the first time it loads it is optimized for your Mac, which can take a few minutes."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "更想用 %1$@？它需要下载一次 %2$@，首次加载时会为这台 Mac 进行优化，可能需要几分钟。"
+          }
+        }
+      }
+    },
     "Preparing": {
       "localizations": {
         "zh-Hans": {
@@ -7851,6 +7947,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "推荐"
+          }
+        }
+      }
+    },
+    "Recommended for this Mac: ready in seconds, with nothing large to download. macOS provides the speech model, and transcription stays on this Mac.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "推荐用于这台 Mac：几秒即可就绪，无需下载大文件。语音模型由 macOS 提供，转写始终在这台 Mac 上完成。"
           }
         }
       }
@@ -11407,6 +11513,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "使用"
+          }
+        }
+      }
+    },
+    "Use %@ Instead": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "改用 %@"
           }
         }
       }

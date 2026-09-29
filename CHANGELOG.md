@@ -9,6 +9,21 @@ without one is refused.
 
 ## Unreleased
 
+## 0.1.3
+
+- On a Mac with macOS 26 or later, a new setup now starts with Apple Speech
+  when it supports your language: it is ready in seconds, with nothing large
+  to download. Whisper is one click away in the setup window, which says what
+  it downloads and that its first load takes a few minutes.
+- The first time a model such as Whisper loads on your Mac, kvoice now says
+  "Optimizing for your Mac — first time only" in the setup window, Speech
+  Models, the menu bar and the recorder, instead of a plain "Loading" that
+  looked stuck. Later loads take seconds and say so.
+- Fixed: clicking another model action while a model was loading could throw
+  away minutes of first-time optimization and start it over. The load now
+  always finishes; an action that has to wait says why instead of doing
+  nothing.
+
 ## 0.1.2
 
 The first build accepted for the Mac App Store; the app is otherwise the same

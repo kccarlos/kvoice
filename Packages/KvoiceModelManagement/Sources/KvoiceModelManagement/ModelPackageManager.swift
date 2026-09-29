@@ -804,7 +804,10 @@ public actor ModelPackageManager: ModelPackageProviding {
     }
 
     private func loadVerifiedPackage(_ package: InstalledModelPackage) async throws {
-        state = .loading
+        // 2026-09-29 (owner decision 2): a first Core ML build on this Mac
+        // is `.optimizing` — the same "busy" to every gate, but its own
+        // "first time only, a few minutes" sentence on every surface.
+        state = await runtimeLoader.loadWillCompileFirstTime(package) ? .optimizing : .loading
         do {
             try await runtimeLoader.load(package)
             currentPackage = package

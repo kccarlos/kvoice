@@ -81,6 +81,7 @@ public extension BlockReason {
         .modelUnavailable,
         .microphoneNotRequested,
         .modelLoading,
+        .modelOptimizing,
         // ADR-025 amendment: the system-managed default's own block copy.
         .systemManagedAssetsMissing
     ]

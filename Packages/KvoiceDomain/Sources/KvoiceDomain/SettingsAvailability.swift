@@ -291,6 +291,12 @@ public enum SettingAvailabilityReason: String, CaseIterable, Sendable {
     case performanceTestRunning
     case fileTranscriptionRunning
     case modelOperationInProgress
+    /// 2026-09-29: a model change waits for the first Core ML build
+    /// (`ModelLifecycleState.optimizing`) — `ModelOperationAdmission`.
+    case modelOptimizing
+    /// 2026-09-29: a model change waits for a load or verification that
+    /// cannot be paused — `ModelOperationAdmission`.
+    case modelLoadInProgress
     case noModelLoaded
     /// ADR-025: the resident runtime (Apple Speech) exposes no compute-unit
     /// choice; the picker shows the stored value for the Core ML runtimes.
@@ -321,6 +327,10 @@ public enum SettingAvailabilityReason: String, CaseIterable, Sendable {
             return "A file is being transcribed."
         case .modelOperationInProgress:
             return "A model operation is in progress."
+        case .modelOptimizing:
+            return "The speech model is being optimized for this Mac (first time only). Model changes are available when it finishes."
+        case .modelLoadInProgress:
+            return "The speech model is loading. Model changes are available when it finishes."
         case .noModelLoaded:
             return "No model is loaded."
         case .runtimeHasNoComputeUnitChoice:

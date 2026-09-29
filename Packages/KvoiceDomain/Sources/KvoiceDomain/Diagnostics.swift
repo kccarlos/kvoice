@@ -115,6 +115,21 @@ public struct DiagnosticEventName: RawRepresentable, Codable, Sendable, Equatabl
     /// activity's name, `site` the running one's — case names only, never
     /// a model ID (`ModelActivity.name`).
     public static let modelActivityRefused = Self(rawValue: "model.activity.refused")
+    /// 2026-09-29 (`ModelOperationAdmission`): the shell refused a user's
+    /// model operation because another could not be interrupted, and said
+    /// why where the user clicked. `site` is the operation (`download`,
+    /// `retry`, `use`, …), `reason` the running activity's name.
+    public static let modelOperationRefused = Self(rawValue: "model.operation.refused")
+    /// 2026-09-29: a user's model operation paused a running download to
+    /// start (the one case the shell still cancels). Same attributes.
+    /// Before this line existed, the operation that cancelled the owner's
+    /// first compile left no trace in the log.
+    public static let modelOperationSuperseded = Self(rawValue: "model.operation.superseded")
+    /// 2026-09-29 (`SetupSpeechModelDefault`): a fresh setup's default was
+    /// decided. `modelID` is the chosen entry; `reason` is
+    /// `systemManagedAvailable` (Apple Speech adopted) or
+    /// `systemManagedUnavailable` (the catalog's recommended entry kept).
+    public static let modelSetupDefaultChosen = Self(rawValue: "model.setupDefault.chosen")
     /// ADR-025 amendment (2026-09-16): `SpeechModelLibrary` started the
     /// install of the default system-managed model's assets on its own,
     /// because the transcription language changed to one the platform

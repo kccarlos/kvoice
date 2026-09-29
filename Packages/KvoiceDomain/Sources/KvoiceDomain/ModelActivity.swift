@@ -151,3 +151,62 @@ public enum ModelActivityTransition {
         ]
     }
 }
+
+/// 2026-09-29: what a new shell-driven model operation (a card's Download
+/// or Use, the wizard's Download, the status menu's model pick) does about
+/// the operation already in flight — decided *before* it is queued, so a
+/// refusal can be said out loud where the user clicked.
+///
+/// Why: the shell ran one operation at a time by cancelling the previous
+/// one. That is right for a download (the cancel pauses it; Resume picks
+/// it up), and was the documented behaviour ("pressing Download on a
+/// second card pauses the first"). It was wrong for everything else: the
+/// owner's TestFlight log shows the launch restore's first Neural Engine
+/// compile — 3.5 minutes — ending in `loadCancelled` because a later
+/// operation cancelled the task it ran in. A load or a verification cannot
+/// be paused and resumed; cancelling it only throws the work away.
+///
+/// | Running activity | Its model's state | Decision |
+/// | --- | --- | --- |
+/// | idle | — | start (after the previous task, never cancelling it) |
+/// | downloading | `.downloading` (bytes flowing) | supersede: cancel → paused, resumable |
+/// | downloading / installing / loading | `.optimizing` | refuse: `modelOptimizing` |
+/// | downloading / installing / loading | anything else | refuse: `modelLoadInProgress` |
+/// | reloadingUnits / testing / transcribingFile / unloading | — | refuse with that activity's reason |
+public enum ModelOperationAdmission: Equatable, Sendable {
+    case start
+    case supersedeDownload
+    case refuse(SettingAvailabilityReason)
+
+    public static func decide(
+        running: ModelActivity,
+        runningModelState: ModelLifecycleState?
+    ) -> ModelOperationAdmission {
+        switch running {
+        case .idle:
+            return .start
+        case .downloading, .installing, .loading:
+            if case .downloading = running, case .downloading? = runningModelState {
+                return .supersedeDownload
+            }
+            if case .optimizing? = runningModelState {
+                return .refuse(.modelOptimizing)
+            }
+            return .refuse(.modelLoadInProgress)
+        case .reloadingUnits:
+            return .refuse(.reloadingComputeUnits)
+        case .testing:
+            return .refuse(.performanceTestRunning)
+        case .transcribingFile:
+            return .refuse(.fileTranscriptionRunning)
+        case .unloading:
+            return .refuse(.modelOperationInProgress)
+        }
+    }
+
+    /// The reason when refused, else nil.
+    public var refusalReason: SettingAvailabilityReason? {
+        if case .refuse(let reason) = self { return reason }
+        return nil
+    }
+}

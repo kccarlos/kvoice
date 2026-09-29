@@ -80,3 +80,72 @@ final class ModelActivityTransitionTests: XCTestCase {
         XCTAssertEqual(refusing, [.reloadingUnits, .testing, .transcribingFile])
     }
 }
+
+/// 2026-09-29: the shell's admission policy for a user's model operation.
+/// Only a download in its byte phase may be superseded (it pauses and
+/// resumes); a load or verification is never cancelled — that is what
+/// threw away the owner's 3.5-minute first compile — and a refusal always
+/// carries a sentence.
+final class ModelOperationAdmissionTests: XCTestCase {
+    private let summary = InstalledModelSummary(modelID: "m", revision: "r", ownership: .managedByKvoice)
+
+    func testIdleStarts() {
+        XCTAssertEqual(ModelOperationAdmission.decide(running: .idle, runningModelState: nil), .start)
+    }
+
+    func testOnlyADownloadInItsBytePhaseIsSuperseded() {
+        XCTAssertEqual(
+            ModelOperationAdmission.decide(running: .downloading("m"), runningModelState: .downloading(completed: 1, total: 2)),
+            .supersedeDownload
+        )
+        // The same install transaction past its bytes: verify, install, load.
+        for state in [ModelLifecycleState.verifying(completedFiles: 1, totalFiles: 2), .installing, .loading] {
+            XCTAssertEqual(
+                ModelOperationAdmission.decide(running: .downloading("m"), runningModelState: state),
+                .refuse(.modelLoadInProgress),
+                "\(state)"
+            )
+        }
+    }
+
+    func testALoadOrVerificationIsRefusedNeverCancelled() {
+        let states: [ModelLifecycleState?] = [nil, .verifying(completedFiles: 0, totalFiles: 1), .loading, .ready(summary)]
+        for running in [ModelActivity.installing("m"), .loading("m")] {
+            for state in states {
+                XCTAssertEqual(
+                    ModelOperationAdmission.decide(running: running, runningModelState: state),
+                    .refuse(.modelLoadInProgress),
+                    "\(running.name) \(String(describing: state))"
+                )
+            }
+        }
+    }
+
+    func testTheFirstCompileSaysSo() {
+        for running in [ModelActivity.installing("m"), .loading("m"), .downloading("m")] {
+            XCTAssertEqual(
+                ModelOperationAdmission.decide(running: running, runningModelState: .optimizing),
+                .refuse(.modelOptimizing)
+            )
+        }
+        XCTAssertTrue(SettingAvailabilityReason.modelOptimizing.message.contains("first time only"))
+    }
+
+    func testTheEngineActivitiesKeepTheirOwnReasons() {
+        XCTAssertEqual(ModelOperationAdmission.decide(running: .reloadingUnits, runningModelState: nil), .refuse(.reloadingComputeUnits))
+        XCTAssertEqual(ModelOperationAdmission.decide(running: .testing, runningModelState: nil), .refuse(.performanceTestRunning))
+        XCTAssertEqual(ModelOperationAdmission.decide(running: .transcribingFile, runningModelState: nil), .refuse(.fileTranscriptionRunning))
+        XCTAssertEqual(ModelOperationAdmission.decide(running: .unloading, runningModelState: nil), .refuse(.modelOperationInProgress))
+    }
+
+    func testEveryActivityHasADecisionAndEveryRefusalHasASentence() {
+        for running in ModelActivityTransition.representativeActivities() {
+            let decision = ModelOperationAdmission.decide(running: running, runningModelState: nil)
+            if let reason = decision.refusalReason {
+                XCTAssertFalse(reason.message.isEmpty, running.name)
+            } else {
+                XCTAssertEqual(running, .idle)
+            }
+        }
+    }
+}

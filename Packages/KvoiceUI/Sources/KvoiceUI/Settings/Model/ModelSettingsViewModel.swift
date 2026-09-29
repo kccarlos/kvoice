@@ -303,7 +303,7 @@ public final class ModelSettingsViewModel {
             return [.resume, .chooseExisting]
         case .downloading:
             return [.cancel]
-        case .validatingExternal, .verifying, .installing, .loading, .deleting:
+        case .validatingExternal, .verifying, .installing, .loading, .optimizing, .deleting:
             return []
         case .ready where descriptor?.source == .systemManaged:
             return ownershipActions
@@ -341,7 +341,9 @@ public final class ModelSettingsViewModel {
         case .installing:
             return String(localized: "Installing the package.", bundle: .module)
         case .loading:
-            return String(localized: "Loading the model into the Neural Engine. The first load can take a few minutes.", bundle: .module)
+            return String(localized: "Loading the model. Wait for it to finish.", bundle: .module)
+        case .optimizing:
+            return String(localized: "Optimizing the model for your Mac. This happens only the first time and can take a few minutes; model changes are available when it finishes.", bundle: .module)
         case .deleting:
             return String(localized: "Removing the package.", bundle: .module)
         case .inference:
@@ -354,7 +356,7 @@ public final class ModelSettingsViewModel {
     public var isBusy: Bool {
         if pendingAction != nil { return true }
         switch state {
-        case .validatingExternal, .downloading, .verifying, .installing, .loading, .deleting, .inference:
+        case .validatingExternal, .downloading, .verifying, .installing, .loading, .optimizing, .deleting, .inference:
             return true
         case .absent, .downloadPaused, .ready, .corrupt, .incompatible, .error, .unavailable:
             return false
@@ -389,6 +391,7 @@ public final class ModelSettingsViewModel {
             return total > 0 ? String(localized: "Verifying — \(done) of \(total) files", bundle: .module) : String(localized: "Verifying…", bundle: .module)
         case .installing: return String(localized: "Installing…", bundle: .module)
         case .loading: return String(localized: "Loading into the Neural Engine…", bundle: .module)
+        case .optimizing: return String(localized: "Optimizing for your Mac — first time only, this can take a few minutes…", bundle: .module)
         case .ready: return String(localized: "Ready", bundle: .module)
         case .inference: return String(localized: "Busy — dictation active", bundle: .module)
         case .corrupt(let failure): return String(localized: "Corrupt — \(DomainCopy.localized(failure.message))", bundle: .module)

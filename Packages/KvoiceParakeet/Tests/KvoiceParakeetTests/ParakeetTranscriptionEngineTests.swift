@@ -130,11 +130,14 @@ final class ParakeetTranscriptionEngineTests: XCTestCase {
         XCTAssertEqual(events.first?.attributes.site?.rawValue, "warmUp")
     }
 
-    func testLoadCancelledDuringWarmUpReleasesTheDecoder() async throws {
+    /// 2026-09-29: a decoder that was built is finished Core ML work; a
+    /// cancellation that lands during its warm-up no longer throws it away.
+    func testLoadCancelledDuringWarmUpKeepsTheBuiltDecoderResident() async throws {
         let fixture = try fixture(.tdtV3)
         let gate = LoadGate()
         let runtime = FakeParakeetRuntime(warmUpGate: gate)
-        let engine = ParakeetTranscriptionEngine(runtime: runtime, trustedReleases: [fixture.anchor])
+        let diagnostics = RecordingDiagnostics()
+        let engine = ParakeetTranscriptionEngine(runtime: runtime, trustedReleases: [fixture.anchor], diagnostics: diagnostics)
 
         let load = Task { try await engine.load(fixture.package) }
         while runtime.decodedPasses.isEmpty { await Task.yield() }
@@ -146,12 +149,74 @@ final class ParakeetTranscriptionEngineTests: XCTestCase {
 
         load.cancel()
         await gate.open()
+        try await load.value
+
+        XCTAssertEqual(runtime.unloadedDecoders, 0, "the built decoder is not released")
+        let loaded = await engine.loadedModelID
+        XCTAssertEqual(loaded, KvoiceFluidAudioModels.parakeetTDTv3ModelID)
+        if case .ready = await engine.state {} else { XCTFail("expected ready") }
+        let events = await diagnostics.events
+        XCTAssertFalse(events.contains { $0.attributes.reason?.rawValue == "loadCancelled" })
+    }
+
+    /// The owner's `loadCancelled` case: the task is cancelled while Core ML
+    /// is still building (the build cannot be interrupted); the finished
+    /// decoder becomes resident instead of being discarded.
+    func testLoadCancelledWhileTheDecoderIsBuildingKeepsItResident() async throws {
+        let fixture = try fixture(.tdtV3)
+        let gate = LoadGate()
+        let runtime = FakeParakeetRuntime(gate: gate)
+        let engine = ParakeetTranscriptionEngine(runtime: runtime, trustedReleases: [fixture.anchor])
+
+        let load = Task { try await engine.load(fixture.package) }
+        while runtime.batchConfigurations.isEmpty { await Task.yield() }
+        load.cancel()
+        await gate.open()
+        try await load.value
+
+        XCTAssertEqual(runtime.unloadedDecoders, 0)
+        let loaded = await engine.loadedModelID
+        XCTAssertEqual(loaded, KvoiceFluidAudioModels.parakeetTDTv3ModelID)
+    }
+
+    /// A replacement cancelled before it starts leaves the resident decoder.
+    func testACancelledReplacementLeavesTheResidentDecoderUntouched() async throws {
+        let fixture = try fixture(.tdtV3)
+        let other = try self.fixture(.unifiedEN)
+        let runtime = FakeParakeetRuntime()
+        let engine = ParakeetTranscriptionEngine(runtime: runtime, trustedReleases: [fixture.anchor, other.anchor])
+        try await engine.load(fixture.package)
+
+        let load = Task {
+            withUnsafeCurrentTask { $0?.cancel() }
+            try await engine.load(other.package)
+        }
         do {
             try await load.value
-            XCTFail("a load cancelled during its warm-up must not succeed")
+            XCTFail("a cancelled replacement must not succeed")
         } catch is CancellationError {}
+        XCTAssertEqual(runtime.unloadedDecoders, 0)
+        XCTAssertEqual(runtime.batchConfigurations.count, 1)
+        let loaded = await engine.loadedModelID
+        XCTAssertEqual(loaded, KvoiceFluidAudioModels.parakeetTDTv3ModelID)
+        if case .ready = await engine.state {} else { XCTFail("expected ready") }
+    }
 
-        XCTAssertEqual(runtime.unloadedDecoders, 1, "the decoder built for the cancelled load is released")
+    /// Cancellation before Core ML starts is still honoured: nothing built.
+    func testLoadCancelledBeforeTheBuildStartsBuildsNothing() async throws {
+        let fixture = try fixture(.tdtV3)
+        let runtime = FakeParakeetRuntime()
+        let engine = ParakeetTranscriptionEngine(runtime: runtime, trustedReleases: [fixture.anchor])
+
+        let load = Task {
+            withUnsafeCurrentTask { $0?.cancel() }
+            try await engine.load(fixture.package)
+        }
+        do {
+            try await load.value
+            XCTFail("a load cancelled before its build must not succeed")
+        } catch is CancellationError {}
+        XCTAssertTrue(runtime.batchConfigurations.isEmpty)
         let loaded = await engine.loadedModelID
         XCTAssertNil(loaded)
     }

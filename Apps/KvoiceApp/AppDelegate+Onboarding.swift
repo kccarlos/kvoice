@@ -43,6 +43,8 @@ extension AppDelegate {
             cancelModelDownload()
         case .retryModel:
             retryModel()
+        case .useSpeechModel(let id):
+            useSetupModel(id)
         case .requestMicrophonePermission, .runMicrophoneTest, .skipMicrophone:
             break
         case .requestAccessibilityPermission, .refreshAccessibilityStatus, .skipAccessibility:

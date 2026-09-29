@@ -37,6 +37,10 @@ public enum ModelStartPrerequisite {
             return isResident ? .passed : .blocked(.modelLoading)
         case .downloading, .downloadPaused, .verifying, .installing, .loading, .validatingExternal:
             return .blocked(.modelLoading)
+        case .optimizing:
+            // 2026-09-29: the first Core ML build on this Mac — minutes,
+            // not a moment, and the sentence says so.
+            return .blocked(.modelOptimizing)
         case .absent:
             return .blocked(isSystemManaged ? .systemManagedAssetsMissing : .modelUnavailable)
         case .unavailable(let failure):

@@ -311,6 +311,7 @@ final class SettingsSurface {
         case .verifying: return "verifying"
         case .installing: return "installing"
         case .loading: return "loading"
+        case .optimizing: return "optimizing"
         case .ready(let summary): return "ready:\(summary.ownership.rawValue)"
         case .inference(let summary, _): return "inference:\(summary.ownership.rawValue)"
         case .corrupt: return "corrupt"

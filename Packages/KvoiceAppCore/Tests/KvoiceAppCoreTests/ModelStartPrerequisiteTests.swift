@@ -33,6 +33,20 @@ final class ModelStartPrerequisiteTests: XCTestCase {
         }
     }
 
+    /// 2026-09-29: the hotkey pressed during the first Core ML build gets
+    /// the "optimized for this Mac, first time only" sentence, not "a moment".
+    func testTheFirstCompileBlocksWithItsOwnSentenceAndNoReload() {
+        for systemManaged in [false, true] {
+            XCTAssertEqual(
+                ModelStartPrerequisite.check(.optimizing, isResident: false, isSystemManaged: systemManaged),
+                .blocked(.modelOptimizing)
+            )
+        }
+        XCTAssertFalse(ModelStartPrerequisite.wantsReload(.optimizing, isResident: false))
+        XCTAssertEqual(BlockReason.modelOptimizing.code, BlockReason.modelLoading.code, "the HUD's error mapping is unchanged")
+        XCTAssertTrue(BlockReason.builtIn.contains(.modelOptimizing), "the sentence is in the copy inventory")
+    }
+
     func testAPackageModelBlocksWithTheGenericSentenceInEveryOtherState() {
         let states: [ModelLifecycleState] = [
             .absent, .corrupt(failure), .incompatible(failure), .deleting(summary), .error(failure), .unavailable(failure)

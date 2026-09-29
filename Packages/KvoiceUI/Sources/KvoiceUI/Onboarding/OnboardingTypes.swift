@@ -137,6 +137,10 @@ public enum OnboardingIntent: Sendable, Equatable {
     case skipModel
     case cancelModelDownload
     case retryModel
+    /// 2026-09-29: the model card's "Use … Instead" — make this catalog
+    /// entry the default and, when it is not installed, start its install
+    /// (one click; the card's note said what that downloads).
+    case useSpeechModel(ModelID)
     case requestMicrophonePermission
     case runMicrophoneTest
     case skipMicrophone

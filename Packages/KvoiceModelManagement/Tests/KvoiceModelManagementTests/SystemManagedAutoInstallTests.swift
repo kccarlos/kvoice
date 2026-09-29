@@ -376,6 +376,55 @@ final class SystemManagedAutoInstallTests: XCTestCase {
         await XCTAssertEqualAsync(await assets.installs, [])
         await XCTAssertEqualAsync(await library.state, Self.ready)
     }
+
+    // MARK: - Fresh-setup default (2026-09-29)
+
+    /// The decision waits for the system entry to have looked at this Mac:
+    /// its constructor `.absent` would otherwise read as "can run it".
+    func testObservedStatesAreWithheldUntilTheSystemEntryHasObservedThePlatform() async throws {
+        let assets = FakeSystemAssets()
+        await assets.set(state: .unavailable(.requiresNewerMacOS), for: "en")
+        let library = try makeLibrary(assets: assets, preferredDefault: nil, transcriptionLanguage: nil)
+
+        let before = await library.observedStates()
+        XCTAssertNil(before, "never decide on the constructor's state")
+
+        await library.restoreSelectedModel(nil)
+        let after = await library.observedStates()
+        XCTAssertEqual(after?["apple-speech"], .unavailable(SystemManagedUnavailableReason.requiresNewerMacOS.modelFailure))
+        let choice = SetupSpeechModelDefault.usableSystemModel(
+            catalog: library.catalog, states: after ?? [:], transcriptionLanguage: nil, macLanguageCode: "en"
+        )
+        XCTAssertNil(choice, "an older macOS keeps Whisper")
+    }
+
+    /// End to end at the library: a fresh setup on a Mac that can run Apple
+    /// Speech switches the default, and the existing per-language automatic
+    /// install fetches the assets — no new install path.
+    func testAFreshSetupAdoptsAppleSpeechAndTheAutomaticInstallFetchesItsAssets() async throws {
+        let assets = FakeSystemAssets()
+        let library = try makeLibrary(assets: assets, preferredDefault: nil, transcriptionLanguage: nil)
+        await library.restoreSelectedModel(nil)
+        let observed = await library.observedStates()
+        let states = try XCTUnwrap(observed)
+        let choice = SetupSpeechModelDefault.choice(
+            onboardingCompletedVersion: nil, savedDefaultModelID: nil, selectedModel: nil,
+            catalog: library.catalog, states: states, transcriptionLanguage: nil, macLanguageCode: "en"
+        )
+        XCTAssertEqual(choice, "apple-speech")
+
+        _ = try await library.setDefaultModel("apple-speech")
+        await library.setTranscriptionLanguage(nil)
+
+        await XCTAssertEqualAsync(await assets.installs, ["en"])
+        await XCTAssertEqualAsync(await library.state, Self.ready)
+    }
+
+    func testWaitUntilIdleReturnsAtOnceWhenNothingRuns() async throws {
+        let library = try makeLibrary(assets: FakeSystemAssets(), preferredDefault: nil)
+        await library.waitUntilIdle()
+        XCTAssertEqual(library.currentActivity, .idle)
+    }
 }
 
 // MARK: - Doubles

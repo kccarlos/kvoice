@@ -576,3 +576,21 @@ public final class AdvancingClock: KvoiceClock, @unchecked Sendable {
         lock.unlock()
     }
 }
+
+/// `ModelCompileRecording` in memory (2026-09-29): seed it with keys a test
+/// wants "already compiled", read back what the code under test recorded.
+public actor InMemoryModelCompileRecord: ModelCompileRecording {
+    public private(set) var compiled: Set<ModelCompileKey>
+
+    public init(compiled: Set<ModelCompileKey> = []) {
+        self.compiled = compiled
+    }
+
+    public func hasCompiled(_ key: ModelCompileKey) -> Bool {
+        compiled.contains(key)
+    }
+
+    public func recordCompiled(_ key: ModelCompileKey) {
+        compiled.insert(key)
+    }
+}

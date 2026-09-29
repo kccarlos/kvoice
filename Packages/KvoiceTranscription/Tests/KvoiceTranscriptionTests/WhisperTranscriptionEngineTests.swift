@@ -644,7 +644,92 @@ final class WhisperTranscriptionEngineTests: XCTestCase {
         XCTAssertEqual(passes, 1)
     }
 
-    func testLoadCancelledDuringWarmUpReleasesTheRuntimeAndReportsNoModel() async throws {
+    /// 2026-09-29, the owner's TestFlight log: `model.load.completed
+    /// failure reason=loadCancelled site=runtimeMake` at the end of a
+    /// 3.5-minute first compile. The task was cancelled while Core ML was
+    /// building (which cannot be interrupted); the finished runtime was
+    /// then thrown away. Now it becomes resident.
+    func testLoadCancelledWhileCoreMLBuildsKeepsTheFinishedRuntimeResident() async throws {
+        let runtime = ScriptedRuntime(result: makeRuntimeResult(text: "first"))
+        let factory = GatedFactory(runtime: runtime)
+        let package = makePackage(id: "primary")
+        let diagnostics = RecordingDiagnostics()
+        let engine = WhisperTranscriptionEngine(
+            factory: factory,
+            trustedReleases: [anchor(for: package)],
+            tokenizerPreflight: FixtureTokenizerPreflight(),
+            diagnostics: diagnostics
+        )
+
+        let load = Task { try await engine.load(package) }
+        while await factory.makeCallCount == 0 { await Task.yield() }
+        load.cancel()
+        await factory.finishBuild()
+        try await load.value
+
+        let loaded = await engine.loadedModelID
+        let state = await engine.state
+        let unloads = await runtime.unloadCallCount
+        XCTAssertEqual(loaded, package.manifest.modelID, "the compile is not thrown away")
+        XCTAssertEqual(state, .ready(summary(for: package)))
+        XCTAssertEqual(unloads, 0)
+        let events = await diagnostics.events
+        XCTAssertFalse(events.contains { $0.attributes.reason?.rawValue == "loadCancelled" })
+        // The runtime serves dictation afterwards.
+        _ = try await engine.transcribe(makeRequest(jobID: UUID()), events: { _ in })
+    }
+
+    /// Cancellation that lands before Core ML starts is still honoured.
+    func testLoadCancelledBeforeCoreMLStartsBuildsNothing() async throws {
+        let runtime = ScriptedRuntime(result: makeRuntimeResult(text: "first"))
+        let factory = ScriptedFactory(steps: [.runtime(runtime)])
+        let package = makePackage(id: "primary")
+        let engine = makeEngine(factory: factory, trustedPackages: [package])
+
+        let load = Task {
+            withUnsafeCurrentTask { $0?.cancel() }
+            try await engine.load(package)
+        }
+        do {
+            try await load.value
+            XCTFail("a load cancelled before the build must not succeed")
+        } catch is CancellationError {}
+        let configurations = await factory.configurations
+        let loaded = await engine.loadedModelID
+        XCTAssertTrue(configurations.isEmpty, "no Core ML build was started")
+        XCTAssertNil(loaded)
+    }
+
+    /// A replacement cancelled before it starts leaves the resident model
+    /// resident: nothing is unloaded, the state never says loading.
+    func testACancelledReplacementLeavesTheResidentRuntimeUntouched() async throws {
+        let first = ScriptedRuntime(result: makeRuntimeResult(text: "first"))
+        let factory = ScriptedFactory(steps: [.runtime(first), .runtime(ScriptedRuntime(result: makeRuntimeResult(text: "never")))])
+        let package = makePackage(id: "primary")
+        let replacement = makePackage(id: "replacement")
+        let engine = makeEngine(factory: factory, trustedPackages: [package, replacement])
+        try await engine.load(package)
+
+        let load = Task {
+            withUnsafeCurrentTask { $0?.cancel() }
+            try await engine.load(replacement)
+        }
+        do {
+            try await load.value
+            XCTFail("a cancelled replacement must not succeed")
+        } catch is CancellationError {}
+
+        let loaded = await engine.loadedModelID
+        let state = await engine.state
+        let unloads = await first.unloadCallCount
+        let builds = await factory.configurations.count
+        XCTAssertEqual(loaded, package.manifest.modelID)
+        XCTAssertEqual(state, .ready(summary(for: package)))
+        XCTAssertEqual(unloads, 0)
+        XCTAssertEqual(builds, 1, "no second Core ML build started")
+    }
+
+    func testLoadCancelledDuringWarmUpKeepsTheBuiltRuntimeResident() async throws {
         let runtime = ScriptedRuntime(result: makeRuntimeResult(text: "first"))
         await runtime.setWarmUpWaitsForCancellation(true)
         let factory = ScriptedFactory(steps: [.runtime(runtime)])
@@ -667,17 +752,12 @@ final class WhisperTranscriptionEngineTests: XCTestCase {
         XCTAssertEqual(midState, .loading)
 
         load.cancel()
-        do {
-            _ = try await load.value
-            XCTFail("a load cancelled during its warm-up must not succeed")
-        } catch is CancellationError {
-            // Expected.
-        }
+        try await load.value
 
         let unloads = await runtime.unloadCallCount
         let loaded = await engine.loadedModelID
-        XCTAssertEqual(unloads, 1, "the runtime built for the cancelled load is released, not leaked")
-        XCTAssertNil(loaded)
+        XCTAssertEqual(unloads, 0, "the built runtime is kept, not released")
+        XCTAssertEqual(loaded, package.manifest.modelID)
         let warmUpEvents = await diagnostics.events.filter { $0.name == .modelWarmUpCompleted }
         XCTAssertTrue(warmUpEvents.isEmpty, "a cancelled warm-up is not a warm-up failure")
     }
@@ -946,6 +1026,28 @@ private actor ScriptedFactory: WhisperRuntimeFactory {
         case let .runtime(runtime): return runtime
         case .failure: throw TestFactoryError.unavailable
         }
+    }
+}
+
+/// A factory whose `make` parks until the test calls `finishBuild()` and —
+/// like a real Core ML compile — ignores task cancellation meanwhile.
+private actor GatedFactory: WhisperRuntimeFactory {
+    private let runtime: any WhisperRuntime
+    private let gate = WarmUpGate()
+    private(set) var makeCallCount = 0
+
+    init(runtime: any WhisperRuntime) {
+        self.runtime = runtime
+    }
+
+    func finishBuild() async {
+        await gate.open()
+    }
+
+    func make(configuration: WhisperRuntimeConfiguration) async throws -> any WhisperRuntime {
+        makeCallCount += 1
+        await gate.waitUntilOpen()
+        return runtime
     }
 }
 

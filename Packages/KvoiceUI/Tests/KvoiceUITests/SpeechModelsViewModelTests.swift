@@ -207,11 +207,54 @@ final class SpeechModelsViewModelTests: XCTestCase {
             XCTAssertEqual(model.mutationDisabledReason(for: highCard), DomainCopy.localized(reason.message), activity.name)
             XCTAssertFalse(model.isEnabled(.delete, for: model.cards[0]), activity.name)
         }
-        for activity in [ModelActivity.downloading("standard"), .installing("standard"), .loading("standard")] {
-            let model = SpeechModelsViewModel(snapshot: snapshot(states: states, resident: "standard", activity: activity))
-            XCTAssertNil(model.engineActivityReason, activity.name)
-            XCTAssertTrue(model.isEnabled(.download, for: model.cards[1]), activity.name)
+        // A download in its byte phase locks only its own card: Download on
+        // another card pauses it (the documented behaviour).
+        let downloading = SpeechModelsViewModel(snapshot: snapshot(
+            states: ["standard": .ready(summary("standard")), "high": .downloading(completed: 1, total: 2)],
+            resident: "standard",
+            activity: .downloading("high")
+        ))
+        XCTAssertNil(downloading.engineActivityReason)
+        XCTAssertTrue(downloading.isEnabled(.delete, for: downloading.cards[0]))
+    }
+
+    /// 2026-09-29: a load or a verification cannot be paused — cancelling
+    /// one threw away the owner's 3.5-minute first compile — so every
+    /// other card is locked with the sentence the shell would refuse with,
+    /// the first compile's own ("first time only") included.
+    func testALoadInFlightLocksEveryCardWithItsReason() {
+        let cases: [(ModelActivity, ModelLifecycleState, SettingAvailabilityReason)] = [
+            (.installing("standard"), .verifying(completedFiles: 1, totalFiles: 4), .modelLoadInProgress),
+            (.installing("standard"), .loading, .modelLoadInProgress),
+            (.installing("standard"), .optimizing, .modelOptimizing),
+            (.downloading("standard"), .optimizing, .modelOptimizing),
+            (.loading("standard"), .loading, .modelLoadInProgress)
+        ]
+        for (activity, state, reason) in cases {
+            let model = SpeechModelsViewModel(snapshot: snapshot(
+                states: ["standard": state, "high": .absent],
+                activity: activity
+            ))
+            let highCard = model.cards[1]
+            XCTAssertFalse(model.isEnabled(.download, for: highCard), "\(activity.name) \(state)")
+            XCTAssertEqual(model.mutationDisabledReason(for: highCard), DomainCopy.localized(reason.message), "\(activity.name) \(state)")
         }
+    }
+
+    /// A refusal the shell reports after a click reads under the cards.
+    func testTheShellsRefusalReadsAsTheSectionsNoteUntilNothingRuns() {
+        var snapshot = snapshot(
+            states: ["standard": .loading, "high": .absent],
+            activity: .installing("standard")
+        )
+        snapshot.actionNote = "The speech model is loading. Model changes are available when it finishes."
+        let model = SpeechModelsViewModel(snapshot: snapshot)
+        XCTAssertEqual(model.refusalNote, snapshot.actionNote)
+
+        snapshot.activity = .idle
+        snapshot.states["standard"] = .ready(summary("standard"))
+        let settled = SpeechModelsViewModel(snapshot: snapshot)
+        XCTAssertNil(settled.refusalNote, "an operation would start now; the refusal is stale")
     }
 
     /// The language, per-model mode, and VAD rows commit through the host

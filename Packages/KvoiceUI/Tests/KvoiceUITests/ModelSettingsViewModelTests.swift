@@ -39,6 +39,26 @@ final class ModelSettingsViewModelTests: XCTestCase {
         XCTAssertEqual(model.progress, 0.5)
     }
 
+    /// 2026-09-29: the first Core ML build and a cached load read
+    /// differently on the card, both indeterminate, both locked.
+    func testTheFirstCompileSaysFirstTimeOnlyAndACachedLoadDoesNot() {
+        let optimizing = ModelSettingsViewModel(state: .optimizing)
+        XCTAssertEqual(optimizing.availableActions, [])
+        XCTAssertTrue(optimizing.isBusy)
+        XCTAssertNil(optimizing.progress, "no made-up percentage")
+        XCTAssertEqual(optimizing.statusDescription, "Optimizing for your Mac — first time only, this can take a few minutes…")
+        XCTAssertEqual(
+            optimizing.mutationDisabledReason,
+            "Optimizing the model for your Mac. This happens only the first time and can take a few minutes; model changes are available when it finishes."
+        )
+
+        let loading = ModelSettingsViewModel(state: .loading)
+        XCTAssertTrue(loading.isBusy)
+        XCTAssertEqual(loading.statusDescription, "Loading into the Neural Engine…")
+        XCTAssertEqual(loading.mutationDisabledReason, "Loading the model. Wait for it to finish.")
+        XCTAssertFalse(loading.statusDescription.contains("first time"))
+    }
+
     func testPausedOffersResume() {
         let model = ModelSettingsViewModel(state: .downloadPaused(resumableBytes: 42))
         XCTAssertEqual(model.availableActions, [.resume, .chooseExisting])

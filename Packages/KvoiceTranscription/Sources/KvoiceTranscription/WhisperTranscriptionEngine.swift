@@ -401,6 +401,14 @@ public actor WhisperTranscriptionEngine: StreamingTranscriptionEngine {
         guard !loadInProgress else {
             throw WhisperTranscriptionError.loadInProgress
         }
+        // 2026-09-29: cancellation is honoured here, before anything moves —
+        // the resident runtime stays resident and nothing is built. Past
+        // this point the load runs to the end: `factory.make` (the Neural
+        // Engine compile) cannot be interrupted, so a runtime it returned
+        // is finished work and becomes resident whatever the task says
+        // (the owner's TestFlight log: `loadCancelled` after a 3.5-minute
+        // first compile, thrown away).
+        try Task.checkCancellation()
         loadInProgress = true
         defer { loadInProgress = false }
         let previousPackage = currentPackage
@@ -422,12 +430,11 @@ public actor WhisperTranscriptionEngine: StreamingTranscriptionEngine {
                 // `computeUnits` reports the new ones. Reload once more in
                 // that case rather than lie about the placement.
                 let unitsAtStart = computeUnits
+                // No cancellation check in the loop: see the top of this
+                // method. A caller that no longer wants the runtime unloads
+                // it like any other.
                 let loadStart = loadClock.now
                 newRuntime = try await factory.make(configuration: configuration(for: package))
-                if Task.isCancelled {
-                    await newRuntime.unload()
-                    throw CancellationError()
-                }
                 statistics.lastLoadDuration = loadClock.now - loadStart
                 // ADR-022 item 8: warm up *before* the runtime becomes
                 // resident, so the model reads as "still loading" to the
@@ -435,12 +442,11 @@ public actor WhisperTranscriptionEngine: StreamingTranscriptionEngine {
                 // done. The warm-up is short (≤ ~1 s of audio) and is let
                 // finish rather than interleaved with a real job; a
                 // compute-unit change that lands during it is caught by
-                // the check below, as during the load itself.
+                // the check below, as during the load itself. A warm-up
+                // cut short by cancellation leaves a usable runtime (the
+                // first real pass pays the rest), so it does not undo the
+                // load either.
                 await warmUp(newRuntime, package: package)
-                if Task.isCancelled {
-                    await newRuntime.unload()
-                    throw CancellationError()
-                }
                 if computeUnits == unitsAtStart { break }
                 await newRuntime.unload()
             } while true
@@ -507,7 +513,8 @@ public actor WhisperTranscriptionEngine: StreamingTranscriptionEngine {
     /// `lastRealTimeFactor`). A failure is swallowed with one scalar event
     /// — the model loaded; the user merely pays the compile on the first
     /// real sentence — and `lastWarmUpDuration` stays nil for it.
-    /// Cancellation is left to the caller, which checks `Task.isCancelled`.
+    /// A warm-up cut short by cancellation logs nothing and leaves the
+    /// runtime resident (`replaceRuntime` no longer discards on cancel).
     private func warmUp(_ runtime: any WhisperRuntime, package: InstalledModelPackage) async {
         let start = loadClock.now
         do {

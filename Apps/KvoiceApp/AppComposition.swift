@@ -265,11 +265,11 @@ final class AppComposition {
 
         let modelManager: SpeechModelLibrary?
         if let loadedCatalog {
+            let modelStorageURL = storageDirectoryURL ?? ModelPackageManager.defaultStorageDirectoryURL()
             do {
                 modelManager = try SpeechModelLibrary(
                     loaded: loadedCatalog,
-                    storageDirectoryURL: storageDirectoryURL
-                        ?? ModelPackageManager.defaultStorageDirectoryURL(),
+                    storageDirectoryURL: modelStorageURL,
                     engine: residentEngine,
                     makeDownloader: makeModelDownloader,
                     urlProvider: modelURLProvider,
@@ -279,7 +279,15 @@ final class AppComposition {
                     // transcription language follows once settings load
                     // (`restoreSelectedModelFromSettings`) and on every
                     // change after that.
-                    systemAssets: [.appleSpeech: AppleSpeechModelAssets(runtime: appleSpeechRuntime)]
+                    systemAssets: [.appleSpeech: AppleSpeechModelAssets(runtime: appleSpeechRuntime)],
+                    // 2026-09-29: which Core ML builds this Mac has done,
+                    // so a first load reads "Optimizing for your Mac —
+                    // first time only" and a cached one does not.
+                    compileRecord: FileModelCompileRecord(
+                        directoryURL: modelStorageURL,
+                        systemBuild: ProcessInfo.processInfo.operatingSystemVersionString,
+                        hardwareModel: FileModelCompileRecord.currentHardwareModel()
+                    )
                 )
             } catch {
                 modelManager = nil

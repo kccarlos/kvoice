@@ -237,8 +237,88 @@ public final class OnboardingViewModel {
     public var modelDetailLine: String? {
         guard let modelEntry else { return nil }
         let runtime = DomainCopy.localized(modelEntry.runtime.displayName)
+        if modelEntry.isSystemManaged {
+            // ADR-025: nothing lands on kvoice's disk; a "0 bytes" size
+            // would read as a bug.
+            return String(localized: "\(runtime) · Built into macOS", bundle: .module)
+        }
         guard modelSpaceEstimate == nil else { return runtime }
         return "\(runtime) · \(ModelSettingsViewModel.formatBytes(modelEntry.downloadBytes))"
+    }
+
+    /// The card's "where the model comes from" sentence (2026-09-29): for
+    /// the system-managed default, why it is the recommendation — ready in
+    /// seconds, nothing large to download; for a package model, the
+    /// verified one-time download and, honestly, the one-time optimization.
+    public var modelSourceNote: String {
+        guard let modelEntry else {
+            return String(localized: "Downloaded once, verified against the manifest bundled with this release, and used only on this Mac.", bundle: .module)
+        }
+        if modelEntry.isSystemManaged {
+            return String(localized: "Recommended for this Mac: ready in seconds, with nothing large to download. macOS provides the speech model, and transcription stays on this Mac.", bundle: .module)
+        }
+        return String(localized: "Downloaded once, verified against the manifest bundled with this release, and used only on this Mac. The first time it loads, it is optimized for your Mac, which can take a few minutes.", bundle: .module)
+    }
+
+    // MARK: Setup recommendation (2026-09-29)
+
+    /// True while the shell decides which model a fresh setup starts with
+    /// (`SetupSpeechModelDefault`), so the card does not offer the old
+    /// default's Download for the second that takes.
+    public private(set) var isDeterminingModel = false
+
+    public func setDeterminingModel(_ determining: Bool) {
+        isDeterminingModel = determining
+    }
+
+    /// The one-click alternative the card offers (`SetupSpeechModelDefault
+    /// .alternative`): Whisper beside Apple Speech, Apple Speech beside
+    /// Whisper on a Mac that can run it; nil otherwise.
+    public private(set) var alternativeModelEntry: SpeechModelCatalogEntry?
+
+    public func setAlternativeModelEntry(_ entry: SpeechModelCatalogEntry?) {
+        alternativeModelEntry = entry
+    }
+
+    /// "Use Whisper v3 Turbo Instead", or nil when there is no alternative
+    /// or the current model is mid-operation that cannot be interrupted.
+    public var alternativeModelTitle: String? {
+        guard let alternativeModelEntry, canUseAlternativeModel else { return nil }
+        return String(localized: "Use \(alternativeModelEntry.displayName) Instead", bundle: .module)
+    }
+
+    /// The honest sentence beside the alternative's button.
+    public var alternativeModelNote: String? {
+        guard let alternativeModelEntry, canUseAlternativeModel else { return nil }
+        if alternativeModelEntry.isSystemManaged {
+            return String(localized: "\(alternativeModelEntry.displayName) also runs on this Mac: ready in seconds, with nothing large to download.", bundle: .module)
+        }
+        let size = ModelSettingsViewModel.formatBytes(alternativeModelEntry.downloadBytes)
+        return String(localized: "Prefer \(alternativeModelEntry.displayName)? It downloads \(size) once, and the first time it loads it is optimized for your Mac, which can take a few minutes.", bundle: .module)
+    }
+
+    /// A download in progress may be switched away from (it pauses); a
+    /// load, a verification or the first compile may not.
+    private var canUseAlternativeModel: Bool {
+        if modelActionPending || isDeterminingModel { return false }
+        switch modelState {
+        case .absent, .downloading, .downloadPaused, .ready, .corrupt, .incompatible, .error, .unavailable:
+            return true
+        case .validatingExternal, .verifying, .installing, .loading, .optimizing, .deleting, .inference:
+            return false
+        }
+    }
+
+    /// The card's "Use … Instead" button.
+    public func useAlternativeModel() {
+        guard let alternativeModelEntry, canUseAlternativeModel else { return }
+        useModel(alternativeModelEntry.id)
+    }
+
+    private func useModel(_ id: ModelID) {
+        modelWasSkipped = false
+        beginPendingModelAction()
+        emit(.useSpeechModel(id))
     }
 
     /// The prerequisite the dictation test is waiting on, or nil.
@@ -284,7 +364,7 @@ public final class OnboardingViewModel {
             }
             return String(localized: "Download paused. Resume to continue.", bundle: .module)
         case .absent, .validatingExternal, .downloading, .verifying, .installing,
-             .loading, .ready, .inference, .deleting:
+             .loading, .optimizing, .ready, .inference, .deleting:
             return nil
         }
     }
@@ -305,7 +385,7 @@ public final class OnboardingViewModel {
             switch modelState {
             case .ready, .inference:
                 return OnboardingActionBar(primaryTitle: String(localized: "Continue", bundle: .module), canGoBack: back)
-            case .validatingExternal, .downloading, .verifying, .installing, .loading, .deleting:
+            case .validatingExternal, .downloading, .verifying, .installing, .loading, .optimizing, .deleting:
                 // The operation keeps running on later screens (C.2 step 3).
                 return OnboardingActionBar(primaryTitle: String(localized: "Continue", bundle: .module), canGoBack: back)
             case .downloadPaused:
@@ -322,7 +402,12 @@ public final class OnboardingViewModel {
                     skipTitle: String(localized: "Skip", bundle: .module), canGoBack: back
                 )
             case .absent:
-                title = String(localized: "Download Model", bundle: .module)
+                if isDeterminingModel {
+                    return OnboardingActionBar(primaryTitle: String(localized: "Continue", bundle: .module), canGoBack: back)
+                }
+                title = modelEntry?.isSystemManaged == true
+                    ? String(localized: "Install Model", bundle: .module)
+                    : String(localized: "Download Model", bundle: .module)
             }
             // Same title while the press is pending, so the button does not
             // re-label itself under the pointer; only the spinner appears.
@@ -414,14 +499,18 @@ public final class OnboardingViewModel {
             switch modelState {
             case .ready, .inference:
                 move(to: .microphone)
-            case .validatingExternal, .downloading, .verifying, .installing, .loading, .deleting:
+            case .validatingExternal, .downloading, .verifying, .installing, .loading, .optimizing, .deleting:
                 continueWithModelInProgress()
             case .downloadPaused, .corrupt, .incompatible, .error:
                 handleModelAction(.retry)
             case .unavailable:
                 skipModel()
             case .absent:
-                handleModelAction(.download)
+                if isDeterminingModel {
+                    continueWithModelInProgress()
+                } else {
+                    handleModelAction(.download)
+                }
             }
         case .microphone:
             switch microphoneAuthorization {
@@ -519,12 +608,12 @@ public final class OnboardingViewModel {
     /// runs or once the model is ready, when the card shows progress or the
     /// ready badge instead.
     public var modelPrimaryAction: OnboardingModelAction? {
-        if modelActionPending { return nil }
+        if modelActionPending || isDeterminingModel { return nil }
         switch modelState {
         case .absent: return .download
         case .downloadPaused: return .retry
         case .corrupt, .incompatible, .error: return .retry
-        case .validatingExternal, .downloading, .verifying, .installing, .loading, .deleting,
+        case .validatingExternal, .downloading, .verifying, .installing, .loading, .optimizing, .deleting,
              .ready, .inference, .unavailable:
             return nil
         }
@@ -533,7 +622,12 @@ public final class OnboardingViewModel {
     /// The title for `modelPrimaryAction`.
     public var modelPrimaryActionTitle: String? {
         switch modelPrimaryAction {
-        case .download: return String(localized: "Download Model", bundle: .module)
+        case .download:
+            // ADR-025: a system-managed model is installed by macOS, not
+            // downloaded by kvoice; the Speech Models card says Install too.
+            return modelEntry?.isSystemManaged == true
+                ? String(localized: "Install Model", bundle: .module)
+                : String(localized: "Download Model", bundle: .module)
         case .retry:
             if case .downloadPaused = modelState { return String(localized: "Resume Download", bundle: .module) }
             return String(localized: "Retry", bundle: .module)
@@ -550,10 +644,10 @@ public final class OnboardingViewModel {
     /// True while a model operation is in flight. The model step uses this to
     /// show activity and to stop the user from starting a second operation.
     public var modelIsBusy: Bool {
-        if modelActionPending { return true }
+        if modelActionPending || isDeterminingModel { return true }
         switch modelState {
         case .validatingExternal, .downloading, .verifying, .installing,
-             .loading, .deleting:
+             .loading, .optimizing, .deleting:
             return true
         case .ready, .inference, .absent, .downloadPaused, .corrupt,
              .incompatible, .error, .unavailable:
@@ -567,6 +661,9 @@ public final class OnboardingViewModel {
     public var modelActivityDescription: String? {
         if modelActionPending {
             return String(localized: "Starting…", bundle: .module)
+        }
+        if isDeterminingModel {
+            return String(localized: "Checking which speech model suits this Mac…", bundle: .module)
         }
         switch modelState {
         case .validatingExternal:
@@ -583,7 +680,12 @@ public final class OnboardingViewModel {
         case .installing:
             return String(localized: "Installing model…", bundle: .module)
         case .loading:
-            return String(localized: "Loading model into the Neural Engine. The first load compiles the model and can take a few minutes.", bundle: .module)
+            return String(localized: "Loading the model…", bundle: .module)
+        case .optimizing:
+            // 2026-09-29 (owner decision 2): the first Core ML build on
+            // this Mac. Indeterminate — Core ML reports no progress, and a
+            // made-up percentage would be worse than none.
+            return String(localized: "Optimizing for your Mac — first time only, this can take a few minutes. You can continue setup meanwhile.", bundle: .module)
         case .deleting:
             return String(localized: "Removing model…", bundle: .module)
         case .ready, .inference, .absent, .downloadPaused, .corrupt,
@@ -619,7 +721,7 @@ public final class OnboardingViewModel {
         case .corrupt, .incompatible, .error, .unavailable:
             return .blocked
         case .absent, .validatingExternal, .downloading, .downloadPaused,
-             .verifying, .installing, .loading, .deleting:
+             .verifying, .installing, .loading, .optimizing, .deleting:
             return .notReady
         }
     }
@@ -675,7 +777,7 @@ public final class OnboardingViewModel {
             switch modelState {
             case .ready, .inference:
                 move(to: .microphone)
-            case .validatingExternal, .downloading, .verifying, .installing, .loading, .deleting:
+            case .validatingExternal, .downloading, .verifying, .installing, .loading, .optimizing, .deleting:
                 continueWithModelInProgress()
             case .absent, .downloadPaused, .corrupt, .incompatible, .error, .unavailable:
                 skipModel()
@@ -789,7 +891,22 @@ public final class OnboardingViewModel {
         }
     }
 
+    /// 2026-09-29: the sentence for a model action the shell refused
+    /// (`ModelOperationAdmission`) — the one door here is the moment
+    /// between the wizard opening and the first state report, when the
+    /// card can still offer Download while a launch load runs. Shown on the
+    /// card until the state moves on.
+    public private(set) var modelNotice: String?
+
+    public func showModelNotice(_ message: String) {
+        endPendingModelAction()
+        modelNotice = message
+    }
+
     public func setModelState(_ state: ModelLifecycleState) {
+        if state != modelState {
+            modelNotice = nil
+        }
         if modelActionPending, state != modelState {
             endPendingModelAction()
         }
@@ -1263,6 +1380,7 @@ public final class OnboardingViewModel {
         case .skipModel: skipModel()
         case .cancelModelDownload: emit(.cancelModelDownload)
         case .retryModel: emit(.retryModel)
+        case .useSpeechModel(let id): useModel(id)
         case .requestMicrophonePermission: emit(.requestMicrophonePermission)
         case .runMicrophoneTest: emit(.runMicrophoneTest)
         case .skipMicrophone: skipMicrophone()

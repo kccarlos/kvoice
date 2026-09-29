@@ -196,6 +196,10 @@ public actor ParakeetTranscriptionEngine: StreamingTranscriptionEngine {
         guard !loadInProgress else {
             throw ParakeetTranscriptionError.loadInProgress
         }
+        // As in the Whisper engine (2026-09-29): cancellation is honoured
+        // here, before anything moves; past this point a built decoder is
+        // finished compile work and becomes resident.
+        try Task.checkCancellation()
         loadInProgress = true
         defer { loadInProgress = false }
         let previous = (package: currentPackage, variant: currentVariant, decoder: decoder)
@@ -236,20 +240,12 @@ public actor ParakeetTranscriptionEngine: StreamingTranscriptionEngine {
                         computeUnits: unitsAtStart
                     )
                 )
-                if Task.isCancelled {
-                    await newDecoder.unload()
-                    throw CancellationError()
-                }
                 statistics.lastLoadDuration = clock.now - start
                 // ADR-022 item 8: warm up before the decoder becomes
                 // resident (the model still reads as loading to the start
                 // gate); a compute-unit change landing during the warm-up
                 // is caught by the check below, as during the load.
                 await warmUp(newDecoder, package: package)
-                if Task.isCancelled {
-                    await newDecoder.unload()
-                    throw CancellationError()
-                }
                 if computeUnits == unitsAtStart { break }
                 await newDecoder.unload()
             } while true

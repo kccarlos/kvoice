@@ -19,6 +19,18 @@ final class RuntimeResidency: @unchecked Sendable {
     }
 }
 
+/// The compute units the engine loads with, as the library last set them
+/// (`setComputeUnits`), for the loaders' compile record (2026-09-29).
+final class ComputeUnitsBox: @unchecked Sendable {
+    private let lock = NSLock()
+    private var value: SpeechComputeUnits = .default
+
+    var current: SpeechComputeUnits {
+        get { lock.withLock { value } }
+        set { lock.withLock { value = newValue } }
+    }
+}
+
 /// The library's `ModelActivity`, readable without entering the actor.
 ///
 /// The transition table is applied inside the actor (`SpeechModelLibrary`
@@ -207,14 +219,85 @@ enum ModelManagerReference: Sendable {
 /// its manager and reported `.ready` without touching the engine. Unload
 /// releases the engine only if the engine currently holds this model, so
 /// deleting a non-default package never evicts the default.
+///
+/// 2026-09-29: it is also where "first-time compile" is known and recorded,
+/// because only here is it certain that a load reaches the engine (a
+/// non-default model's "load" is a no-op). With a `compileRecord`, a
+/// package-backed load that the record has never seen under the current
+/// compute units is announced as first-time (`loadWillCompileFirstTime`)
+/// and, once the engine accepted it, recorded; each real load leaves a
+/// scalar `model.load.started` / `model.load.completed` pair whose
+/// `reason` is `firstCompile` or `cached` and whose duration is the load's.
 struct ResidencyGatedRuntimeLoader: ModelRuntimeLoader {
     let modelID: ModelID
     let engine: any TranscriptionEngine
     let residency: RuntimeResidency
+    var compileRecord: (any ModelCompileRecording)?
+    var computeUnits: ComputeUnitsBox?
+    var diagnostics: (any DiagnosticLogging)?
+    var clock: ModelClock = { Date() }
 
     func load(_ package: InstalledModelPackage) async throws {
         guard residency.current == modelID else { return }
-        try await engine.load(package)
+        let key = compileKey(for: package)
+        let firstCompile: Bool
+        if let key, let compileRecord {
+            firstCompile = await !compileRecord.hasCompiled(key)
+        } else {
+            firstCompile = false
+        }
+        let reason = firstCompile ? "firstCompile" : "cached"
+        await diagnostics?.log(DiagnosticEvent(
+            name: .modelLoadStarted,
+            attributes: DiagnosticAttributes(modelID: modelID, reason: reason, site: "engineLoad")
+        ))
+        let start = clock()
+        do {
+            try await engine.load(package)
+        } catch {
+            // The pair always closes: a failed load logs its own line
+            // (scalars only — the case of the failure, never its message)
+            // beside whatever the engine logged, then the error goes on.
+            let elapsed = clock().timeIntervalSince(start)
+            await diagnostics?.log(DiagnosticEvent(
+                name: .modelLoadCompleted,
+                result: .failure,
+                durationMilliseconds: max(elapsed, 0) * 1000,
+                errorCode: .modelLoadFailed,
+                attributes: DiagnosticAttributes(
+                    modelID: modelID,
+                    reason: error is CancellationError ? "loadCancelled" : "\(reason)Failed",
+                    site: "engineLoad"
+                )
+            ))
+            throw error
+        }
+        let elapsed = clock().timeIntervalSince(start)
+        if let key {
+            await compileRecord?.recordCompiled(key)
+        }
+        await diagnostics?.log(DiagnosticEvent(
+            name: .modelLoadCompleted,
+            result: .success,
+            durationMilliseconds: max(elapsed, 0) * 1000,
+            attributes: DiagnosticAttributes(modelID: modelID, reason: reason, site: "engineLoad")
+        ))
+    }
+
+    func loadWillCompileFirstTime(_ package: InstalledModelPackage) async -> Bool {
+        guard residency.current == modelID, let key = compileKey(for: package), let compileRecord else { return false }
+        return await !compileRecord.hasCompiled(key)
+    }
+
+    /// Nil for a system-managed package: the OS owns that model and there
+    /// is no Core ML build of kvoice's to wait for (ADR-025).
+    private func compileKey(for package: InstalledModelPackage) -> ModelCompileKey? {
+        guard package.ownership != .systemManaged, let computeUnits else { return nil }
+        return ModelCompileKey(
+            modelID: package.manifest.modelID,
+            revision: package.manifest.source.revision,
+            computeUnits: computeUnits.current
+        )
     }
 
     func unload() async {
@@ -264,6 +347,8 @@ public actor SpeechModelLibrary {
     private let managers: [ModelID: ModelManagerReference]
     private let engine: any TranscriptionEngine
     private let residency: RuntimeResidency
+    private let computeUnitsBox = ComputeUnitsBox()
+    private let compileRecord: (any ModelCompileRecording)?
     private let activityBox = ModelActivityBox()
     private let diagnosticLogger: (any DiagnosticLogging)?
     private var activityContinuations: [UUID: AsyncStream<ModelActivity>.Continuation] = [:]
@@ -313,10 +398,12 @@ public actor SpeechModelLibrary {
         appVersion: String = ModelPackageManager.defaultAppVersion(),
         diagnosticLogger: (any DiagnosticLogging)? = nil,
         systemAssets: [SpeechModelRuntime: any SystemManagedModelAssets] = [:],
-        transcriptionLanguage: String? = nil
+        transcriptionLanguage: String? = nil,
+        compileRecord: (any ModelCompileRecording)? = nil
     ) throws {
         catalogBox = CatalogBox(catalog: loaded.catalog)
         self.diagnosticLogger = diagnosticLogger
+        self.compileRecord = compileRecord
         let runnable = loaded.catalog.runnableEntries.filter { entry in
             entry.isSystemManaged ? systemAssets[entry.runtime] != nil : loaded.anchors[entry.id] != nil
         }
@@ -332,7 +419,17 @@ public actor SpeechModelLibrary {
 
         var managers: [ModelID: ModelManagerReference] = [:]
         for entry in runnable {
-            let loader = ResidencyGatedRuntimeLoader(modelID: entry.id, engine: engine, residency: residency)
+            let loader = ResidencyGatedRuntimeLoader(
+                modelID: entry.id,
+                engine: engine,
+                residency: residency,
+                compileRecord: compileRecord,
+                computeUnits: computeUnitsBox,
+                // The load lines belong to the compile tracking: without a
+                // record there is no first/cached distinction to report.
+                diagnostics: compileRecord == nil ? nil : diagnosticLogger,
+                clock: clock
+            )
             if entry.isSystemManaged {
                 guard let assets = systemAssets[entry.runtime] else { continue }
                 managers[entry.id] = .system(SystemManagedModelManager(
@@ -545,6 +642,17 @@ public actor SpeechModelLibrary {
         }
     }
 
+    /// Returns once the library is `.idle` (at once when it already is).
+    /// 2026-09-29: the shell waits here after superseding a download, which
+    /// may run outside the shell's own task (the ADR-025 automatic asset
+    /// install), so the next operation is not refused by the table while
+    /// the cancelled one unwinds.
+    public func waitUntilIdle() async {
+        for await next in activityChanges() where next.isIdle {
+            return
+        }
+    }
+
     /// Returns the library to `.idle`. Harmless when nothing is running.
     public func endActivity() {
         endActivity(.completed)
@@ -632,6 +740,19 @@ public actor SpeechModelLibrary {
         return result
     }
 
+    /// Every lifecycle state, but only once each system-managed entry has
+    /// observed the platform for the current language (nil before that):
+    /// its constructor state `.absent` says nothing about this Mac, and a
+    /// decision taken on it (the fresh-setup default, 2026-09-29) would
+    /// pick Apple Speech on a Mac that cannot run it.
+    public func observedStates() async -> [ModelID: ModelLifecycleState]? {
+        for id in modelIDs {
+            guard let system = managers[id]?.systemManager else { continue }
+            guard await system.snapshot().hasObservedAssets else { return nil }
+        }
+        return await states()
+    }
+
     /// True when the default model is verified and the engine holds it.
     public func isDefaultModelResident() async -> Bool {
         switch await defaultManager.state {
@@ -691,6 +812,17 @@ public actor SpeechModelLibrary {
         }
         try await withActivity(.reloadingUnits) {
             try await engine.setComputeUnits(units)
+        }
+        computeUnitsBox.current = units
+        // 2026-09-29: a reload under new units is a Core ML build of the
+        // resident model under them; the next launch's load of the same
+        // combination is a cached one.
+        if let compileRecord, let package = await residentPackage(), package.ownership != .systemManaged {
+            await compileRecord.recordCompiled(ModelCompileKey(
+                modelID: package.manifest.modelID,
+                revision: package.manifest.source.revision,
+                computeUnits: units
+            ))
         }
     }
 

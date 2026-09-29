@@ -1504,6 +1504,14 @@ public enum ModelLifecycleState: Sendable, Equatable {
     case verifying(completedFiles: Int, totalFiles: Int)
     case installing
     case loading
+    /// 2026-09-29: a `.loading` that is this Mac's first build of the model
+    /// under the current compute units (`ModelCompileRecording` has no
+    /// record of it), so Core ML is compiling it for the Neural Engine —
+    /// minutes rather than seconds, once. Every surface says "Optimizing
+    /// for your Mac — first time only" instead of "Loading…"; everything
+    /// else (the start gate, the busy checks) treats it exactly as
+    /// `.loading`.
+    case optimizing
     case ready(InstalledModelSummary)
     case inference(InstalledModelSummary, jobID: JobID)
     case corrupt(ModelFailure)

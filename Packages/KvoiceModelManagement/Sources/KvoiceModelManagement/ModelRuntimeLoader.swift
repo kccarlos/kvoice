@@ -7,6 +7,17 @@ import KvoiceDomain
 public protocol ModelRuntimeLoader: Sendable {
     func load(_ package: InstalledModelPackage) async throws
     func unload() async
+    /// 2026-09-29: true when `load(package)` would reach the engine *and*
+    /// this Mac has no record of building the model under the current
+    /// compute units — the first-time Core ML compile, which the manager
+    /// shows as `.optimizing` instead of `.loading`. A loader that does not
+    /// know (the default) answers false: "Loading…" is never a false
+    /// promise, "first time only" would be.
+    func loadWillCompileFirstTime(_ package: InstalledModelPackage) async -> Bool
+}
+
+public extension ModelRuntimeLoader {
+    func loadWillCompileFirstTime(_ package: InstalledModelPackage) async -> Bool { false }
 }
 /// Bridges the existing actor-isolated transcription engine to the manager.
 public struct TranscriptionEngineModelRuntimeLoader: ModelRuntimeLoader {

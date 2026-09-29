@@ -465,6 +465,9 @@ extension AppDelegate {
             switch latestModelState {
             case .downloading, .downloadPaused, .verifying, .installing, .loading, .validatingExternal:
                 return (String(localized: "Model loading…", table: "Shell"), true)
+            case .optimizing:
+                // 2026-09-29: the first Core ML build on this Mac.
+                return (String(localized: "Optimizing model for this Mac (first time only)…", table: "Shell"), true)
             default:
                 return (String(localized: "Model not ready", table: "Shell"), true)
             }
@@ -554,6 +557,8 @@ extension AppDelegate {
             return String(localized: "Installing…", table: "Shell")
         case .loading, .validatingExternal:
             return String(localized: "Loading…", table: "Shell")
+        case .optimizing:
+            return String(localized: "Optimizing for this Mac — first time only…", table: "Shell")
         case .deleting:
             return String(localized: "Deleting…", table: "Shell")
         case .absent:

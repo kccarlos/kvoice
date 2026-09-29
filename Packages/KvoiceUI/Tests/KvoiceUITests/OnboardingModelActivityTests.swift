@@ -1,5 +1,6 @@
 import XCTest
 @testable import KvoiceDomain
+import KvoiceTestSupport
 @testable import KvoiceUI
 
 /// The model step showed only a readiness label, so a multi-minute verify or
@@ -55,7 +56,9 @@ final class OnboardingModelActivityTests: XCTestCase {
         XCTAssertEqual(model.modelProgress, 0.75)
     }
 
-    func testLoadingIsIndeterminateAndWarnsAboutDuration() {
+    /// 2026-09-29: a cached load is plain "Loading…" — the "first time"
+    /// warning belongs to `.optimizing` only.
+    func testACachedLoadIsIndeterminateAndMakesNoFirstTimeClaim() {
         let model = OnboardingViewModel()
         model.setModelState(.loading)
 
@@ -64,10 +67,44 @@ final class OnboardingModelActivityTests: XCTestCase {
         // must fall back to a spinner rather than a zero-valued bar.
         XCTAssertNil(model.modelProgress)
         let description = model.modelActivityDescription ?? ""
-        XCTAssertTrue(
-            description.lowercased().contains("first load"),
-            "loading copy should set the expectation that it takes a while, got: \(description)"
+        XCTAssertEqual(description, "Loading the model…")
+        XCTAssertFalse(description.lowercased().contains("first time"))
+    }
+
+    /// Owner decision 2: the first Core ML build says what it is, how long,
+    /// that it is once, and that setup can go on — with no percentage.
+    func testTheFirstCompileIsIndeterminateAndSaysFirstTimeOnly() {
+        let model = OnboardingViewModel()
+        model.setModelState(.optimizing)
+
+        XCTAssertTrue(model.modelIsBusy)
+        XCTAssertNil(model.modelProgress, "Core ML reports no progress; never a made-up percentage")
+        XCTAssertNil(model.modelProgressPercentDescription)
+        XCTAssertNil(model.modelPrimaryAction, "nothing to press while it compiles")
+        XCTAssertEqual(
+            model.modelActivityDescription,
+            "Optimizing for your Mac — first time only, this can take a few minutes. You can continue setup meanwhile."
         )
+        XCTAssertEqual(model.actionBar.primaryTitle, "Continue", "setup is not held hostage by the compile")
+        XCTAssertEqual(model.readiness.model, .notReady)
+    }
+
+    /// 2026-09-29: a Download the shell refused (a launch load was running
+    /// before the first state report landed) says why on the card, and the
+    /// note goes once the state moves on.
+    func testARefusedModelActionExplainsItselfUntilTheStateMoves() {
+        let model = OnboardingViewModel(clock: ParkingClock())
+        model.handleModelAction(.download)
+        XCTAssertTrue(model.modelActionPending)
+
+        model.showModelNotice("The speech model is loading. Model changes are available when it finishes.")
+        XCTAssertEqual(model.modelNotice, "The speech model is loading. Model changes are available when it finishes.")
+        XCTAssertFalse(model.modelActionPending, "the spinner stops: nothing was started")
+
+        model.setModelState(.absent)
+        XCTAssertNotNil(model.modelNotice, "an unchanged state keeps the note")
+        model.setModelState(.optimizing)
+        XCTAssertNil(model.modelNotice)
     }
 
     private static var summary: InstalledModelSummary {

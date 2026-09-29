@@ -35,6 +35,9 @@ public struct SpeechModelsSnapshot: Sendable, Equatable {
     /// (a compute-unit reload, the performance test, a file transcription,
     /// an unload) disable every card's mutating buttons with their reason.
     public var activity: ModelActivity
+    /// 2026-09-29: the sentence for the last card action the shell refused
+    /// (`ModelOperationAdmission`), until the next action; nil otherwise.
+    public var actionNote: String?
 
     public init(
         catalog: SpeechModelCatalog,
@@ -42,7 +45,8 @@ public struct SpeechModelsSnapshot: Sendable, Equatable {
         defaultModelID: ModelID,
         residentModelID: ModelID? = nil,
         dictationIsActive: Bool = false,
-        activity: ModelActivity = .idle
+        activity: ModelActivity = .idle,
+        actionNote: String? = nil
     ) {
         self.catalog = catalog
         self.states = states
@@ -50,6 +54,7 @@ public struct SpeechModelsSnapshot: Sendable, Equatable {
         self.residentModelID = residentModelID
         self.dictationIsActive = dictationIsActive
         self.activity = activity
+        self.actionNote = actionNote
     }
 }
 
@@ -190,7 +195,7 @@ public struct ModelCardState: Sendable, Equatable, Identifiable {
     public var isBusy: Bool {
         guard let state else { return false }
         switch state {
-        case .validatingExternal, .downloading, .verifying, .installing, .loading, .deleting, .inference:
+        case .validatingExternal, .downloading, .verifying, .installing, .loading, .optimizing, .deleting, .inference:
             return true
         case .absent, .downloadPaused, .ready, .corrupt, .incompatible, .error, .unavailable:
             return false
@@ -356,18 +361,25 @@ public final class SpeechModelsViewModel {
         pendingActions[id] != nil
     }
 
-    /// The engine-holding activity's reason, or nil while the library is
-    /// idle or busy with a package operation (which its own card shows).
-    /// The sentences are the availability projection's, so the Runtime
-    /// card and the model cards say the same thing.
+    /// Why no card may start a change right now, or nil: the shell's own
+    /// admission policy (`ModelOperationAdmission`) over the library's
+    /// activity and the state of the model it concerns, so a button is
+    /// disabled with the sentence the shell would refuse it with.
+    ///
+    /// The engine-holding activities (a compute-unit reload, the test, a
+    /// file, an unload) say their own reason, as before. Since 2026-09-29 a
+    /// load or verification in flight — which cannot be paused, and whose
+    /// cancellation threw away the owner's first compile — also disables
+    /// the other cards ("…being optimized for this Mac (first time
+    /// only)…" during `.optimizing`); a download in its byte phase does
+    /// not, because Download on another card pausing it is the documented
+    /// behaviour.
     public var engineActivityReason: String? {
-        let reason: SettingAvailabilityReason
-        switch snapshot?.activity ?? .idle {
-        case .reloadingUnits: reason = .reloadingComputeUnits
-        case .testing: reason = .performanceTestRunning
-        case .transcribingFile: reason = .fileTranscriptionRunning
-        case .unloading: reason = .modelOperationInProgress
-        case .idle, .downloading, .installing, .loading: return nil
+        guard let snapshot else { return nil }
+        let running = snapshot.activity
+        let runningState = running.modelID.flatMap { snapshot.states[$0] }
+        guard let reason = ModelOperationAdmission.decide(running: running, runningModelState: runningState).refusalReason else {
+            return nil
         }
         return DomainCopy.localized(reason.message)
     }
@@ -420,7 +432,13 @@ public final class SpeechModelsViewModel {
     /// The last refusal's sentence; nil otherwise. Only the settings-only
     /// rows below (language, mode, VAD) can produce one — the lifecycle
     /// actions above go through `performer`, not the host.
-    public var refusalNote: String? { host.refusalNote }
+    public var refusalNote: String? {
+        if let note = host.refusalNote { return note }
+        // A shell refusal is stale once nothing runs: an operation would
+        // start now (`ModelOperationAdmission.start`), so the sentence goes.
+        guard let snapshot, !snapshot.activity.isIdle else { return nil }
+        return snapshot.actionNote
+    }
 
     public func setMode(_ mode: SpeechTranscriptionMode, for id: ModelID) {
         guard self.mode(for: id) != mode else { return }
@@ -464,7 +482,7 @@ public final class SpeechModelsViewModel {
             return [.resume]
         case .downloading:
             return [.cancel]
-        case .validatingExternal, .verifying, .installing, .loading, .deleting:
+        case .validatingExternal, .verifying, .installing, .loading, .optimizing, .deleting:
             return []
         case .ready:
             return isDefault ? [.delete] : [.use, .delete]

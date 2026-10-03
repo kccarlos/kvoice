@@ -41,7 +41,7 @@ the command, not the dependency.
 | `./Scripts/make_app_icon.sh` | Regenerate `AppIcon.icns` from its SVG. Only needed after editing the icon. |
 | `./Scripts/check_release_signature.sh <app>`, `./Scripts/check_app_store_signature.sh <app>` | Check a Release or AppStore bundle's signature and entitlements. |
 | `./Scripts/ci_check_toolchain.sh` | Print the Xcode, SDK and Swift versions and fail when they are too old to build kvoice. CI runs it first. |
-| `./Scripts/make_dmg.sh`, `notarize.sh`, `archive_app_store.sh`, `release_notes.sh`, `release_version.sh`, `ci_import_signing_identity.sh`, `ci_remove_signing_identity.sh` | Release tooling, run by the release workflow ([Releases](#releases)). You do not need them to contribute. Their tests: `python3 -m unittest Scripts.test_release_scripts`. |
+| `./Scripts/make_dmg.sh`, `notarize.sh`, `archive_app_store.sh`, `release_notes.sh`, `release_version.sh`, `update_homebrew_cask.py`, `ci_import_signing_identity.sh`, `ci_remove_signing_identity.sh` | Release tooling, run by the release workflow ([Releases](#releases)). You do not need them to contribute. Their tests: `python3 -m unittest Scripts.test_release_scripts`. |
 
 The built app lands in `.build/xcode-derived/Build/Products/<configuration>/kvoice.app`.
 `KVOICE_MARKETING_VERSION` and `KVOICE_BUILD_NUMBER` override the version from
@@ -235,7 +235,11 @@ on a sync commit of `main`. `.github/workflows/release.yml` then:
      review by the workflow;
 4. publishes a GitHub Release with the DMG, its SHA-256 and the notes
    (`release_notes.sh`: the CHANGELOG section plus the sync commits since
-   the previous tag).
+   the previous tag);
+5. for a release that is not a pre-release, points the Homebrew cask in
+   [kccarlos/homebrew-tap](https://github.com/kccarlos/homebrew-tap) at the
+   new version and the published checksum (`update_homebrew_cask.py`) and
+   pushes it. Without its token the job only leaves a notice.
 
 Its configuration, all in the repository settings:
 
@@ -249,12 +253,17 @@ Its configuration, all in the repository settings:
 | `release` secret | `MAC_INSTALLER_P12_BASE64`, `MAC_INSTALLER_P12_PASSWORD` | The "Mac Installer Distribution" certificate and key, likewise. |
 | `release` secret | `APP_STORE_PROFILE_BASE64` | The "Mac App Store Connect" provisioning profile for `io.github.kccarlos.kvoice` (base64 of the `.provisionprofile`). |
 | `release` secret | `ASC_API_KEY_P8_BASE64`, `ASC_API_KEY_ID`, `ASC_API_ISSUER_ID` | An App Store Connect API key (base64 of `AuthKey_<id>.p8`), its key ID and the issuer ID. Used to notarize and to upload. |
+| `homebrew` secret | `HOMEBREW_TAP_TOKEN` | A fine-grained personal access token with access to the tap repository only and the Contents read and write permission. Optional: without it the tap is not updated. |
 
 The `release` environment requires a reviewer and is limited to `v*` tags
 and the `main` branch (the preview builds below), so no other branch, pull
 request or fork can reach these secrets, and every run that reads them
 waits for a maintainer's approval. The signing jobs delete their temporary
 keychain, key file and profile in `if: always()` steps.
+
+The `homebrew` environment holds only the tap token. It is limited to `v*`
+tags and has no reviewer: its job runs only after the approved release
+jobs, and the token can write nothing but the tap.
 
 The Developer ID DMG's steps (import the identity, build, check, notarize
 and staple the app, package, notarize and staple the DMG) are the composite

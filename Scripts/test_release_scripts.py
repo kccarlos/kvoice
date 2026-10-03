@@ -1,6 +1,8 @@
 """Tests for the release scripts that run in the public repository's release
-and preview workflows: release_notes.sh, release_version.sh, the argument
-handling of check_app_store_signature.sh, and the shipped CHANGELOG.md.
+and preview workflows: release_notes.sh, release_version.sh,
+update_homebrew_cask.py, the argument handling of
+check_app_store_signature.sh, the shape of the workflows, and the shipped
+CHANGELOG.md.
 
 Standard library only. Each release-notes test builds a throwaway git
 repository shaped like the public one (a CHANGELOG.md and `sync:` commits)
@@ -14,6 +16,7 @@ from __future__ import annotations
 import os
 import shutil
 import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -223,6 +226,138 @@ class ReleaseVersionTests(unittest.TestCase):
                 self.assertNotEqual(self.version(tag, build).returncode, 0)
 
 
+# The tap's Casks/kvoice.rb as published, with a stand-in checksum.
+OLD_SHA = "12" * 32
+NEW_SHA = "ab" * 32
+CASK = f'''cask "kvoice" do
+  version "0.1.3"
+  sha256 "{OLD_SHA}"
+
+  url "https://github.com/kccarlos/kvoice/releases/download/v#{{version}}/KVoice-#{{version}}.dmg"
+  name "KVoice"
+  desc "Dictation with on-device speech recognition and optional AI actions"
+  homepage "https://github.com/kccarlos/kvoice"
+
+  livecheck do
+    url :url
+    strategy :github_latest
+  end
+
+  depends_on arch: :arm64
+  depends_on macos: :sequoia
+
+  app "kvoice.app"
+
+  uninstall quit: "io.github.kccarlos.kvoice"
+end
+'''
+
+
+class UpdateHomebrewCaskTests(unittest.TestCase):
+    """update_homebrew_cask.py, which the release's `homebrew` job runs on a
+    clone of the tap: exactly `version` and `sha256` change, a second run
+    changes nothing, and bad input changes nothing at all."""
+
+    def setUp(self) -> None:
+        self._directory = tempfile.TemporaryDirectory()
+        self.root = Path(self._directory.name)
+        self.cask = self.root / "kvoice.rb"
+        self.cask.write_text(CASK, encoding="utf-8")
+
+    def tearDown(self) -> None:
+        self._directory.cleanup()
+
+    def update(self, *args: str) -> subprocess.CompletedProcess[str]:
+        return run([sys.executable, str(SCRIPTS / "update_homebrew_cask.py"), str(self.cask), *args], self.root)
+
+    def sha_file(self, name: str, digest: str = NEW_SHA) -> Path:
+        path = self.root / f"{name}.sha256"
+        path.write_text(f"{digest}  {name}\n", encoding="utf-8")
+        return path
+
+    def test_only_the_version_and_checksum_lines_change(self) -> None:
+        result = self.update("0.2.0", "--sha256", NEW_SHA)
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        expected = CASK.replace('version "0.1.3"', 'version "0.2.0"').replace(OLD_SHA, NEW_SHA)
+        self.assertEqual(self.cask.read_text(encoding="utf-8"), expected)
+        self.assertIn("now at 0.2.0", result.stdout)
+
+    def test_the_published_sha256_file_is_read_and_tied_to_the_version(self) -> None:
+        result = self.update("0.2.0", "--sha256-file", str(self.sha_file("KVoice-0.2.0.dmg")))
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn(f'sha256 "{NEW_SHA}"', self.cask.read_text(encoding="utf-8"))
+
+        self.cask.write_text(CASK, encoding="utf-8")
+        wrong = self.update("0.2.0", "--sha256-file", str(self.sha_file("KVoice-0.1.9.dmg")))
+        self.assertEqual(wrong.returncode, 2)
+        self.assertIn("not KVoice-0.2.0.dmg", wrong.stderr)
+        self.assertEqual(self.cask.read_text(encoding="utf-8"), CASK)
+
+    def test_a_second_run_changes_nothing(self) -> None:
+        self.assertEqual(self.update("0.2.0", "--sha256", NEW_SHA).returncode, 0)
+        once = self.cask.read_text(encoding="utf-8")
+        before = self.cask.stat().st_mtime_ns
+
+        again = self.update("0.2.0", "--sha256", NEW_SHA)
+
+        self.assertEqual(again.returncode, 0, again.stderr)
+        self.assertIn("unchanged", again.stdout)
+        self.assertEqual(self.cask.read_text(encoding="utf-8"), once)
+        self.assertEqual(self.cask.stat().st_mtime_ns, before, "not even rewritten")
+
+    def test_a_bad_version_or_checksum_is_refused_and_nothing_changes(self) -> None:
+        cases = (
+            ("0.2.0-rc.1", NEW_SHA, "MAJOR.MINOR.PATCH"),
+            ("v0.2.0", NEW_SHA, "MAJOR.MINOR.PATCH"),
+            ("0.2", NEW_SHA, "MAJOR.MINOR.PATCH"),
+            ('0.2.0"\n  evil "x', NEW_SHA, "MAJOR.MINOR.PATCH"),
+            ("0.2.0", NEW_SHA[:-1], "64 hex digits"),
+            ("0.2.0", "g" * 64, "64 hex digits"),
+            ("0.2.0", NEW_SHA + "0", "64 hex digits"),
+            ("0.2.0", "", "64 hex digits"),
+        )
+        for version, digest, message in cases:
+            with self.subTest(version=version, digest=digest):
+                result = self.update(version, "--sha256", digest)
+                self.assertEqual(result.returncode, 2)
+                self.assertIn(message, result.stderr)
+                self.assertEqual(self.cask.read_text(encoding="utf-8"), CASK)
+
+    def test_an_older_version_is_refused_unless_allowed(self) -> None:
+        refused = self.update("0.1.2", "--sha256", NEW_SHA)
+        self.assertEqual(refused.returncode, 2)
+        self.assertIn("older than the cask's 0.1.3", refused.stderr)
+        self.assertEqual(self.cask.read_text(encoding="utf-8"), CASK)
+
+        allowed = self.update("0.1.2", "--sha256", NEW_SHA, "--allow-downgrade")
+        self.assertEqual(allowed.returncode, 0, allowed.stderr)
+        self.assertIn('version "0.1.2"', self.cask.read_text(encoding="utf-8"))
+        # Numeric, not text, order.
+        self.assertEqual(self.update("0.1.10", "--sha256", NEW_SHA).returncode, 0)
+
+    def test_a_cask_without_exactly_one_version_and_checksum_is_refused(self) -> None:
+        for cask in (
+            CASK.replace('  version "0.1.3"\n', ""),
+            CASK.replace(f'  sha256 "{OLD_SHA}"\n', ""),
+            CASK.replace('  version "0.1.3"\n', '  version "0.1.3"\n  version "0.1.4"\n'),
+        ):
+            with self.subTest(cask=cask[:60]):
+                self.cask.write_text(cask, encoding="utf-8")
+                result = self.update("0.2.0", "--sha256", NEW_SHA)
+                self.assertEqual(result.returncode, 2)
+                self.assertIn("not one", result.stderr)
+                self.assertEqual(self.cask.read_text(encoding="utf-8"), cask)
+
+    def test_a_missing_cask_or_checksum_source_is_refused(self) -> None:
+        self.cask.unlink()
+        self.assertEqual(self.update("0.2.0", "--sha256", NEW_SHA).returncode, 2)
+        self.cask.write_text(CASK, encoding="utf-8")
+        self.assertEqual(self.update("0.2.0").returncode, 2, "a checksum is required")
+        self.assertEqual(self.update("0.2.0", "--sha256-file", str(self.root / "none.sha256")).returncode, 2)
+        self.assertEqual(self.cask.read_text(encoding="utf-8"), CASK)
+
+
 class CheckAppStoreSignatureArgumentTests(unittest.TestCase):
     """The option handling, which refuses before any codesign call, so it
     runs anywhere; the checks themselves need a signed bundle."""
@@ -313,6 +448,66 @@ class PreviewWorkflowTests(unittest.TestCase):
         self.assertNotIn("KVOICE_PCC_ENTITLEMENT", preview)
         self.assertNotIn("APPLE_DISTRIBUTION", preview)
         self.assertNotIn("APP_STORE_PROFILE", preview)
+
+
+def job_block(workflow: str, job: str) -> str:
+    """The text of one job in a workflow, from `  <job>:` to the next job."""
+    lines = workflow.split("\njobs:\n", 1)[1].splitlines()
+    start = lines.index(f"  {job}:")
+    end = next((i for i in range(start + 1, len(lines))
+                if lines[i].startswith("  ") and not lines[i].startswith("   ") and lines[i].rstrip().endswith(":")),
+               len(lines))
+    return "\n".join(lines[start:end])
+
+
+class HomebrewWorkflowTests(unittest.TestCase):
+    """release.yml's `homebrew` job: after the GitHub Release, releases only,
+    this repository only, the tap token confined to that job and never
+    printed, and the release's own action pins."""
+
+    def setUp(self) -> None:
+        self.release = (WORKFLOWS / "release.yml").read_text(encoding="utf-8")
+        self.job = job_block(self.release, "homebrew")
+
+    def test_it_runs_after_publish_for_releases_of_this_repository_only(self) -> None:
+        self.assertIn("    needs: [version, publish]\n", self.job)
+        guard = next(line for line in self.job.splitlines() if line.startswith("    if:"))
+        self.assertIn("github.repository == 'kccarlos/kvoice'", guard)
+        self.assertIn("needs.version.outputs.prerelease == 'false'", guard)
+        self.assertNotIn("always()", guard, "never after a failed publish")
+        self.assertIn("    environment: homebrew\n", self.job)
+        self.assertIn("    permissions:\n      contents: read\n", self.job)
+
+    def test_the_token_stays_in_the_job_and_is_never_printed(self) -> None:
+        outside = self.release.replace(self.job, "")
+        self.assertNotIn("HOMEBREW_TAP_TOKEN }}", outside)
+        for line in self.job.splitlines():
+            if "HOMEBREW_TAP_TOKEN" in line and ("echo" in line or "printf" in line or "cat " in line):
+                self.assertNotIn("$HOMEBREW_TAP_TOKEN", line, line)
+        self.assertNotIn("x-access-token", self.job, "no token in a remote URL")
+        self.assertEqual(self.job.count("secrets.HOMEBREW_TAP_TOKEN"), 2, "the presence check and the tap checkout")
+        self.assertIn("::notice", self.job, "a missing token is a notice, not a failure")
+        self.assertIn("repository: kccarlos/homebrew-tap", self.job)
+
+    def test_it_runs_the_tested_script_and_commits_as_the_noreply_identity(self) -> None:
+        self.assertIn("python3 Scripts/update_homebrew_cask.py homebrew-tap/Casks/kvoice.rb", self.job)
+        self.assertIn('--sha256-file "$RUNNER_TEMP/KVoice-$VERSION.dmg.sha256"', self.job)
+        self.assertIn("user.email=110118511+kccarlos@users.noreply.github.com", self.job)
+        self.assertIn('-m "kvoice $VERSION"', self.job)
+        self.assertIn("git diff --quiet", self.job, "a re-run with nothing to change pushes nothing")
+        self.assertIn("git push origin HEAD:main", self.job)
+
+    def test_it_reuses_the_releases_action_pins(self) -> None:
+        pins = PreviewWorkflowTests.pins
+        mine = pins(self, self.job)
+        self.assertTrue(mine)
+        self.assertLessEqual(mine, pins(self, self.release.replace(self.job, "")))
+
+    def test_the_summary_reports_it(self) -> None:
+        summary = job_block(self.release, "summary")
+        self.assertIn("homebrew]", summary.split("needs:", 1)[1].splitlines()[0])
+        self.assertIn("| Homebrew tap |", summary)
+        self.assertIn('"$HOMEBREW" = "failure"', summary)
 
 
 # The App Store listing: `appstore/` in the public tree, the overlay's

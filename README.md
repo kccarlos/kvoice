@@ -33,6 +33,17 @@ transcribed **on your Mac**.
 
 Want plain dictation? That works too, with no AI at all.
 
+### Install
+
+```sh
+brew install --cask kccarlos/tap/kvoice
+```
+
+Or [download the notarized DMG](https://github.com/kccarlos/kvoice/releases/latest)
+and drag KVoice to Applications. Needs a Mac with Apple silicon and macOS 15
+or later. A Mac App Store edition is coming; see [Download](#download) for
+how the editions differ.
+
 <!--
   Demo GIF slot: Docs/assets/kvoice-demo.gif, about 15 seconds, 800 px wide,
   under 5 MB. Add it here as a centred img at width 720 once it exists.
@@ -108,15 +119,27 @@ hands-free, hold for push-to-talk).
 
 KVoice comes in two editions, built from the same code. Both are free.
 
-- **Mac App Store edition** (coming soon): the easiest install and automatic
-  updates. The store listing will be linked here once it is live.
+- **Full edition with [Homebrew](https://brew.sh)** (the quickest way):
+
+  ```sh
+  brew install --cask kccarlos/tap/kvoice
+  ```
+
+  It installs the same notarized DMG that is published on GitHub. To update
+  or remove it later:
+
+  ```sh
+  brew upgrade --cask kvoice              # update
+  brew uninstall --cask kvoice            # remove the app
+  brew uninstall --zap --cask kvoice      # also remove its settings, models and history
+  ```
+
+- **Mac App Store edition** (coming soon): automatic updates through the
+  App Store. The store listing will be linked here once it is live.
 - **Full edition from GitHub:** download the DMG from the
   [latest release](https://github.com/kccarlos/kvoice/releases/latest), open
   it, drag **KVoice** to Applications, and open it. It is signed with a
   Developer ID and notarized by Apple.
-
-> Releases start with version 0.1.0. Until the first one is published, you
-> can [build KVoice from source](#build-from-source).
 
 ### Which edition should I choose?
 
@@ -136,7 +159,7 @@ to read other apps.
 | A lone modifier key (for example Right Option) as the shortcut | No, use a key combination | Yes |
 | Middle mouse button to start recording | No | Yes |
 | Escape to cancel while another app is in front | No, set a Cancel shortcut instead | Yes |
-| Updates | Through the App Store | Download the new release |
+| Updates | Through the App Store | `brew upgrade --cask kvoice`, or download the new release |
 
 Both editions keep their own settings and history, so switching means
 setting up again.

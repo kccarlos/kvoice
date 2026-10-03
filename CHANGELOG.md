@@ -9,6 +9,10 @@ without one is refused.
 
 ## Unreleased
 
+- KVoice can now be installed and updated with Homebrew:
+  `brew install --cask kccarlos/tap/kvoice`. It is the same notarized build
+  as the DMG.
+
 ## 0.1.3
 
 - New app icon and menu-bar icon.

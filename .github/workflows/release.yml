@@ -14,8 +14,14 @@
 #                to App Store Connect (TestFlight). Never submitted for
 #                review; that stays a person's decision in App Store Connect.
 #   publish      the GitHub Release with the DMG, its SHA-256 and the notes.
+#   homebrew     after `publish`, for a release (not a pre-release): points
+#                the cask in kccarlos/homebrew-tap at the new version and
+#                the published DMG's SHA-256, and pushes it. Uses the
+#                `homebrew` environment's HOMEBREW_TAP_TOKEN, which can
+#                write that one repository and nothing else; without the
+#                secret the job leaves a notice and succeeds.
 #   summary      a table of every job's result in the run summary; fails the
-#                run, visibly, when either edition failed.
+#                run, visibly, when either edition, or the tap update, failed.
 #
 # The two editions are independent by decision: `publish` needs only
 # `developer-id`, so the DMG ships even when the App Store upload fails.
@@ -305,9 +311,95 @@ jobs:
           gh release create "$TAG" "$@" \
             "dist/KVoice-$VERSION.dmg" "dist/KVoice-$VERSION.dmg.sha256"
 
+  homebrew:
+    name: Homebrew tap
+    needs: [version, publish]
+    # Only a release: a pre-release tag (-rc.N) never reaches the tap.
+    if: github.repository == 'kccarlos/kvoice' && needs.version.outputs.prerelease == 'false'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # HOMEBREW_TAP_TOKEN lives in this environment, which has no reviewer
+    # (the jobs this one needs were already approved in `release`) and
+    # admits `v*` tags only, so no branch, pull request or other workflow
+    # can read it. A fine-grained token: Contents read and write on
+    # kccarlos/homebrew-tap, nothing else.
+    environment: homebrew
+    # This repository is only read (the script, the release's checksum);
+    # the tap is written with the tap token, not with this job's token.
+    permissions:
+      contents: read
+    outputs:
+      state: ${{ steps.result.outputs.state }}
+    steps:
+      # A secret cannot appear in a job's `if:`; this step stands in.
+      - name: The tap token
+        id: token
+        env:
+          HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+        run: |
+          if [ -z "$HOMEBREW_TAP_TOKEN" ]; then
+            echo "::notice title=Homebrew tap not updated::HOMEBREW_TAP_TOKEN is not set in the homebrew environment, so the cask was left as it is. Update it by hand (Scripts/update_homebrew_cask.py)."
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: steps.token.outputs.configured == 'true'
+        with:
+          persist-credentials: false
+
+      # The checksum of the DMG as published, from the release itself.
+      - name: The published checksum
+        if: steps.token.outputs.configured == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+          VERSION: ${{ needs.version.outputs.version }}
+        run: |
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" \
+            --pattern "KVoice-$VERSION.dmg.sha256" --dir "$RUNNER_TEMP"
+          cat "$RUNNER_TEMP/KVoice-$VERSION.dmg.sha256"
+
+      # The only checkout that keeps its credential: the push below uses it.
+      # It is the tap token, scoped to the tap; it is removed when the job
+      # ends.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: steps.token.outputs.configured == 'true'
+        with:
+          repository: kccarlos/homebrew-tap
+          ref: main
+          token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          path: homebrew-tap
+
+      - name: Update and push the cask
+        id: result
+        env:
+          CONFIGURED: ${{ steps.token.outputs.configured }}
+          VERSION: ${{ needs.version.outputs.version }}
+        run: |
+          if [ "$CONFIGURED" != "true" ]; then
+            echo "state=no token" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          python3 Scripts/update_homebrew_cask.py homebrew-tap/Casks/kvoice.rb "$VERSION" \
+            --sha256-file "$RUNNER_TEMP/KVoice-$VERSION.dmg.sha256"
+          cd homebrew-tap
+          if git diff --quiet; then
+            echo "::notice::The cask is already at $VERSION"
+            echo "state=already current" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git diff
+          git -c user.name=kccarlos \
+              -c user.email=110118511+kccarlos@users.noreply.github.com \
+              commit --quiet -m "kvoice $VERSION" Casks/kvoice.rb
+          git push origin HEAD:main
+          echo "state=updated" >> "$GITHUB_OUTPUT"
+
   summary:
     name: Release summary
-    needs: [version, test, developer-id, app-store, publish]
+    needs: [version, test, developer-id, app-store, publish, homebrew]
     if: always() && needs.version.result == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -319,6 +411,8 @@ jobs:
           DEVELOPER_ID: ${{ needs.developer-id.result }}
           APP_STORE: ${{ needs.app-store.result }}
           PUBLISH: ${{ needs.publish.result }}
+          HOMEBREW: ${{ needs.homebrew.result }}
+          HOMEBREW_STATE: ${{ needs.homebrew.outputs.state }}
         run: |
           {
             echo "## KVoice $VERSION"
@@ -329,6 +423,7 @@ jobs:
             echo "| Developer ID DMG (notarized) | $DEVELOPER_ID |"
             echo "| GitHub Release | $PUBLISH |"
             echo "| Mac App Store upload (TestFlight) | $APP_STORE |"
+            echo "| Homebrew tap | $HOMEBREW${HOMEBREW_STATE:+ ($HOMEBREW_STATE)} |"
           } >> "$GITHUB_STEP_SUMMARY"
           status=0
           if [ "$APP_STORE" != "success" ]; then
@@ -337,6 +432,11 @@ jobs:
           fi
           if [ "$DEVELOPER_ID" != "success" ] || [ "$PUBLISH" != "success" ]; then
             echo "::error title=DMG release $DEVELOPER_ID / $PUBLISH::The Developer ID DMG or the GitHub Release did not succeed."
+            status=1
+          fi
+          # Skipped is expected: a pre-release, or no GitHub Release.
+          if [ "$HOMEBREW" = "failure" ] || [ "$HOMEBREW" = "cancelled" ]; then
+            echo "::error title=Homebrew tap $HOMEBREW::The release is published but the Homebrew cask was not updated. Re-run the homebrew job, or update the tap by hand with Scripts/update_homebrew_cask.py."
             status=1
           fi
           exit "$status"

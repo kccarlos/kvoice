@@ -228,6 +228,12 @@ Transcription** to the Shortcuts app, Siri and Spotlight.
 | Modifier-only and middle-mouse triggers | Yes | No |
 | Private Cloud Compute | No | Where available |
 
+Install the direct-download edition with Homebrew
+(`brew install --cask kccarlos/tap/kvoice`, updated with
+`brew upgrade --cask kvoice`) or from the DMG on
+[GitHub Releases](https://github.com/kccarlos/kvoice/releases/latest). Both
+are the same notarized build.
+
 The App Store edition is sandboxed, which is why it cannot edit another app's
 text fields directly or read their selection. It types the text as
 keystrokes instead, after checking that the app you started in is still in

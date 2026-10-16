@@ -120,6 +120,10 @@ jobs:
         uses: 1password/load-secrets-action@70062d7a876d3eb6334754fa26efd2fbd90c32f2 # v5.0.1
         with:
           export-env: false
+          # 1Password CLI 2.41.0 on the macOS 27 runner image fails at sign-in
+          # ("error initializing client: (500)"); 2.40.0 works with the same
+          # token. Raise this once a later CLI is confirmed on that image.
+          version: 2.40.0
         env:
           OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
           ASC_API_ISSUER_ID: op://github/app-store-connect-api-key/issuer_id
@@ -191,6 +195,10 @@ jobs:
         uses: 1password/load-secrets-action@70062d7a876d3eb6334754fa26efd2fbd90c32f2 # v5.0.1
         with:
           export-env: false
+          # 1Password CLI 2.41.0 on the macOS 27 runner image fails at sign-in
+          # ("error initializing client: (500)"); 2.40.0 works with the same
+          # token. Raise this once a later CLI is confirmed on that image.
+          version: 2.40.0
         env:
           OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
           ASC_API_ISSUER_ID: op://github/app-store-connect-api-key/issuer_id

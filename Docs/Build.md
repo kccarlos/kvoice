@@ -248,16 +248,22 @@ Its configuration, all in the repository settings:
 | Variable | `APPLE_TEAM_ID` | The 10-character Apple team ID. Not secret (every signed binary carries it); a variable so a fork uses its own. |
 | Variable | `KVOICE_PCC_ENTITLEMENT` | `1` to sign the App Store build with the managed Private Cloud Compute entitlement, once Apple has granted it and the profile includes it. Unset otherwise. |
 | Variable | `KVOICE_MACOS_RUNNER`, `KVOICE_DEVELOPER_DIR` | Optional runner label and Xcode path overrides (above). |
-| `release` secret | `DEVELOPER_ID_P12_BASE64`, `DEVELOPER_ID_P12_PASSWORD` | The "Developer ID Application" certificate and its private key, exported as a `.p12` (base64), and its password. |
-| `release` secret | `APPLE_DISTRIBUTION_P12_BASE64`, `APPLE_DISTRIBUTION_P12_PASSWORD` | The "Apple Distribution" certificate and key, likewise. |
-| `release` secret | `MAC_INSTALLER_P12_BASE64`, `MAC_INSTALLER_P12_PASSWORD` | The "Mac Installer Distribution" certificate and key, likewise. |
-| `release` secret | `APP_STORE_PROFILE_BASE64` | The "Mac App Store Connect" provisioning profile for `io.github.kccarlos.kvoice` (base64 of the `.provisionprofile`). |
-| `release` secret | `ASC_API_KEY_P8_BASE64`, `ASC_API_KEY_ID`, `ASC_API_ISSUER_ID` | An App Store Connect API key (base64 of `AuthKey_<id>.p8`), its key ID and the issuer ID. Used to notarize and to upload. |
-| `homebrew` secret | `HOMEBREW_TAP_TOKEN` | A fine-grained personal access token with access to the tap repository only and the Contents read and write permission. Optional: without it the tap is not updated. |
+| `release` and `homebrew` secret | `OP_SERVICE_ACCOUNT_TOKEN` | A 1Password service account token that can read the vault `github`. It is the only secret; the jobs load everything else with `1password/load-secrets-action`. Without it in `homebrew` the tap is not updated. |
+
+The 1Password items in vault `github` (every value one line; files as base64):
+
+| Item | Fields | Contents |
+| --- | --- | --- |
+| `apple-developer-id-application` | `p12_base64`, `password` | The "Developer ID Application" certificate and its private key, exported as a `.p12`, and its password. |
+| `apple-distribution` | `p12_base64`, `password` | The "Apple Distribution" certificate and key, likewise. |
+| `apple-mac-installer-distribution` | `p12_base64`, `password` | The "Mac Installer Distribution" certificate and key, likewise. |
+| `kvoice-mac-app-store-profile` | `profile_base64` | The "Mac App Store Connect" provisioning profile for `io.github.kccarlos.kvoice`. |
+| `app-store-connect-api-key` | `key_id`, `issuer_id`, `p8_base64` | An App Store Connect API key (App Manager) and its `AuthKey_<id>.p8`. Used to notarize and to upload. |
+| `homebrew-tap-token` | `credential` | A fine-grained personal access token with access to the tap repository only and the Contents read and write permission. |
 
 The `release` environment requires a reviewer and is limited to `v*` tags
 and the `main` branch (the preview builds below), so no other branch, pull
-request or fork can reach these secrets, and every run that reads them
+request or fork can reach the service account token, and every run that reads it
 waits for a maintainer's approval. The signing jobs delete their temporary
 keychain, key file and profile in `if: always()` steps.
 

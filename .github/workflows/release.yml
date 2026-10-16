@@ -16,10 +16,11 @@
 #   publish      the GitHub Release with the DMG, its SHA-256 and the notes.
 #   homebrew     after `publish`, for a release (not a pre-release): points
 #                the cask in kccarlos/homebrew-tap at the new version and
-#                the published DMG's SHA-256, and pushes it. Uses the
-#                `homebrew` environment's HOMEBREW_TAP_TOKEN, which can
-#                write that one repository and nothing else; without the
-#                secret the job leaves a notice and succeeds.
+#                the published DMG's SHA-256, and pushes it. Uses the tap
+#                token from 1Password (homebrew-tap-token), which can write
+#                that one repository and nothing else; without
+#                OP_SERVICE_ACCOUNT_TOKEN in the `homebrew` environment the
+#                job leaves a notice and succeeds.
 #   summary      a table of every job's result in the run summary; fails the
 #                run, visibly, when either edition, or the tap update, failed.
 #
@@ -31,8 +32,10 @@
 # The signing jobs use the protected `release` environment: they wait for a
 # maintainer's approval and are the only jobs that can read its secrets.
 # Nothing here runs on pull requests, and nothing uses pull_request_target.
-# Secret and variable names, and how to produce each value, are in the
-# contributor docs (Docs/Build.md, "Releases").
+# Signing material comes from the 1Password vault `github` through
+# 1password/load-secrets-action; the only GitHub secret is
+# OP_SERVICE_ACCOUNT_TOKEN (in `release` and `homebrew`). Item names and
+# variables are in the contributor docs (Docs/Build.md, "Releases").
 #
 # Runner: see ci.yml. The signing jobs honour KVOICE_MACOS_RUNNER too.
 name: Release
@@ -149,6 +152,20 @@ jobs:
           persist-credentials: false
       - name: Toolchain
         run: ./Scripts/ci_check_toolchain.sh 27
+      # Signing secrets from 1Password; step outputs, so only the steps that name them see the values.
+      - name: Secrets from 1Password
+        id: op
+        uses: 1password/load-secrets-action@70062d7a876d3eb6334754fa26efd2fbd90c32f2 # v5.0.1
+        with:
+          export-env: false
+        env:
+          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
+          ASC_API_ISSUER_ID: op://github/app-store-connect-api-key/issuer_id
+          ASC_API_KEY_ID: op://github/app-store-connect-api-key/key_id
+          ASC_API_KEY_P8_BASE64: op://github/app-store-connect-api-key/p8_base64
+          DEVELOPER_ID_P12_BASE64: op://github/apple-developer-id-application/p12_base64
+          DEVELOPER_ID_P12_PASSWORD: op://github/apple-developer-id-application/password
+
       # Import the Developer ID, refuse any other identity, the notary key,
       # build Release, check the signature (Developer ID authority, team
       # APPLE_TEAM_ID), notarize and staple the app, package the DMG,
@@ -158,11 +175,11 @@ jobs:
         with:
           configuration: Release
           dmg-name: ${{ needs.version.outputs.version }}
-          developer-id-p12-base64: ${{ secrets.DEVELOPER_ID_P12_BASE64 }}
-          developer-id-p12-password: ${{ secrets.DEVELOPER_ID_P12_PASSWORD }}
-          asc-api-key-p8-base64: ${{ secrets.ASC_API_KEY_P8_BASE64 }}
-          asc-api-key-id: ${{ secrets.ASC_API_KEY_ID }}
-          asc-api-issuer-id: ${{ secrets.ASC_API_ISSUER_ID }}
+          developer-id-p12-base64: ${{ steps.op.outputs.DEVELOPER_ID_P12_BASE64 }}
+          developer-id-p12-password: ${{ steps.op.outputs.DEVELOPER_ID_P12_PASSWORD }}
+          asc-api-key-p8-base64: ${{ steps.op.outputs.ASC_API_KEY_P8_BASE64 }}
+          asc-api-key-id: ${{ steps.op.outputs.ASC_API_KEY_ID }}
+          asc-api-issuer-id: ${{ steps.op.outputs.ASC_API_ISSUER_ID }}
 
       - name: Upload the DMG
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -214,12 +231,29 @@ jobs:
           printf '%s' "$APPLE_TEAM_ID" | grep -Eq '^[A-Z0-9]{10}$' \
             || { echo "::error::Set the repository variable APPLE_TEAM_ID to the 10-character Apple team ID"; exit 1; }
 
+      # Signing secrets from 1Password; step outputs, so only the steps that name them see the values.
+      - name: Secrets from 1Password
+        id: op
+        uses: 1password/load-secrets-action@70062d7a876d3eb6334754fa26efd2fbd90c32f2 # v5.0.1
+        with:
+          export-env: false
+        env:
+          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
+          APPLE_DISTRIBUTION_P12_BASE64: op://github/apple-distribution/p12_base64
+          APPLE_DISTRIBUTION_P12_PASSWORD: op://github/apple-distribution/password
+          APP_STORE_PROFILE_BASE64: op://github/kvoice-mac-app-store-profile/profile_base64
+          ASC_API_ISSUER_ID: op://github/app-store-connect-api-key/issuer_id
+          ASC_API_KEY_ID: op://github/app-store-connect-api-key/key_id
+          ASC_API_KEY_P8_BASE64: op://github/app-store-connect-api-key/p8_base64
+          MAC_INSTALLER_P12_BASE64: op://github/apple-mac-installer-distribution/p12_base64
+          MAC_INSTALLER_P12_PASSWORD: op://github/apple-mac-installer-distribution/password
+
       - name: Import the distribution identities
         env:
-          APPLE_DISTRIBUTION_P12_BASE64: ${{ secrets.APPLE_DISTRIBUTION_P12_BASE64 }}
-          APPLE_DISTRIBUTION_P12_PASSWORD: ${{ secrets.APPLE_DISTRIBUTION_P12_PASSWORD }}
-          MAC_INSTALLER_P12_BASE64: ${{ secrets.MAC_INSTALLER_P12_BASE64 }}
-          MAC_INSTALLER_P12_PASSWORD: ${{ secrets.MAC_INSTALLER_P12_PASSWORD }}
+          APPLE_DISTRIBUTION_P12_BASE64: ${{ steps.op.outputs.APPLE_DISTRIBUTION_P12_BASE64 }}
+          APPLE_DISTRIBUTION_P12_PASSWORD: ${{ steps.op.outputs.APPLE_DISTRIBUTION_P12_PASSWORD }}
+          MAC_INSTALLER_P12_BASE64: ${{ steps.op.outputs.MAC_INSTALLER_P12_BASE64 }}
+          MAC_INSTALLER_P12_PASSWORD: ${{ steps.op.outputs.MAC_INSTALLER_P12_PASSWORD }}
         run: |
           if [ -z "$APPLE_DISTRIBUTION_P12_BASE64" ] || [ -z "$MAC_INSTALLER_P12_BASE64" ]; then
             echo "::error::Set APPLE_DISTRIBUTION_P12_BASE64 and MAC_INSTALLER_P12_BASE64 (and their passwords) in the release environment"
@@ -229,10 +263,10 @@ jobs:
 
       - name: Provisioning profile and App Store Connect API key
         env:
-          APP_STORE_PROFILE_BASE64: ${{ secrets.APP_STORE_PROFILE_BASE64 }}
-          ASC_API_KEY_P8_BASE64: ${{ secrets.ASC_API_KEY_P8_BASE64 }}
-          ASC_API_KEY_ID: ${{ secrets.ASC_API_KEY_ID }}
-          ASC_API_ISSUER_ID: ${{ secrets.ASC_API_ISSUER_ID }}
+          APP_STORE_PROFILE_BASE64: ${{ steps.op.outputs.APP_STORE_PROFILE_BASE64 }}
+          ASC_API_KEY_P8_BASE64: ${{ steps.op.outputs.ASC_API_KEY_P8_BASE64 }}
+          ASC_API_KEY_ID: ${{ steps.op.outputs.ASC_API_KEY_ID }}
+          ASC_API_ISSUER_ID: ${{ steps.op.outputs.ASC_API_ISSUER_ID }}
         run: |
           if [ -z "$APP_STORE_PROFILE_BASE64" ]; then
             echo "::error::Set APP_STORE_PROFILE_BASE64 (the Mac App Store provisioning profile) in the release environment"
@@ -318,7 +352,7 @@ jobs:
     if: github.repository == 'kccarlos/kvoice' && needs.version.outputs.prerelease == 'false'
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    # HOMEBREW_TAP_TOKEN lives in this environment, which has no reviewer
+    # OP_SERVICE_ACCOUNT_TOKEN (for the tap token) lives in this environment, which has no reviewer
     # (the jobs this one needs were already approved in `release`) and
     # admits `v*` tags only, so no branch, pull request or other workflow
     # can read it. A fine-grained token: Contents read and write on
@@ -332,17 +366,28 @@ jobs:
       state: ${{ steps.result.outputs.state }}
     steps:
       # A secret cannot appear in a job's `if:`; this step stands in.
-      - name: The tap token
+      - name: The 1Password token
         id: token
         env:
-          HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
         run: |
-          if [ -z "$HOMEBREW_TAP_TOKEN" ]; then
-            echo "::notice title=Homebrew tap not updated::HOMEBREW_TAP_TOKEN is not set in the homebrew environment, so the cask was left as it is. Update it by hand (Scripts/update_homebrew_cask.py)."
+          if [ -z "$OP_SERVICE_ACCOUNT_TOKEN" ]; then
+            echo "::notice title=Homebrew tap not updated::OP_SERVICE_ACCOUNT_TOKEN is not set in the homebrew environment, so the cask was left as it is. Update it by hand (Scripts/update_homebrew_cask.py)."
             echo "configured=false" >> "$GITHUB_OUTPUT"
           else
             echo "configured=true" >> "$GITHUB_OUTPUT"
           fi
+
+      # The tap token from 1Password (homebrew-tap-token).
+      - name: Secrets from 1Password
+        id: op
+        if: steps.token.outputs.configured == 'true'
+        uses: 1password/load-secrets-action@70062d7a876d3eb6334754fa26efd2fbd90c32f2 # v5.0.1
+        with:
+          export-env: false
+        env:
+          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
+          HOMEBREW_TAP_TOKEN: op://github/homebrew-tap-token/credential
 
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         if: steps.token.outputs.configured == 'true'
@@ -369,7 +414,7 @@ jobs:
         with:
           repository: kccarlos/homebrew-tap
           ref: main
-          token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          token: ${{ steps.op.outputs.HOMEBREW_TAP_TOKEN }}
           path: homebrew-tap
 
       - name: Update and push the cask

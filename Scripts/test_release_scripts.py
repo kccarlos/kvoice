@@ -485,7 +485,13 @@ class HomebrewWorkflowTests(unittest.TestCase):
             if "HOMEBREW_TAP_TOKEN" in line and ("echo" in line or "printf" in line or "cat " in line):
                 self.assertNotIn("$HOMEBREW_TAP_TOKEN", line, line)
         self.assertNotIn("x-access-token", self.job, "no token in a remote URL")
-        self.assertEqual(self.job.count("secrets.HOMEBREW_TAP_TOKEN"), 2, "the presence check and the tap checkout")
+        # The tap token comes from 1Password; GitHub holds only the service
+        # account token, read by the presence check and the loader.
+        self.assertNotIn("secrets.HOMEBREW_TAP_TOKEN", self.job)
+        self.assertEqual(self.job.count("secrets.OP_SERVICE_ACCOUNT_TOKEN"), 2, "the presence check and the loader")
+        self.assertIn("HOMEBREW_TAP_TOKEN: op://github/homebrew-tap-token/credential", self.job)
+        self.assertIn("export-env: false", self.job, "the token is a step output, not job-wide env")
+        self.assertEqual(self.job.count("steps.op.outputs.HOMEBREW_TAP_TOKEN"), 1, "only the tap checkout reads it")
         self.assertIn("::notice", self.job, "a missing token is a notice, not a failure")
         self.assertIn("repository: kccarlos/homebrew-tap", self.job)
 

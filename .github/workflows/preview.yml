@@ -114,17 +114,31 @@ jobs:
       - name: Toolchain
         run: ./Scripts/ci_check_toolchain.sh 27
 
+      # Signing secrets from 1Password; step outputs, so only the steps that name them see the values.
+      - name: Secrets from 1Password
+        id: op
+        uses: 1password/load-secrets-action@70062d7a876d3eb6334754fa26efd2fbd90c32f2 # v5.0.1
+        with:
+          export-env: false
+        env:
+          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
+          ASC_API_ISSUER_ID: op://github/app-store-connect-api-key/issuer_id
+          ASC_API_KEY_ID: op://github/app-store-connect-api-key/key_id
+          ASC_API_KEY_P8_BASE64: op://github/app-store-connect-api-key/p8_base64
+          DEVELOPER_ID_P12_BASE64: op://github/apple-developer-id-application/p12_base64
+          DEVELOPER_ID_P12_PASSWORD: op://github/apple-developer-id-application/password
+
       - name: Notarized Developer ID DMG
         uses: ./.github/actions/notarized-dmg
         with:
           configuration: Release
           dmg-name: ${{ env.DMG_NAME }}
           volume-name: KVoice ${{ env.DMG_NAME }}
-          developer-id-p12-base64: ${{ secrets.DEVELOPER_ID_P12_BASE64 }}
-          developer-id-p12-password: ${{ secrets.DEVELOPER_ID_P12_PASSWORD }}
-          asc-api-key-p8-base64: ${{ secrets.ASC_API_KEY_P8_BASE64 }}
-          asc-api-key-id: ${{ secrets.ASC_API_KEY_ID }}
-          asc-api-issuer-id: ${{ secrets.ASC_API_ISSUER_ID }}
+          developer-id-p12-base64: ${{ steps.op.outputs.DEVELOPER_ID_P12_BASE64 }}
+          developer-id-p12-password: ${{ steps.op.outputs.DEVELOPER_ID_P12_PASSWORD }}
+          asc-api-key-p8-base64: ${{ steps.op.outputs.ASC_API_KEY_P8_BASE64 }}
+          asc-api-key-id: ${{ steps.op.outputs.ASC_API_KEY_ID }}
+          asc-api-issuer-id: ${{ steps.op.outputs.ASC_API_ISSUER_ID }}
 
       - name: Upload the DMG
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -171,6 +185,20 @@ jobs:
       - name: Toolchain
         run: ./Scripts/ci_check_toolchain.sh 27
 
+      # Signing secrets from 1Password; step outputs, so only the steps that name them see the values.
+      - name: Secrets from 1Password
+        id: op
+        uses: 1password/load-secrets-action@70062d7a876d3eb6334754fa26efd2fbd90c32f2 # v5.0.1
+        with:
+          export-env: false
+        env:
+          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
+          ASC_API_ISSUER_ID: op://github/app-store-connect-api-key/issuer_id
+          ASC_API_KEY_ID: op://github/app-store-connect-api-key/key_id
+          ASC_API_KEY_P8_BASE64: op://github/app-store-connect-api-key/p8_base64
+          DEVELOPER_ID_P12_BASE64: op://github/apple-developer-id-application/p12_base64
+          DEVELOPER_ID_P12_PASSWORD: op://github/apple-developer-id-application/password
+
       # The AppStore configuration signed with the Developer ID: build_app.sh
       # adds the secure timestamp for it, check_app_store_signature.sh
       # --developer-id checks it, notarize.sh picks that check from the
@@ -181,11 +209,11 @@ jobs:
           configuration: AppStore
           dmg-name: ${{ env.DMG_NAME }}
           volume-name: KVoice App Store Edition TEST BUILD ${{ needs.version.outputs.version }}-preview-${{ needs.version.outputs.short-sha }}
-          developer-id-p12-base64: ${{ secrets.DEVELOPER_ID_P12_BASE64 }}
-          developer-id-p12-password: ${{ secrets.DEVELOPER_ID_P12_PASSWORD }}
-          asc-api-key-p8-base64: ${{ secrets.ASC_API_KEY_P8_BASE64 }}
-          asc-api-key-id: ${{ secrets.ASC_API_KEY_ID }}
-          asc-api-issuer-id: ${{ secrets.ASC_API_ISSUER_ID }}
+          developer-id-p12-base64: ${{ steps.op.outputs.DEVELOPER_ID_P12_BASE64 }}
+          developer-id-p12-password: ${{ steps.op.outputs.DEVELOPER_ID_P12_PASSWORD }}
+          asc-api-key-p8-base64: ${{ steps.op.outputs.ASC_API_KEY_P8_BASE64 }}
+          asc-api-key-id: ${{ steps.op.outputs.ASC_API_KEY_ID }}
+          asc-api-issuer-id: ${{ steps.op.outputs.ASC_API_ISSUER_ID }}
 
       - name: Upload the DMG
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

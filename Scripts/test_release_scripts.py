@@ -488,10 +488,17 @@ class HomebrewWorkflowTests(unittest.TestCase):
         # The tap token comes from 1Password; GitHub holds only the service
         # account token, read by the presence check and the loader.
         self.assertNotIn("secrets.HOMEBREW_TAP_TOKEN", self.job)
-        self.assertEqual(self.job.count("secrets.OP_SERVICE_ACCOUNT_TOKEN"), 2, "the presence check and the loader")
-        self.assertIn("HOMEBREW_TAP_TOKEN: op://github/homebrew-tap-token/credential", self.job)
-        self.assertIn("export-env: false", self.job, "the token is a step output, not job-wide env")
-        self.assertEqual(self.job.count("steps.op.outputs.HOMEBREW_TAP_TOKEN"), 1, "only the tap checkout reads it")
+        # The presence check plus the loader's three attempts (op1..op3, 30 s
+        # apart: 1Password sign-in fails intermittently on some runners).
+        self.assertEqual(self.job.count("secrets.OP_SERVICE_ACCOUNT_TOKEN"), 4, "the presence check and three loader attempts")
+        for attempt in ("op1", "op2", "op3"):
+            self.assertIn(f"id: {attempt}\n", self.job)
+        self.assertEqual(self.job.count("uses: 1password/load-secrets-action@"), 3, "every token use is a loader attempt")
+        self.assertEqual(self.job.count("HOMEBREW_TAP_TOKEN: op://github/homebrew-tap-token/credential"), 3)
+        self.assertEqual(self.job.count("export-env: false"), 3, "the token is a step output, not job-wide env")
+        self.assertEqual(
+            self.job.count("steps.op1.outputs.HOMEBREW_TAP_TOKEN || steps.op2.outputs.HOMEBREW_TAP_TOKEN || steps.op3.outputs.HOMEBREW_TAP_TOKEN"),
+            1, "only the tap checkout reads it")
         self.assertIn("::notice", self.job, "a missing token is a notice, not a failure")
         self.assertIn("repository: kccarlos/homebrew-tap", self.job)
 

@@ -114,9 +114,58 @@ jobs:
       - name: Toolchain
         run: ./Scripts/ci_check_toolchain.sh 27
 
+      # Evidence for the intermittent 1Password sign-in errors on the macOS 27
+      # runner: how far this runner's clock is from GitHub's. No secrets.
+      - name: Runner clock (no secrets)
+        run: |
+          python3 -c 'import email.utils,time,urllib.request; h=urllib.request.urlopen(urllib.request.Request("https://api.github.com",method="HEAD"),timeout=15).headers["Date"]; d=time.time()-email.utils.parsedate_to_datetime(h).timestamp(); print(f"::notice title=Runner clock::runner minus GitHub server time = {d:+.1f} s")' || echo "::notice title=Runner clock::clock check unavailable"
       # Signing secrets from 1Password; step outputs, so only the steps that name them see the values.
+      # Up to three attempts, 30 s apart: sign-in from some macOS 27 runner
+      # machines fails intermittently (400/500 from 1Password) while others succeed.
       - name: Secrets from 1Password
-        id: op
+        id: op1
+        continue-on-error: true
+        uses: 1password/load-secrets-action@70062d7a876d3eb6334754fa26efd2fbd90c32f2 # v5.0.1
+        with:
+          export-env: false
+          # 1Password CLI 2.41.0 on the macOS 27 runner image fails at sign-in
+          # ("error initializing client: (500)"); 2.40.0 works with the same
+          # token. Raise this once a later CLI is confirmed on that image.
+          version: 2.40.0
+        env:
+          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
+          ASC_API_ISSUER_ID: op://github/app-store-connect-api-key/issuer_id
+          ASC_API_KEY_ID: op://github/app-store-connect-api-key/key_id
+          ASC_API_KEY_P8_BASE64: op://github/app-store-connect-api-key/p8_base64
+          DEVELOPER_ID_P12_BASE64: op://github/apple-developer-id-application/p12_base64
+          DEVELOPER_ID_P12_PASSWORD: op://github/apple-developer-id-application/password
+      - name: Wait before retrying 1Password
+        if: steps.op1.outcome == 'failure'
+        run: sleep 30
+      - name: Secrets from 1Password (attempt 2)
+        id: op2
+        if: steps.op1.outcome == 'failure'
+        continue-on-error: true
+        uses: 1password/load-secrets-action@70062d7a876d3eb6334754fa26efd2fbd90c32f2 # v5.0.1
+        with:
+          export-env: false
+          # 1Password CLI 2.41.0 on the macOS 27 runner image fails at sign-in
+          # ("error initializing client: (500)"); 2.40.0 works with the same
+          # token. Raise this once a later CLI is confirmed on that image.
+          version: 2.40.0
+        env:
+          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
+          ASC_API_ISSUER_ID: op://github/app-store-connect-api-key/issuer_id
+          ASC_API_KEY_ID: op://github/app-store-connect-api-key/key_id
+          ASC_API_KEY_P8_BASE64: op://github/app-store-connect-api-key/p8_base64
+          DEVELOPER_ID_P12_BASE64: op://github/apple-developer-id-application/p12_base64
+          DEVELOPER_ID_P12_PASSWORD: op://github/apple-developer-id-application/password
+      - name: Wait before retrying 1Password
+        if: steps.op2.outcome == 'failure'
+        run: sleep 30
+      - name: Secrets from 1Password (attempt 3)
+        id: op3
+        if: steps.op2.outcome == 'failure'
         uses: 1password/load-secrets-action@70062d7a876d3eb6334754fa26efd2fbd90c32f2 # v5.0.1
         with:
           export-env: false
@@ -138,11 +187,11 @@ jobs:
           configuration: Release
           dmg-name: ${{ env.DMG_NAME }}
           volume-name: KVoice ${{ env.DMG_NAME }}
-          developer-id-p12-base64: ${{ steps.op.outputs.DEVELOPER_ID_P12_BASE64 }}
-          developer-id-p12-password: ${{ steps.op.outputs.DEVELOPER_ID_P12_PASSWORD }}
-          asc-api-key-p8-base64: ${{ steps.op.outputs.ASC_API_KEY_P8_BASE64 }}
-          asc-api-key-id: ${{ steps.op.outputs.ASC_API_KEY_ID }}
-          asc-api-issuer-id: ${{ steps.op.outputs.ASC_API_ISSUER_ID }}
+          developer-id-p12-base64: ${{ steps.op1.outputs.DEVELOPER_ID_P12_BASE64 || steps.op2.outputs.DEVELOPER_ID_P12_BASE64 || steps.op3.outputs.DEVELOPER_ID_P12_BASE64 }}
+          developer-id-p12-password: ${{ steps.op1.outputs.DEVELOPER_ID_P12_PASSWORD || steps.op2.outputs.DEVELOPER_ID_P12_PASSWORD || steps.op3.outputs.DEVELOPER_ID_P12_PASSWORD }}
+          asc-api-key-p8-base64: ${{ steps.op1.outputs.ASC_API_KEY_P8_BASE64 || steps.op2.outputs.ASC_API_KEY_P8_BASE64 || steps.op3.outputs.ASC_API_KEY_P8_BASE64 }}
+          asc-api-key-id: ${{ steps.op1.outputs.ASC_API_KEY_ID || steps.op2.outputs.ASC_API_KEY_ID || steps.op3.outputs.ASC_API_KEY_ID }}
+          asc-api-issuer-id: ${{ steps.op1.outputs.ASC_API_ISSUER_ID || steps.op2.outputs.ASC_API_ISSUER_ID || steps.op3.outputs.ASC_API_ISSUER_ID }}
 
       - name: Upload the DMG
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -189,9 +238,58 @@ jobs:
       - name: Toolchain
         run: ./Scripts/ci_check_toolchain.sh 27
 
+      # Evidence for the intermittent 1Password sign-in errors on the macOS 27
+      # runner: how far this runner's clock is from GitHub's. No secrets.
+      - name: Runner clock (no secrets)
+        run: |
+          python3 -c 'import email.utils,time,urllib.request; h=urllib.request.urlopen(urllib.request.Request("https://api.github.com",method="HEAD"),timeout=15).headers["Date"]; d=time.time()-email.utils.parsedate_to_datetime(h).timestamp(); print(f"::notice title=Runner clock::runner minus GitHub server time = {d:+.1f} s")' || echo "::notice title=Runner clock::clock check unavailable"
       # Signing secrets from 1Password; step outputs, so only the steps that name them see the values.
+      # Up to three attempts, 30 s apart: sign-in from some macOS 27 runner
+      # machines fails intermittently (400/500 from 1Password) while others succeed.
       - name: Secrets from 1Password
-        id: op
+        id: op1
+        continue-on-error: true
+        uses: 1password/load-secrets-action@70062d7a876d3eb6334754fa26efd2fbd90c32f2 # v5.0.1
+        with:
+          export-env: false
+          # 1Password CLI 2.41.0 on the macOS 27 runner image fails at sign-in
+          # ("error initializing client: (500)"); 2.40.0 works with the same
+          # token. Raise this once a later CLI is confirmed on that image.
+          version: 2.40.0
+        env:
+          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
+          ASC_API_ISSUER_ID: op://github/app-store-connect-api-key/issuer_id
+          ASC_API_KEY_ID: op://github/app-store-connect-api-key/key_id
+          ASC_API_KEY_P8_BASE64: op://github/app-store-connect-api-key/p8_base64
+          DEVELOPER_ID_P12_BASE64: op://github/apple-developer-id-application/p12_base64
+          DEVELOPER_ID_P12_PASSWORD: op://github/apple-developer-id-application/password
+      - name: Wait before retrying 1Password
+        if: steps.op1.outcome == 'failure'
+        run: sleep 30
+      - name: Secrets from 1Password (attempt 2)
+        id: op2
+        if: steps.op1.outcome == 'failure'
+        continue-on-error: true
+        uses: 1password/load-secrets-action@70062d7a876d3eb6334754fa26efd2fbd90c32f2 # v5.0.1
+        with:
+          export-env: false
+          # 1Password CLI 2.41.0 on the macOS 27 runner image fails at sign-in
+          # ("error initializing client: (500)"); 2.40.0 works with the same
+          # token. Raise this once a later CLI is confirmed on that image.
+          version: 2.40.0
+        env:
+          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
+          ASC_API_ISSUER_ID: op://github/app-store-connect-api-key/issuer_id
+          ASC_API_KEY_ID: op://github/app-store-connect-api-key/key_id
+          ASC_API_KEY_P8_BASE64: op://github/app-store-connect-api-key/p8_base64
+          DEVELOPER_ID_P12_BASE64: op://github/apple-developer-id-application/p12_base64
+          DEVELOPER_ID_P12_PASSWORD: op://github/apple-developer-id-application/password
+      - name: Wait before retrying 1Password
+        if: steps.op2.outcome == 'failure'
+        run: sleep 30
+      - name: Secrets from 1Password (attempt 3)
+        id: op3
+        if: steps.op2.outcome == 'failure'
         uses: 1password/load-secrets-action@70062d7a876d3eb6334754fa26efd2fbd90c32f2 # v5.0.1
         with:
           export-env: false
@@ -217,11 +315,11 @@ jobs:
           configuration: AppStore
           dmg-name: ${{ env.DMG_NAME }}
           volume-name: KVoice App Store Edition TEST BUILD ${{ needs.version.outputs.version }}-preview-${{ needs.version.outputs.short-sha }}
-          developer-id-p12-base64: ${{ steps.op.outputs.DEVELOPER_ID_P12_BASE64 }}
-          developer-id-p12-password: ${{ steps.op.outputs.DEVELOPER_ID_P12_PASSWORD }}
-          asc-api-key-p8-base64: ${{ steps.op.outputs.ASC_API_KEY_P8_BASE64 }}
-          asc-api-key-id: ${{ steps.op.outputs.ASC_API_KEY_ID }}
-          asc-api-issuer-id: ${{ steps.op.outputs.ASC_API_ISSUER_ID }}
+          developer-id-p12-base64: ${{ steps.op1.outputs.DEVELOPER_ID_P12_BASE64 || steps.op2.outputs.DEVELOPER_ID_P12_BASE64 || steps.op3.outputs.DEVELOPER_ID_P12_BASE64 }}
+          developer-id-p12-password: ${{ steps.op1.outputs.DEVELOPER_ID_P12_PASSWORD || steps.op2.outputs.DEVELOPER_ID_P12_PASSWORD || steps.op3.outputs.DEVELOPER_ID_P12_PASSWORD }}
+          asc-api-key-p8-base64: ${{ steps.op1.outputs.ASC_API_KEY_P8_BASE64 || steps.op2.outputs.ASC_API_KEY_P8_BASE64 || steps.op3.outputs.ASC_API_KEY_P8_BASE64 }}
+          asc-api-key-id: ${{ steps.op1.outputs.ASC_API_KEY_ID || steps.op2.outputs.ASC_API_KEY_ID || steps.op3.outputs.ASC_API_KEY_ID }}
+          asc-api-issuer-id: ${{ steps.op1.outputs.ASC_API_ISSUER_ID || steps.op2.outputs.ASC_API_ISSUER_ID || steps.op3.outputs.ASC_API_ISSUER_ID }}
 
       - name: Upload the DMG
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

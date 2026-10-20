@@ -115,6 +115,7 @@ extension DictationJobRunner {
             }
             recordRawTranscript(rawText)
             recordFinalText(rawText)
+            applySpokenTriggerUnderNoDefaultAction(rawText)
 
             let mode = job?.modeSnapshot ?? .off
             _ = try? await apply(.rawTranscript(jobID: jobID, mode: mode), coordinator)

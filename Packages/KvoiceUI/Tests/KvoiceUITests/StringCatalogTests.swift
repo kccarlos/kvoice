@@ -138,6 +138,37 @@ final class StringCatalogTests: XCTestCase {
         XCTAssertTrue(project.contains("\"zh-Hans\""), "knownRegions must list every shipped language")
     }
 
+    /// The "KVoice Shortcut" recorder window lives in KvoiceHotkeys, whose
+    /// SwiftUI literals and bundle-less `String(localized:)` calls resolve
+    /// against `Bundle.main` — KvoiceUI's catalog. 0.1.5 showed it in
+    /// English in the Chinese UI because none of its keys were there.
+    /// The literals are read from the source, so a new sentence in that file
+    /// fails here until it is translated (and `sync_strings.sh` now syncs
+    /// KvoiceHotkeys into the same catalog).
+    func testTheShortcutRecorderWindowIsTranslated() throws {
+        let source = try String(
+            contentsOf: StringCatalog.repositoryRoot.appendingPathComponent(
+                "Packages/KvoiceHotkeys/Sources/KvoiceHotkeys/ShortcutRecorderWindow.swift"
+            ),
+            encoding: .utf8
+        )
+        let pattern = #"(?:Text|Button|Picker|accessibilityLabel|accessibilityHint|String\(localized:)\(?\s*"((?:[^"\\]|\\.)+)""#
+        let regex = try NSRegularExpression(pattern: pattern)
+        let range = NSRange(source.startIndex..., in: source)
+        let keys = Set(regex.matches(in: source, range: range).compactMap { match -> String? in
+            guard let keyRange = Range(match.range(at: 1), in: source) else { return nil }
+            // `\(x)` interpolation becomes `%@` in the catalog key.
+            return source[keyRange].replacingOccurrences(of: #"\\\((?:[^()]|\([^()]*\))*\)"#, with: "%@", options: .regularExpression)
+        })
+        XCTAssertTrue(keys.contains("KVoice Shortcut"), "the window title is localized")
+        XCTAssertGreaterThanOrEqual(keys.count, 14, "the extraction found the window's sentences")
+        let catalog = try StringCatalog(relativePath: StringCatalog.kvoiceUI)
+        for key in keys.sorted() {
+            let value = catalog.value(for: key, language: "zh-Hans")
+            XCTAssertFalse(value?.isEmpty ?? true, "untranslated recorder string: \(key)")
+        }
+    }
+
     func testBaseConfigurationEmitsStringsData() throws {
         let xcconfig = try String(
             contentsOf: StringCatalog.repositoryRoot.appendingPathComponent("Config/Base.xcconfig"),

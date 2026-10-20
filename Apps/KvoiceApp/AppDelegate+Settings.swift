@@ -60,6 +60,9 @@ extension AppDelegate {
                 if seededPromptModes {
                     settings.ai.seedBuiltInPromptModesIfNeeded()
                 }
+                // Spec A1.1 rule 3: an untouched built-in prompt saved by an
+                // earlier version takes the shipped text; an edited one stays.
+                let upgradedPromptModes = settings.ai.upgradeUntouchedBuiltInPromptModes()
                 // Every page is a projection over the coordinator and needs
                 // no hydration; loading here is the one place a load-time
                 // value reaches them at all.
@@ -83,7 +86,7 @@ extension AppDelegate {
                 self.promptModeSettingsViewModel.discardStaleDrafts()
                 self.refreshDictionaryCatalogLimit()
                 self.settingsLoaded = true
-                if seededPromptModes {
+                if seededPromptModes || upgradedPromptModes {
                     self.persistCurrentSettings()
                 }
                 // Retention runs against the loaded settings, never the defaults.

@@ -291,8 +291,14 @@ public final class KeyboardShortcutsAdapter: @preconcurrency GlobalShortcutServi
 
     private var recorderWindow: ShortcutRecorderWindowController?
 
+    /// The recorder window's name for a lone modifier key. The shell sets it
+    /// to the interface-language name (`DomainCopy`, in KvoiceUI, which this
+    /// package does not import); the default is the domain's English.
+    public var modifierKeyDisplayName: @MainActor (ShortcutDefinition.ModifierOnlyKey) -> String = { $0.displayName }
+
     private let backend: any HotkeyRegistrationBackend
     private let modifierMonitor: ModifierOnlyShortcutMonitor
+    private let modifierReleasePollSleep: KeyStateWatchdog.Sleep?
     private let auxiliaryBackendFactory: @MainActor (AuxiliaryShortcutRole) -> any HotkeyRegistrationBackend
     private let inputMonitorFactory: any InputEventMonitorFactory
     private let globalInputMonitorsAvailable: Bool
@@ -337,6 +343,13 @@ public final class KeyboardShortcutsAdapter: @preconcurrency GlobalShortcutServi
             handler(event)
         }
 
+        /// The watchdog ended a hold: forget it in both the registration and
+        /// its monitor without reporting a release, so the next press counts.
+        func forgetHold() {
+            isDown = false
+            monitor?.forgetHold()
+        }
+
         func tearDown() {
             backend?.unregister()
             monitor?.stop()
@@ -363,6 +376,11 @@ public final class KeyboardShortcutsAdapter: @preconcurrency GlobalShortcutServi
         // the composition root. False refuses the modifier-only key and the
         // middle mouse trigger with `.unavailableInAppStoreEdition`.
         globalInputMonitorsAvailable: Bool = true,
+        // Paces the modifier-only key's release poll
+        // (`ModifierOnlyShortcutMonitor.releasePollInterval`). Separate from
+        // `sleep` because tests pass an immediate `sleep` for the watchdog,
+        // which would turn the poll into a busy loop. Nil: the system sleep.
+        modifierReleasePollSleep: KeyStateWatchdog.Sleep? = nil,
         auxiliaryBackendFactory: @escaping @MainActor (AuxiliaryShortcutRole) -> any HotkeyRegistrationBackend = { role in
             KeyboardShortcutsRegistrationBackend(name: role.registrationName)
         }
@@ -371,7 +389,8 @@ public final class KeyboardShortcutsAdapter: @preconcurrency GlobalShortcutServi
         self.inputMonitorFactory = inputMonitorFactory
         self.globalInputMonitorsAvailable = globalInputMonitorsAvailable
         self.auxiliaryBackendFactory = auxiliaryBackendFactory
-        self.modifierMonitor = ModifierOnlyShortcutMonitor(factory: inputMonitorFactory)
+        self.modifierReleasePollSleep = modifierReleasePollSleep
+        self.modifierMonitor = ModifierOnlyShortcutMonitor(factory: inputMonitorFactory, sleep: modifierReleasePollSleep)
         let sleep = sleep ?? KeyStateWatchdog.systemSleep
         self.middleMouseMonitor = MiddleMouseTriggerMonitor(factory: inputMonitorFactory, sleep: sleep)
         self.escapeMonitor = ActiveJobEscapeMonitor(factory: escapeMonitorFactory)
@@ -520,7 +539,7 @@ public final class KeyboardShortcutsAdapter: @preconcurrency GlobalShortcutServi
 
         let registration: AuxiliaryRegistration
         if let key = shortcut.modifierOnlyKey {
-            let monitor = ModifierOnlyShortcutMonitor(factory: inputMonitorFactory)
+            let monitor = ModifierOnlyShortcutMonitor(factory: inputMonitorFactory, sleep: modifierReleasePollSleep)
             let candidate = AuxiliaryRegistration(shortcut: shortcut, backend: nil, monitor: monitor, handler: handler)
             try monitor.start(
                 key: key,
@@ -637,7 +656,8 @@ public final class KeyboardShortcutsAdapter: @preconcurrency GlobalShortcutServi
                        let restoreHandler {
                         try? self.register(restoreShortcut, handler: restoreHandler)
                     }
-                }
+                },
+                keyName: modifierKeyDisplayName
             )
         }
         NSApp.activate(ignoringOtherApps: true)
@@ -727,6 +747,11 @@ public final class KeyboardShortcutsAdapter: @preconcurrency GlobalShortcutServi
     private func watchdogDidForceStop(_ reason: KeyStateWatchdogStopReason) {
         guard physicalKeyIsDown else { return }
         physicalKeyIsDown = false
+        // The monitors would otherwise still think a key is held.
+        modifierMonitor.forgetHold()
+        for registration in auxiliaryRegistrations.values {
+            registration.forgetHold()
+        }
         handler?(.keyUp)
         onWatchdogStop?(reason)
     }

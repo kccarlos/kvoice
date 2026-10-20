@@ -21,6 +21,10 @@ struct ShortcutRecorderView: View {
     let currentShortcut: ShortcutDefinition?
     let onRecorded: (ShortcutDefinition) -> Void
     let onCancel: () -> Void
+    /// The on-screen name of a lone modifier key. Injected because the
+    /// domain's English `displayName` is a `DomainCopy` key that only
+    /// `KvoiceUI` can resolve, and this package does not depend on it.
+    let keyName: (ShortcutDefinition.ModifierOnlyKey) -> String
 
     /// What the picker offers: a lone modifier key, or a recorded combination.
     enum Choice: Hashable {
@@ -50,11 +54,13 @@ struct ShortcutRecorderView: View {
     init(
         currentShortcut: ShortcutDefinition?,
         onRecorded: @escaping (ShortcutDefinition) -> Void,
-        onCancel: @escaping () -> Void
+        onCancel: @escaping () -> Void,
+        keyName: @escaping (ShortcutDefinition.ModifierOnlyKey) -> String = { $0.displayName }
     ) {
         self.currentShortcut = currentShortcut
         self.onRecorded = onRecorded
         self.onCancel = onCancel
+        self.keyName = keyName
         // Open on the recommended key unless the user already has a
         // combination, in which case start where they are.
         if let key = currentShortcut?.modifierOnlyKey {
@@ -75,7 +81,7 @@ struct ShortcutRecorderView: View {
 
             Picker("Trigger key", selection: $choice) {
                 ForEach(ShortcutDefinition.ModifierOnlyKey.allCases, id: \.self) { key in
-                    Text(key.displayName).tag(Choice.modifierOnly(key))
+                    Text(verbatim: keyName(key)).tag(Choice.modifierOnly(key))
                 }
                 Text("Custom key combination…").tag(Choice.customCombination)
             }
@@ -126,7 +132,7 @@ struct ShortcutRecorderView: View {
                     .foregroundStyle(.red)
                     .fixedSize(horizontal: false, vertical: true)
             } else if let currentShortcut {
-                Text("Current: \(Self.describe(currentShortcut))")
+                Text("Current: \(describe(currentShortcut))")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -167,10 +173,10 @@ struct ShortcutRecorderView: View {
         case .combination(let shortcut):
             return String(describing: shortcut)
         case .modifierOnly(let key):
-            return key.displayName
+            return keyName(key)
         case nil:
             let symbols = Self.symbols(for: heldModifiers)
-            return symbols.isEmpty ? "Press a combination…" : symbols
+            return symbols.isEmpty ? String(localized: "Press a combination…") : symbols
         }
     }
 
@@ -226,13 +232,13 @@ struct ShortcutRecorderView: View {
         // and the adapter's forward mapping rejects a modifier-less shortcut.
         guard !modifiers.subtracting([.shift, .function, .capsLock]).isEmpty else {
             captured = nil
-            rejection = "Add Control, Option, or Command — Shift alone will not register."
+            rejection = String(localized: "Add Control, Option, or Command — Shift alone will not register.")
             return
         }
 
         guard let shortcut = KeyboardShortcuts.Shortcut(event: event) else {
             captured = nil
-            rejection = "That key cannot be used as a global shortcut."
+            rejection = String(localized: "That key cannot be used as a global shortcut.")
             return
         }
 
@@ -250,12 +256,12 @@ struct ShortcutRecorderView: View {
     }
 
     /// Local formatting so this package does not depend on KvoiceUI.
-    private static func describe(_ shortcut: ShortcutDefinition) -> String {
+    private func describe(_ shortcut: ShortcutDefinition) -> String {
         if let key = shortcut.modifierOnlyKey {
-            return key.displayName
+            return keyName(key)
         }
         let modifiers = shortcut.modifiers.map { $0.capitalized }
-        let key = shortcut.key == " " ? "Space" : shortcut.key.capitalized
+        let key = shortcut.key == " " ? String(localized: "Space") : shortcut.key.capitalized
         return (modifiers + [key]).joined(separator: "-")
     }
 }
@@ -265,7 +271,8 @@ final class ShortcutRecorderWindowController: NSWindowController {
     init(
         currentShortcut: ShortcutDefinition?,
         onRecorded: @escaping (ShortcutDefinition) -> Void,
-        onClose: @escaping () -> Void
+        onClose: @escaping () -> Void,
+        keyName: @escaping (ShortcutDefinition.ModifierOnlyKey) -> String = { $0.displayName }
     ) {
         let window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 430, height: 260),
@@ -273,7 +280,10 @@ final class ShortcutRecorderWindowController: NSWindowController {
             backing: .buffered,
             defer: false
         )
-        window.title = "KVoice Shortcut"
+        // `String(localized:)` without a bundle reads `Bundle.main`, whose
+        // `Localizable` table is KvoiceUI's catalog (Docs/Localization.md);
+        // the SwiftUI literals below resolve against the same table.
+        window.title = String(localized: "KVoice Shortcut")
         window.isReleasedWhenClosed = false
         super.init(window: window)
 
@@ -284,7 +294,8 @@ final class ShortcutRecorderWindowController: NSWindowController {
                     onRecorded(definition)
                     onClose()
                 },
-                onCancel: onClose
+                onCancel: onClose,
+                keyName: keyName
             )
         )
         window.center()

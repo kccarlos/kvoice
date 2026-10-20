@@ -39,6 +39,18 @@ final class AIActionsSettingsTests: XCTestCase {
         XCTAssertTrue(settings.isEnabled, "but the switch itself is kept")
     }
 
+    func testADefaultActionChoiceIsAwaitedOnlyWhenActionsExistAndNoneUsableIsChosen() {
+        var settings = configured(isEnabled: true)
+        XCTAssertFalse(settings.awaitsDefaultActionChoice, "no actions at all: nothing to choose from")
+        settings.seedBuiltInPromptModesIfNeeded()
+        XCTAssertTrue(settings.awaitsDefaultActionChoice, "a fresh install's Default Action is None")
+        XCTAssertEqual(settings.mode, .polish, "mode stays the switch and the endpoint; the controller applies the rule")
+        settings.apply(promptMode: settings.promptModes[0])
+        XCTAssertFalse(settings.awaitsDefaultActionChoice)
+        settings.promptModes[0].prompt = "  "
+        XCTAssertTrue(settings.awaitsDefaultActionChoice, "an unusable default action runs nothing either")
+    }
+
     func testLegacyModeSetterMapsOntoTheSwitchAndFollowsTheDefaultAction() {
         var settings = configured()
         settings.mode = .polish

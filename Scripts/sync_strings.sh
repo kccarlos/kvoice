@@ -29,31 +29,37 @@ intermediates="$derived_data_path/Build/Intermediates.noindex"
 # Xcode lays the package targets out as either
 # `kvoice.build/Debug/KvoiceUI.build` or (a fresh derived-data folder under
 # Xcode 26) `Kvoice.build/Debug/KvoiceUI-t.build`; take whichever exists.
-ui_build=""
-for candidate in \
-    "$intermediates/kvoice.build/Debug/KvoiceUI.build" \
-    "$intermediates/Kvoice.build/Debug/KvoiceUI-t.build"; do
-    if [ -d "$candidate" ]; then
-        ui_build="$candidate"
-        break
-    fi
-done
+package_build() {
+    for candidate in \
+        "$intermediates/kvoice.build/Debug/$1.build" \
+        "$intermediates/Kvoice.build/Debug/$1-t.build"; do
+        if [ -d "$candidate" ]; then
+            echo "$candidate"
+            return
+        fi
+    done
+}
+ui_build="$(package_build KvoiceUI)"
+# KvoiceHotkeys' shortcut recorder window is SwiftUI too; its literals and
+# its `String(localized:)` calls (no bundle) resolve against `Bundle.main`,
+# whose `Localizable` table is KvoiceUI's catalog, so they sync into it.
+hotkeys_build="$(package_build KvoiceHotkeys)"
 app_build="$intermediates/Kvoice.build/Debug/kvoice.build"
-if [ -z "$ui_build" ] || [ ! -d "$app_build" ]; then
+if [ -z "$ui_build" ] || [ -z "$hotkeys_build" ] || [ ! -d "$app_build" ]; then
     echo "No Debug build products under $derived_data_path; run ./Scripts/build_app.sh Debug first (or pass --build)." >&2
     exit 2
 fi
 
 sync_catalog() {
     catalog="$1"
-    build_dir="$2"
+    shift
     # shellcheck disable=SC2046
-    "$tool" sync "$catalog" --stringsdata $(find "$build_dir" -name '*.stringsdata' ! -name 'ExtractedAppShortcutsMetadata.stringsdata')
+    "$tool" sync "$catalog" --stringsdata $(find "$@" -name '*.stringsdata' ! -name 'ExtractedAppShortcutsMetadata.stringsdata')
     echo "synced $catalog"
 }
 
 # KvoiceUI: SwiftUI literals and String(localized:bundle: .module) calls.
-sync_catalog Packages/KvoiceUI/Sources/KvoiceUI/Resources/Localizable.xcstrings "$ui_build"
+sync_catalog Packages/KvoiceUI/Sources/KvoiceUI/Resources/Localizable.xcstrings "$ui_build" "$hotkeys_build"
 # The app shell: String(localized:table: "Shell") calls in Apps/KvoiceApp.
 sync_catalog Apps/KvoiceApp/Resources/Shell.xcstrings "$app_build"
 # DomainCopy.xcstrings is keyed by runtime values (KvoiceDomain's English

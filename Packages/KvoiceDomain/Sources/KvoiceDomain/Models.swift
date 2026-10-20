@@ -352,10 +352,58 @@ public struct AIEndpointSettings: Codable, Sendable, Equatable {
         return promptModes.first { $0.id == activePromptModeID }
     }
 
+    /// True when actions exist but none is chosen as the default (Default
+    /// Action "None") or the chosen one is not usable. Product decision #6:
+    /// the switch runs the default action, so a dictation then runs no AI —
+    /// the AI Actions section says "Nothing runs until one is selected".
+    /// `mode` itself is left alone because the connection test and the
+    /// clients read it with no action chosen; the controller checks this
+    /// when it snapshots a job (0.1.5 ran a polish with the legacy prompt).
+    /// A value with no actions at all (written before actions existed) is
+    /// not waiting for a choice.
+    public var awaitsDefaultActionChoice: Bool {
+        !promptModes.isEmpty && activePromptMode?.isUsable != true
+    }
+
     /// Seeds the shipped modes the first time, leaving any the user already has.
     public mutating func seedBuiltInPromptModesIfNeeded() {
         guard promptModes.isEmpty else { return }
         promptModes = BuiltInPromptModes.all
+    }
+
+    /// Brings untouched built-in prompts up to the shipped text (spec A1.1
+    /// rule 3). A built-in whose stored prompt exactly equals a text it
+    /// shipped with earlier (`BuiltInPromptModes.previousPrompts`) gets the
+    /// current one; an edited prompt, a user action, and everything that is
+    /// a preference rather than prompt text (name, icon, triggers, mode
+    /// settings, context opt-ins, translation language) are never touched.
+    /// When the default action is among those upgraded, its new effective
+    /// prompt is copied into `promptConfiguration`, because the request path
+    /// reads that copy, not the mode. Only the prompt slot is written: a full
+    /// `apply(promptMode:)` would also reset the translation language the AI
+    /// settings page may have changed since. Returns whether anything
+    /// changed; a second run is a no-op.
+    @discardableResult
+    public mutating func upgradeUntouchedBuiltInPromptModes() -> Bool {
+        var changed = false
+        var upgradedDefaultAction = false
+        for index in promptModes.indices {
+            guard let key = promptModes[index].builtInKey,
+                  let shipped = BuiltInPromptModes.shipped(forKey: key),
+                  promptModes[index].prompt != shipped.prompt,
+                  BuiltInPromptModes.previousPrompts(forKey: key).contains(promptModes[index].prompt)
+            else { continue }
+            promptModes[index].prompt = shipped.prompt
+            changed = true
+            if promptModes[index].id == activePromptModeID { upgradedDefaultAction = true }
+        }
+        if upgradedDefaultAction, let active = activePromptMode {
+            switch active.behavior {
+            case .polish: promptConfiguration.polishPrompt = active.effectiveSystemPrompt
+            case .translate: promptConfiguration.translatePrompt = active.effectiveSystemPrompt
+            }
+        }
+        return changed
     }
 
     /// Copies a saved configuration into the active endpoint fields.

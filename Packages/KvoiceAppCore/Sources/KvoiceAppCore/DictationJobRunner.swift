@@ -122,6 +122,10 @@ final class DictationJobRunner {
     /// `aiInputTooLong`), for the `ai.fallback.used` line; the reducer event
     /// carries the code only. Cleared once logged.
     var aiFailureMetadata: DiagnosticAttributes?
+    /// Default Action "None" with action triggers on: the job starts with AI
+    /// off, and these are the settings a trigger phrase at the start of the
+    /// transcript may still run (`DictationController.startRecording`).
+    var triggerOnlyAISettings: AIEndpointSettings?
     /// Set while the output volume is lowered so every exit path restores
     /// it exactly once.
     private var outputMuted = false
@@ -244,6 +248,26 @@ final class DictationJobRunner {
                 )
             )
         )
+    }
+
+    /// Default Action "None" runs nothing, but a trigger phrase opening the
+    /// transcript is an explicit choice: when one matches, the job takes
+    /// that action before the reducer sees the transcript, as a ⌘digit
+    /// during recording would; otherwise the job stays AI-off. A choice
+    /// already made during recording wins. The AI stage's own resolver then
+    /// strips the phrase from what is sent.
+    func applySpokenTriggerUnderNoDefaultAction(_ transcript: String) {
+        guard let pending = triggerOnlyAISettings else { return }
+        triggerOnlyAISettings = nil
+        guard var job, job.aiSettingsSnapshot?.awaitsDefaultActionChoice == true,
+              job.aiSettingsSnapshot?.isEnabled == false,
+              let match = ActionTriggerResolver.match(transcript: transcript, actions: pending.promptModes)
+        else { return }
+        var settings = pending
+        settings.apply(promptMode: match.action)
+        job.applyAISettings(settings)
+        self.job = job
+        settingsSnapshot?.ai = settings
     }
 
     /// Double-press auto-send (product decision #5) for the running recording.

@@ -120,6 +120,101 @@ final class DictationControllerAIControlTests: XCTestCase {
         XCTAssertTrue(persisted.ai.isEnabled)
     }
 
+    // MARK: Default Action "None" (0.1.5 App Store edition report)
+
+    func testWithNoDefaultActionTheSwitchOnRunsNoAI() async {
+        var settings = enabledSettings()
+        settings.ai.activePromptModeID = nil
+        let fixture = makeFixture(settings: settings)
+
+        _ = await fixture.controller.startRecording()
+        let job = await fixture.controller.activeJob
+        XCTAssertEqual(job?.modeSnapshot, .off, "0.1.5 snapshotted .polish here and ran the legacy prompt")
+        XCTAssertEqual(job?.aiSettingsSnapshot?.isEnabled, false, "the HUD indicator reads off too")
+
+        _ = await fixture.controller.stopRecording()
+        await fixture.controller.waitForCompletion()
+        let requests = await fixture.aiClient.receivedRequests
+        XCTAssertTrue(requests.isEmpty)
+        let inserted = await fixture.insertion.insertedTexts
+        XCTAssertEqual(inserted, ["hello"])
+        let persisted = await fixture.settingsRepository.settings
+        XCTAssertTrue(persisted.ai.isEnabled, "the stored switch is not the controller's to change")
+    }
+
+    /// A spoken trigger phrase is an explicit choice (README: "start a
+    /// sentence with an action's trigger word to use another one"), so it
+    /// still runs its action while the Default Action is "None".
+    func testWithNoDefaultActionATriggerPhraseRunsItsAction() async {
+        var settings = enabledSettings()
+        settings.ai.activePromptModeID = nil
+        settings.ai.actionTriggersEnabled = true
+        settings.ai.promptModes[1].triggerWords = ["shout"]
+        let fixture = makeFixture(settings: settings, engine: FakeTranscriptionEngine(result: transcript("shout hello")))
+
+        _ = await fixture.controller.startRecording()
+        let job = await fixture.controller.activeJob
+        XCTAssertEqual(job?.modeSnapshot, .off, "nothing is chosen while recording")
+        _ = await fixture.controller.stopRecording()
+        await fixture.controller.waitForCompletion()
+
+        let requests = await fixture.aiClient.receivedRequests
+        XCTAssertEqual(requests.count, 1)
+        XCTAssertEqual(requests.first?.polishPrompt, shout.effectiveSystemPrompt)
+        XCTAssertEqual(requests.first?.rawTranscript, "hello", "the trigger phrase is not sent")
+        let persisted = await fixture.settingsRepository.settings
+        XCTAssertNil(persisted.ai.activePromptModeID, "the default stays None")
+    }
+
+    func testWithNoDefaultActionAndNoTriggerPhraseNothingRuns() async {
+        var settings = enabledSettings()
+        settings.ai.activePromptModeID = nil
+        settings.ai.actionTriggersEnabled = true
+        settings.ai.promptModes[1].triggerWords = ["shout"]
+        let fixture = makeFixture(settings: settings, engine: FakeTranscriptionEngine(result: transcript("hello there")))
+
+        _ = await fixture.controller.startRecording()
+        _ = await fixture.controller.stopRecording()
+        await fixture.controller.waitForCompletion()
+
+        let requests = await fixture.aiClient.receivedRequests
+        XCTAssertTrue(requests.isEmpty)
+        let inserted = await fixture.insertion.insertedTexts
+        XCTAssertEqual(inserted, ["hello there"])
+    }
+
+    func testWithNoDefaultActionTriggersStayOffWhenTheyAreOff() async {
+        var settings = enabledSettings()
+        settings.ai.activePromptModeID = nil
+        settings.ai.promptModes[1].triggerWords = ["shout"]
+        let fixture = makeFixture(settings: settings, engine: FakeTranscriptionEngine(result: transcript("shout hello")))
+
+        _ = await fixture.controller.startRecording()
+        _ = await fixture.controller.stopRecording()
+        await fixture.controller.waitForCompletion()
+
+        let requests = await fixture.aiClient.receivedRequests
+        XCTAssertTrue(requests.isEmpty, "action triggers are opt-in")
+    }
+
+    func testWithNoDefaultActionTheRecorderToggleIsRefusedButAnActionIsAccepted() async {
+        var settings = enabledSettings()
+        settings.ai.activePromptModeID = nil
+        let fixture = makeFixture(settings: settings)
+        _ = await fixture.controller.startRecording()
+
+        let enabled = await fixture.controller.setAIEnabled(true)
+        XCTAssertFalse(enabled, "⌘⇧A with nothing to run is refused, as its documentation says")
+        var job = await fixture.controller.activeJob
+        XCTAssertEqual(job?.modeSnapshot, .off)
+
+        let chosen = await fixture.controller.setAIAction(id: shout.id)
+        XCTAssertTrue(chosen, "choosing an action is an explicit request")
+        job = await fixture.controller.activeJob
+        XCTAssertEqual(job?.modeSnapshot, .polish)
+        _ = await fixture.controller.cancel()
+    }
+
     func testControlsAreAcceptedWhileFinalizingAndTheAIStageUsesTheSwitchedAction() async {
         let audio = GatedAudioCaptureDouble()
         let fixture = makeFixture(audio: audio)

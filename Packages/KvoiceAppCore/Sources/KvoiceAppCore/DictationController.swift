@@ -637,7 +637,7 @@ public actor DictationController {
         guard let runner = aiControlRunner, var settings = runner.aiControlSettings(),
               settings.isEnabled != enabled else { return false }
         settings.isEnabled = enabled
-        guard !enabled || settings.mode != .off else { return false }
+        guard !enabled || (settings.mode != .off && !settings.awaitsDefaultActionChoice) else { return false }
         await runner.applyAIControl(settings, reason: "recorderAIToggle", self)
         return true
     }

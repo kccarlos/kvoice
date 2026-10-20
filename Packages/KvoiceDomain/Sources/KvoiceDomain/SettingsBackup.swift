@@ -94,11 +94,17 @@ public enum SettingsBackupCoding {
                 supported: SettingsBackupEnvelope.currentFormatVersion
             )
         }
+        var envelope: SettingsBackupEnvelope
         do {
-            return try makeDecoder().decode(SettingsBackupEnvelope.self, from: data)
+            envelope = try makeDecoder().decode(SettingsBackupEnvelope.self, from: data)
         } catch {
             throw SettingsBackupImportError.malformed
         }
+        // A backup written by an earlier version carries the prompts it
+        // shipped with; untouched ones arrive as today's (spec A1.1 rule 3),
+        // exactly as they would on the next launch.
+        envelope.settings.ai.upgradeUntouchedBuiltInPromptModes()
+        return envelope
     }
 }
 

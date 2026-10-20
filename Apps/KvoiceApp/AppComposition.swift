@@ -324,6 +324,7 @@ final class AppComposition {
         let shortcutAdapter = KeyboardShortcutsAdapter(
             globalInputMonitorsAvailable: edition.hasGlobalInputMonitors
         )
+        shortcutAdapter.modifierKeyDisplayName = { DomainCopy.localized($0.displayName) }
         let hudController = HUDController(dismissTimings: tunables.hudDismissTimings)
         let onboardingIntentRouter = AppOnboardingIntentRouter()
         let onboardingViewModel = OnboardingViewModel(

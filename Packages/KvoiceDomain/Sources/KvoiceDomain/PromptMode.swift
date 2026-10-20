@@ -297,7 +297,7 @@ public enum PromptTemplate {
         case formalWriting = "addendum-formal-writing-v1"
         case professional = "addendum-professional-v1"
         case secondTranslation = "addendum-second-translation-v1"
-        case showOriginal = "addendum-show-original-v1"
+        case showOriginal = "addendum-show-original-v2"
         case showQuestion = "addendum-show-question-v1"
     }
 
@@ -371,75 +371,75 @@ public enum BuiltInPromptModes {
     public static var all: [PromptMode] {
         [
             mode(
-                key: Key.clean, name: "Clean Up", behavior: .polish, resource: "clean-default-v2",
+                key: Key.clean, name: "Clean Up", behavior: .polish, resource: "clean-default-v3",
                 summary: "Minimal cleanup: remove fillers and false starts; keep wording, tone, and structure.",
                 icon: "🧹"
             ),
             mode(
-                key: Key.polish, name: "Polish", behavior: .polish, resource: "polish-default-v2",
+                key: Key.polish, name: "Polish", behavior: .polish, resource: "polish-default-v3",
                 summary: "Improve clarity and flow, fix grammar and recognition slips; keep the language mix.",
                 icon: "✨"
             ),
             mode(
-                key: Key.email, name: "Message", behavior: .polish, resource: "email-default-v2",
+                key: Key.email, name: "Message", behavior: .polish, resource: "email-default-v3",
                 summary: "Rewrite as a clear, courteous message ready to send.",
                 icon: "💬"
             ),
             mode(
-                key: Key.notes, name: "Notes", behavior: .polish, resource: "notes-default-v2",
+                key: Key.notes, name: "Notes", behavior: .polish, resource: "notes-default-v3",
                 summary: "Restructure spoken thinking into short, grouped notes.",
                 icon: "📝"
             ),
             mode(
-                key: Key.promptRewrite, name: "Prompt", behavior: .polish, resource: "prompt-default-v2",
+                key: Key.promptRewrite, name: "Prompt", behavior: .polish, resource: "prompt-default-v3",
                 summary: "Turn a spoken request into a precise prompt for an AI assistant.",
                 icon: "🧠"
             ),
             mode(
-                key: Key.writing, name: "Writing", behavior: .polish, resource: "writing-default-v2",
+                key: Key.writing, name: "Writing", behavior: .polish, resource: "writing-default-v3",
                 summary: "Formal rewrite: polite, concise, fixes homophone and recognition slips, keeps details.",
                 icon: "✍️",
                 triggerWords: ["formal writing"]
             ),
             mode(
-                key: Key.emailDraft, name: "Email Draft", behavior: .polish, resource: "email-draft-default-v2",
+                key: Key.emailDraft, name: "Email Draft", behavior: .polish, resource: "email-draft-default-v3",
                 summary: "Polite, concise email with greeting and sign-off; facts intact.",
                 icon: "✉️",
                 triggerWords: ["draft email", "email draft"]
             ),
             mode(
-                key: Key.summarize, name: "Summarize", behavior: .polish, resource: "summarize-default-v2",
+                key: Key.summarize, name: "Summarize", behavior: .polish, resource: "summarize-default-v3",
                 summary: "Concise bullets that keep every decision, number, and name.",
                 icon: "📋",
                 triggerWords: ["summarize", "summarise"]
             ),
             mode(
-                key: Key.todo, name: "TODO List", behavior: .polish, resource: "todo-default-v2",
+                key: Key.todo, name: "TODO List", behavior: .polish, resource: "todo-default-v3",
                 summary: "Turn speech into a checklist of actionable tasks; skip cancelled items.",
                 icon: "☑️",
                 triggerWords: ["todo list", "to-do list", "to do list"]
             ),
             mode(
-                key: Key.questionAnswer, name: "Q&A", behavior: .polish, resource: "qa-default-v2",
+                key: Key.questionAnswer, name: "Q&A", behavior: .polish, resource: "qa-default-v3",
                 summary: "Answer the dictated question directly; steps or code only when needed.",
                 icon: "❓",
                 triggerWords: ["question", "quick question"]
             ),
             mode(
-                key: Key.terminal, name: "Terminal", behavior: .polish, resource: "terminal-default-v2",
+                key: Key.terminal, name: "Terminal", behavior: .polish, resource: "terminal-default-v3",
                 summary: "Speech to one safe shell command. Nothing is executed.",
                 icon: "⌨️",
                 triggerWords: ["terminal", "shell command"]
             ),
             mode(
-                key: Key.translate, name: "Translate", behavior: .translate, resource: "translate-default-v2",
+                key: Key.translate, name: "Translate", behavior: .translate, resource: "translate-default-v3",
                 summary: "Lightly clean the speech and translate it into the target language.",
                 icon: "🌐",
                 triggerWords: ["translate"],
                 translationLanguage: english
             ),
             mode(
-                key: Key.translate2, name: "Translate 2", behavior: .translate, resource: "translate2-default-v2",
+                key: Key.translate2, name: "Translate 2", behavior: .translate, resource: "translate2-default-v3",
                 summary: "A second translation target for two-way conversations without switching back and forth.",
                 icon: "🔁",
                 triggerWords: ["translate two", "translate 2"],
@@ -450,6 +450,35 @@ public enum BuiltInPromptModes {
 
     public static func shipped(forKey key: String) -> PromptMode? {
         all.first { $0.builtInKey == key }
+    }
+
+    /// Every prompt text a built-in shipped with before the current one,
+    /// oldest first. The resources stay bundled so an untouched copy saved
+    /// by an earlier version can still be recognised (spec A1.1 rule 3:
+    /// a stored prompt that exactly equals an older shipped default may be
+    /// replaced; an edited one never is). When a prompt changes, add a new
+    /// `-vN` resource for it and append the old one here; never edit a
+    /// shipped resource in place, and never change a `Key`, which is what
+    /// the mode's identifier is derived from.
+    static let previousResources: [String: [String]] = [
+        Key.clean: ["clean-default-v2"],
+        Key.polish: ["polish-default-v2"],
+        Key.email: ["email-default-v2"],
+        Key.notes: ["notes-default-v2"],
+        Key.promptRewrite: ["prompt-default-v2"],
+        Key.translate: ["translate-default-v2"],
+        Key.writing: ["writing-default-v2"],
+        Key.emailDraft: ["email-draft-default-v2"],
+        Key.summarize: ["summarize-default-v2"],
+        Key.todo: ["todo-default-v2"],
+        Key.questionAnswer: ["qa-default-v2"],
+        Key.terminal: ["terminal-default-v2"],
+        Key.translate2: ["translate2-default-v2"]
+    ]
+
+    /// The texts `key` shipped with before the current release.
+    public static func previousPrompts(forKey key: String) -> [String] {
+        (previousResources[key] ?? []).map(loadPrompt)
     }
 
     private static func mode(

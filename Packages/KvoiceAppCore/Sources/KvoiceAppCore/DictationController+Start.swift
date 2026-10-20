@@ -149,6 +149,21 @@ extension DictationController {
             settings.ai.isEnabled = true
         }
 
+        // Default Action "None": the switch is on but no action is chosen,
+        // so nothing runs (`awaitsDefaultActionChoice`). Turned off on this
+        // job's snapshot only, so the HUD indicator, the AI stage and
+        // History all agree; the stored switch is untouched. A spoken
+        // trigger phrase is still an explicit choice: with triggers on, the
+        // settings are kept so the transcript can pick its action
+        // (`DictationJobRunner.triggerOnlyAISettings`).
+        var triggerOnlyAISettings: AIEndpointSettings?
+        if settings.ai.awaitsDefaultActionChoice {
+            if settings.ai.isEnabled, settings.ai.actionTriggersEnabled, delivery == .insertIntoTarget {
+                triggerOnlyAISettings = settings.ai
+            }
+            settings.ai.isEnabled = false
+        }
+
         // The in-app test never processes with AI: it exercises the recorder
         // and STT path and shows the raw transcript (C.2 step 9).
         let mode: DictationMode = delivery == .inApp ? .off : settings.ai.mode
@@ -165,6 +180,7 @@ extension DictationController {
             options: delivery == .inApp ? .init() : options
         )
         runner.prepare(settings: settings)
+        runner.triggerOnlyAISettings = triggerOnlyAISettings
         inAppDeliveredText = nil
 
         // The actor can be re-entered while target/settings are awaited. A

@@ -1139,6 +1139,16 @@
         }
       }
     },
+    "Add Control, Option, or Command — Shift alone will not register.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "请加上 Control、Option 或 Command — 仅按 Shift 无法注册。"
+          }
+        }
+      }
+    },
     "Add Device": {
       "localizations": {
         "zh-Hans": {
@@ -2181,6 +2191,16 @@
         }
       }
     },
+    "Choose a shortcut": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "选择快捷键"
+          }
+        }
+      }
+    },
     "Choose a text file with one term per line.": {
       "localizations": {
         "zh-Hans": {
@@ -2883,6 +2903,16 @@
         }
       }
     },
+    "Current: %@": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "当前：%@"
+          }
+        }
+      }
+    },
     "Currently using": {
       "localizations": {
         "zh-Hans": {
@@ -2909,6 +2939,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "自定义输入设备"
+          }
+        }
+      }
+    },
+    "Custom key combination…": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "自定义组合键…"
           }
         }
       }
@@ -5307,6 +5347,16 @@
         }
       }
     },
+    "KVoice Shortcut": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "KVoice 快捷键"
+          }
+        }
+      }
+    },
     "KVoice always lives in the menu bar; macOS may ask you to approve the login item once.": {
       "localizations": {
         "zh-Hans": {
@@ -7591,6 +7641,16 @@
         }
       }
     },
+    "Press a combination…": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "请按下组合键…"
+          }
+        }
+      }
+    },
     "Press again to stop": {
       "localizations": {
         "zh-Hans": {
@@ -7617,6 +7677,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "再按一次以停止。"
+          }
+        }
+      }
+    },
+    "Press the combination you want. It needs at least one of Control, Option, or Command.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "按下想要的组合键，其中至少包含 Control、Option 或 Command 之一。"
           }
         }
       }
@@ -7987,6 +8057,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "录制快捷键…"
+          }
+        }
+      }
+    },
+    "Recorded %@": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已录制 %@"
           }
         }
       }
@@ -8807,6 +8887,16 @@
         }
       }
     },
+    "Right Option is recommended. A lone modifier key needs Accessibility permission; a key combination does not.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "推荐使用右 Option。单独的修饰键需要辅助功能权限，组合键则不需要。"
+          }
+        }
+      }
+    },
     "Run Cleanup": {
       "localizations": {
         "zh-Hans": {
@@ -9199,6 +9289,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "选中文本操作"
+          }
+        }
+      }
+    },
+    "Selection Action %lld shortcut": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "选中文本操作 %lld 的快捷键"
           }
         }
       }
@@ -9739,6 +9839,16 @@
         }
       }
     },
+    "Space": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "空格"
+          }
+        }
+      }
+    },
     "Speech Model": {
       "localizations": {
         "zh-Hans": {
@@ -10215,6 +10325,16 @@
         }
       }
     },
+    "That key cannot be used as a global shortcut.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "该按键不能用作全局快捷键。"
+          }
+        }
+      }
+    },
     "The <resource> in https://<resource>.openai.azure.com": {
       "localizations": {
         "zh-Hans": {
@@ -10437,6 +10557,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "已安装的模型未通过验证。%@ 请重试以重新下载。"
+          }
+        }
+      }
+    },
+    "The key on its own starts and stops dictation, so it never types anything. Right Option is recommended because the left key is the one used for typing symbols.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "单独按下此键即可开始和停止听写，不会输入任何字符。推荐使用右 Option，因为左 Option 用于输入符号。"
           }
         }
       }
@@ -11297,6 +11427,16 @@
         }
       }
     },
+    "Trigger key": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "触发键"
+          }
+        }
+      }
+    },
     "Trigger mode": {
       "localizations": {
         "zh-Hans": {
@@ -11577,6 +11717,16 @@
         }
       }
     },
+    "Use Shortcut": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "使用此快捷键"
+          }
+        }
+      }
+    },
     "Use System Instructions": {
       "localizations": {
         "zh-Hans": {
@@ -11775,6 +11925,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "语音活动检测"
+          }
+        }
+      }
+    },
+    "Waiting for a shortcut. Currently held: %@": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在等待快捷键。当前按住：%@"
           }
         }
       }

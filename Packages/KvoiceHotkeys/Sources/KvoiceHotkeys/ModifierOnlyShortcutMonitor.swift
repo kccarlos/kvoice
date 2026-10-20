@@ -14,6 +14,12 @@ import KvoiceDomain
 @MainActor
 public protocol InputEventMonitorFactory: AnyObject {
     var isAccessibilityTrusted: Bool { get }
+    /// The modifier keys held right now, read from the window server rather
+    /// than from an event (`NSEvent.modifierFlags`). Device-independent bits
+    /// only in practice (probed 2026-10-20: Right Option held reads 0x80000,
+    /// without the 0x40 device bit). The modifier-only monitor polls it while
+    /// a hold is open, to notice a release whose `flagsChanged` it never saw.
+    var currentModifierFlags: UInt { get }
     func addLocalMonitor(
         matching mask: NSEvent.EventTypeMask,
         handler: @escaping (NSEvent) -> NSEvent?
@@ -31,6 +37,10 @@ public final class NSEventInputMonitorFactory: InputEventMonitorFactory {
 
     public var isAccessibilityTrusted: Bool {
         AXIsProcessTrusted()
+    }
+
+    public var currentModifierFlags: UInt {
+        NSEvent.modifierFlags.rawValue
     }
 
     public func addLocalMonitor(
@@ -81,6 +91,26 @@ public enum ModifierKeyEdgeDetector {
         }
     }
 
+    /// The device-independent flag of the key's family (`.option` for Right
+    /// Option, and so on). Unlike the device bit it is present in
+    /// `NSEvent.modifierFlags`, which is what the release poll reads.
+    public static func familyFlagMask(for key: ShortcutDefinition.ModifierOnlyKey) -> UInt {
+        switch key {
+        case .rightOption: return NSEvent.ModifierFlags.option.rawValue
+        case .rightCommand: return NSEvent.ModifierFlags.command.rawValue
+        case .rightControl: return NSEvent.ModifierFlags.control.rawValue
+        case .rightShift: return NSEvent.ModifierFlags.shift.rawValue
+        case .fn: return NSEvent.ModifierFlags.function.rawValue
+        }
+    }
+
+    /// True when `modifierFlags` proves `key` is not held: neither its own
+    /// device bit nor any key of its family is down. Left Option held alone
+    /// is not proof that Right Option was released, so it never counts.
+    public static func provesReleased(_ key: ShortcutDefinition.ModifierOnlyKey, modifierFlags: UInt) -> Bool {
+        modifierFlags & deviceFlagMask(for: key) == 0 && modifierFlags & familyFlagMask(for: key) == 0
+    }
+
     /// The semantic edge for one event, or nil when the event is about a
     /// different key.
     public static func edge(
@@ -100,19 +130,43 @@ public enum ModifierKeyEdgeDetector {
 /// Carbon hot keys need a non-modifier key, which is why this path exists.
 /// It is only usable when the process is Accessibility-trusted; otherwise the
 /// global monitor installs but never fires, so `start` refuses instead.
+///
+/// A lost release must never leave the key dead (0.1.5 demo, 2026-10-20:
+/// twice a release went unseen, the recording ran until Escape, and once the
+/// key then did nothing). Three recoveries, each a release the monitor
+/// *infers*:
+/// - a second press with no release in between closes the open hold first,
+///   so the press is never swallowed;
+/// - any other `flagsChanged` whose flags prove the key is up
+///   (`ModifierKeyEdgeDetector.provesReleased`) closes it;
+/// - while a hold is open, the current modifier state is polled every
+///   `releasePollInterval`; two readings in a row that prove the key is up
+///   close it.
 @MainActor
 public final class ModifierOnlyShortcutMonitor {
+    public static let releasePollInterval: Duration = .milliseconds(250)
+
     public private(set) var key: ShortcutDefinition.ModifierOnlyKey?
     public private(set) var isDown = false
 
     private let factory: any InputEventMonitorFactory
+    private let sleep: KeyStateWatchdog.Sleep
     private var localMonitor: Any?
     private var globalMonitor: Any?
     private var onKeyDown: (@MainActor () -> Void)?
     private var onKeyUp: (@MainActor () -> Void)?
+    private var pollTask: Task<Void, Never>?
+    private var holdGeneration = 0
+    private var releasedReadings = 0
 
-    public init(factory: any InputEventMonitorFactory = NSEventInputMonitorFactory()) {
+    /// `sleep` paces the release poll; optional and resolved here for the
+    /// same toolchain reason as `KeyboardShortcutsAdapter.init`.
+    public init(
+        factory: any InputEventMonitorFactory = NSEventInputMonitorFactory(),
+        sleep: KeyStateWatchdog.Sleep? = nil
+    ) {
         self.factory = factory
+        self.sleep = sleep ?? KeyStateWatchdog.systemSleep
     }
 
     // No `isolated deinit`: the owning adapter calls `stop()` from its own
@@ -165,26 +219,96 @@ public final class ModifierOnlyShortcutMonitor {
         globalMonitor = nil
         key = nil
         isDown = false
+        cancelPoll()
         onKeyDown = nil
         onKeyUp = nil
+    }
+
+    /// Forgets an open hold without reporting a release, for an owner that
+    /// already ended it (the adapter's watchdog synthesized the key-up).
+    public func forgetHold() {
+        isDown = false
+        cancelPoll()
     }
 
     /// Exposed for deterministic tests; the monitors call it with the raw
     /// scalar fields of the event and nothing else.
     public func handle(keyCode: UInt16, modifierFlags: UInt) {
-        guard let key,
-              let edge = ModifierKeyEdgeDetector.edge(keyCode: keyCode, modifierFlags: modifierFlags, for: key)
-        else { return }
+        guard let key else { return }
+        guard let edge = ModifierKeyEdgeDetector.edge(keyCode: keyCode, modifierFlags: modifierFlags, for: key) else {
+            // Another modifier changed. Its flags still describe the whole
+            // keyboard: if they prove the trigger is up, its release was lost.
+            // The window server's current state must agree, so one event
+            // with cleared flags from a remapper, a remote desktop or a VM
+            // cannot cut a push-to-talk recording short while the key is
+            // physically down.
+            if isDown,
+               ModifierKeyEdgeDetector.provesReleased(key, modifierFlags: modifierFlags),
+               ModifierKeyEdgeDetector.provesReleased(key, modifierFlags: factory.currentModifierFlags) {
+                endHold()
+            }
+            return
+        }
         switch edge {
         case .keyDown:
-            guard !isDown else { return }
-            isDown = true
-            onKeyDown?()
+            // `flagsChanged` never repeats, so a second press means the
+            // release in between was lost: report it, then this press.
+            if isDown { endHold() }
+            beginHold()
         case .keyUp:
             guard isDown else { return }
-            isDown = false
-            onKeyUp?()
+            endHold()
         }
+    }
+
+    // MARK: Hold
+
+    private func beginHold() {
+        isDown = true
+        startPoll()
+        onKeyDown?()
+    }
+
+    private func endHold() {
+        isDown = false
+        cancelPoll()
+        onKeyUp?()
+    }
+
+    private func startPoll() {
+        cancelPoll()
+        let generation = holdGeneration
+        let sleep = sleep
+        pollTask = Task { [weak self] in
+            while true {
+                do {
+                    try await sleep(Self.releasePollInterval)
+                } catch {
+                    return
+                }
+                guard !Task.isCancelled, let self, self.pollStillHolding(generation: generation) else { return }
+            }
+        }
+    }
+
+    private func cancelPoll() {
+        holdGeneration += 1
+        releasedReadings = 0
+        pollTask?.cancel()
+        pollTask = nil
+    }
+
+    /// One poll reading. Returns whether the hold is still open.
+    private func pollStillHolding(generation: Int) -> Bool {
+        guard generation == holdGeneration, isDown, let key else { return false }
+        guard ModifierKeyEdgeDetector.provesReleased(key, modifierFlags: factory.currentModifierFlags) else {
+            releasedReadings = 0
+            return true
+        }
+        releasedReadings += 1
+        guard releasedReadings >= 2 else { return true }
+        endHold()
+        return false
     }
 }
 

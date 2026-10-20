@@ -21,7 +21,7 @@ final class TriggerMonitorTests: XCTestCase {
         XCTAssertEqual(ModifierKeyEdgeDetector.keyCode(for: .rightCommand), 54)
     }
 
-    func testModifierOnlyMonitorRefusesWithoutAccessibilityAndCollapsesRepeats() throws {
+    func testModifierOnlyMonitorRefusesWithoutAccessibilityAndReportsBalancedEdges() throws {
         let untrusted = FakeInputMonitorFactory(trusted: false)
         let refused = ModifierOnlyShortcutMonitor(factory: untrusted)
         XCTAssertThrowsError(try refused.start(key: .rightOption, onKeyDown: {}, onKeyUp: {})) { error in
@@ -38,11 +38,10 @@ final class TriggerMonitorTests: XCTestCase {
 
         let down = NSEvent.ModifierFlags.option.rawValue | 0x40
         monitor.handle(keyCode: 61, modifierFlags: down)
-        monitor.handle(keyCode: 61, modifierFlags: down)
         monitor.handle(keyCode: 58, modifierFlags: down)
         monitor.handle(keyCode: 61, modifierFlags: 0)
         monitor.handle(keyCode: 61, modifierFlags: 0)
-        XCTAssertEqual(edges, [.keyDown, .keyUp])
+        XCTAssertEqual(edges, [.keyDown, .keyUp], "an unmatched release is dropped")
 
         monitor.stop()
         XCTAssertFalse(monitor.isActive)
@@ -67,7 +66,6 @@ final class TriggerMonitorTests: XCTestCase {
         // The real monitor hands the adapter an NSEvent; drive it the same way.
         let flags = NSEvent.ModifierFlags(rawValue: NSEvent.ModifierFlags.option.rawValue | 0x40)
         factory.emitFlagsChanged(keyCode: 61, modifierFlags: flags)
-        factory.emitFlagsChanged(keyCode: 61, modifierFlags: flags)
         factory.emitFlagsChanged(keyCode: 61, modifierFlags: [])
         XCTAssertEqual(events, [.keyDown, .keyUp])
 
@@ -76,6 +74,200 @@ final class TriggerMonitorTests: XCTestCase {
         try adapter.register(combination) { _ in }
         XCTAssertEqual(factory.removed, 2)
         XCTAssertEqual(backend.registeredShortcut, try combination.asKeyboardShortcut())
+    }
+
+    // MARK: Lost releases (0.1.5 demo, 2026-10-20)
+
+    private static let rightOptionHeld = NSEvent.ModifierFlags.option.rawValue | 0x40
+
+    func testASecondPressAfterALostReleaseIsNotSwallowed() throws {
+        let monitor = ModifierOnlyShortcutMonitor(factory: FakeInputMonitorFactory(trusted: true), sleep: ManualSleeper().sleep)
+        var edges: [ShortcutEvent] = []
+        try monitor.start(key: .rightOption, onKeyDown: { edges.append(.keyDown) }, onKeyUp: { edges.append(.keyUp) })
+
+        monitor.handle(keyCode: 61, modifierFlags: Self.rightOptionHeld)
+        // The release never arrives. Before the fix this press was dropped,
+        // so a toggle recording could not be stopped and the key seemed dead.
+        monitor.handle(keyCode: 61, modifierFlags: Self.rightOptionHeld)
+        XCTAssertEqual(edges, [.keyDown, .keyUp, .keyDown])
+        monitor.handle(keyCode: 61, modifierFlags: 0)
+        XCTAssertEqual(edges, [.keyDown, .keyUp, .keyDown, .keyUp])
+        monitor.stop()
+    }
+
+    func testAnotherModifierWhoseFlagsProveTheKeyIsUpEndsTheHold() throws {
+        let factory = FakeInputMonitorFactory(trusted: true)
+        let monitor = ModifierOnlyShortcutMonitor(factory: factory, sleep: ManualSleeper().sleep)
+        var edges: [ShortcutEvent] = []
+        try monitor.start(key: .rightOption, onKeyDown: { edges.append(.keyDown) }, onKeyUp: { edges.append(.keyUp) })
+
+        // Left Option (58) going down while Right Option is held: still held.
+        monitor.handle(keyCode: 61, modifierFlags: Self.rightOptionHeld)
+        monitor.handle(keyCode: 58, modifierFlags: Self.rightOptionHeld | 0x20)
+        XCTAssertEqual(edges, [.keyDown])
+        // Right Option's release is lost while Left Option stays down: the
+        // next event's flags still carry `.option`, which is not proof.
+        monitor.handle(keyCode: 58, modifierFlags: NSEvent.ModifierFlags.option.rawValue | 0x20)
+        XCTAssertEqual(edges, [.keyDown], "Left Option held alone is not proof Right Option is up")
+        // Shift pressed with no Option at all, and the system agrees: proof.
+        factory.currentModifierFlags = NSEvent.ModifierFlags.shift.rawValue
+        monitor.handle(keyCode: 56, modifierFlags: NSEvent.ModifierFlags.shift.rawValue | 0x02)
+        XCTAssertEqual(edges, [.keyDown, .keyUp])
+        XCTAssertFalse(monitor.isDown)
+        monitor.stop()
+    }
+
+    func testClearedFlagsOnAnotherModifierDoNotEndAHoldTheSystemStillSees() throws {
+        let factory = FakeInputMonitorFactory(trusted: true)
+        let monitor = ModifierOnlyShortcutMonitor(factory: factory, sleep: ManualSleeper().sleep)
+        var edges: [ShortcutEvent] = []
+        try monitor.start(key: .rightOption, onKeyDown: { edges.append(.keyDown) }, onKeyUp: { edges.append(.keyUp) })
+
+        monitor.handle(keyCode: 61, modifierFlags: Self.rightOptionHeld)
+        // A remapper or remote session posts a Shift event with no Option,
+        // while the window server still reports Option down.
+        factory.currentModifierFlags = NSEvent.ModifierFlags.option.rawValue
+        monitor.handle(keyCode: 56, modifierFlags: NSEvent.ModifierFlags.shift.rawValue | 0x02)
+        XCTAssertEqual(edges, [.keyDown], "the event alone is not proof")
+        XCTAssertTrue(monitor.isDown)
+
+        // When the system agrees the key is up, the same event ends the hold.
+        factory.currentModifierFlags = NSEvent.ModifierFlags.shift.rawValue
+        monitor.handle(keyCode: 56, modifierFlags: NSEvent.ModifierFlags.shift.rawValue | 0x02)
+        XCTAssertEqual(edges, [.keyDown, .keyUp])
+        monitor.stop()
+    }
+
+    func testAWatchdogStopAlsoForgetsAnAuxiliaryModifierHold() throws {
+        let factory = FakeInputMonitorFactory(trusted: true)
+        let primary = FakeRegistrationBackend()
+        let adapter = KeyboardShortcutsAdapter(
+            backend: primary,
+            maximumHoldDuration: .seconds(60),
+            sleep: ManualSleeper().sleep,
+            inputMonitorFactory: factory,
+            modifierReleasePollSleep: ManualSleeper().sleep
+        )
+        try adapter.register(ShortcutDefinition(key: "space", modifiers: ["control"])) { _ in }
+        var cancelEdges: [ShortcutEvent] = []
+        try adapter.registerAuxiliaryShortcut(.cancel, .rightOption) { cancelEdges.append($0) }
+        let held = NSEvent.ModifierFlags(rawValue: Self.rightOptionHeld)
+
+        primary.emitKeyDown()
+        factory.emitFlagsChanged(keyCode: 61, modifierFlags: held)
+        XCTAssertEqual(cancelEdges, [.keyDown])
+        // The watchdog ends the primary hold; the auxiliary hold is
+        // forgotten too, without a synthetic release.
+        adapter.applicationDidResignActive()
+        XCTAssertEqual(cancelEdges, [.keyDown])
+        // Its real release is then unmatched, and the next press counts.
+        factory.emitFlagsChanged(keyCode: 61, modifierFlags: [])
+        factory.emitFlagsChanged(keyCode: 61, modifierFlags: held)
+        XCTAssertEqual(cancelEdges, [.keyDown, .keyDown])
+        adapter.unregisterAuxiliaryShortcut(.cancel)
+        XCTAssertEqual(cancelEdges, [.keyDown, .keyDown, .keyUp], "tear-down still reports a held key's release")
+        adapter.unregister()
+    }
+
+    func testTheReleasePollEndsAHoldWhoseReleaseWasLost() async throws {
+        let factory = FakeInputMonitorFactory(trusted: true)
+        let clock = ManualSleeper()
+        let monitor = ModifierOnlyShortcutMonitor(factory: factory, sleep: clock.sleep)
+        var edges: [ShortcutEvent] = []
+        try monitor.start(key: .rightOption, onKeyDown: { edges.append(.keyDown) }, onKeyUp: { edges.append(.keyUp) })
+
+        factory.currentModifierFlags = NSEvent.ModifierFlags.option.rawValue
+        monitor.handle(keyCode: 61, modifierFlags: Self.rightOptionHeld)
+        await settle(until: { clock.parked == 1 })
+        XCTAssertEqual(clock.lastDuration, ModifierOnlyShortcutMonitor.releasePollInterval)
+        // Held: `NSEvent.modifierFlags` carries `.option` but no device bit.
+        for _ in 0..<3 {
+            await tick(clock)
+        }
+        XCTAssertEqual(edges, [.keyDown], "a held key is never released by the poll")
+
+        // The key is up but its flagsChanged was lost.
+        factory.currentModifierFlags = 0
+        await tick(clock)
+        XCTAssertEqual(edges, [.keyDown], "one reading is not enough")
+        clock.resumeAll()
+        await settle(until: { !monitor.isDown })
+        XCTAssertEqual(edges, [.keyDown, .keyUp])
+        for _ in 0..<50 { await Task.yield() }
+        XCTAssertEqual(clock.parked, 0, "the poll ends with the hold")
+
+        // The next press works.
+        monitor.handle(keyCode: 61, modifierFlags: Self.rightOptionHeld)
+        XCTAssertEqual(edges, [.keyDown, .keyUp, .keyDown])
+        monitor.stop()
+    }
+
+    func testAPollReadingThatSeesTheKeyAgainResetsTheCount() async throws {
+        let factory = FakeInputMonitorFactory(trusted: true)
+        let clock = ManualSleeper()
+        let monitor = ModifierOnlyShortcutMonitor(factory: factory, sleep: clock.sleep)
+        var edges: [ShortcutEvent] = []
+        try monitor.start(key: .rightOption, onKeyDown: { edges.append(.keyDown) }, onKeyUp: { edges.append(.keyUp) })
+        monitor.handle(keyCode: 61, modifierFlags: Self.rightOptionHeld)
+        await settle(until: { clock.parked == 1 })
+
+        for flags in [0, NSEvent.ModifierFlags.option.rawValue, 0, NSEvent.ModifierFlags.option.rawValue] {
+            factory.currentModifierFlags = flags
+            await tick(clock)
+        }
+        XCTAssertEqual(edges, [.keyDown], "only two readings in a row count")
+
+        // A real release cancels the poll.
+        monitor.handle(keyCode: 61, modifierFlags: 0)
+        XCTAssertEqual(edges, [.keyDown, .keyUp])
+        await settle(until: { clock.parked == 0 })
+        monitor.stop()
+    }
+
+    /// One poll period: wake the parked sleeper and wait until it reads and
+    /// parks again.
+    private func tick(_ clock: ManualSleeper, file: StaticString = #filePath, line: UInt = #line) async {
+        clock.resumeAll()
+        await settle(until: { clock.parked == 1 }, file: file, line: line)
+    }
+
+    func testAWatchdogStopDoesNotLeaveTheModifierKeyDead() throws {
+        let factory = FakeInputMonitorFactory(trusted: true)
+        let adapter = KeyboardShortcutsAdapter(
+            backend: FakeRegistrationBackend(),
+            maximumHoldDuration: .seconds(60),
+            sleep: ManualSleeper().sleep,
+            inputMonitorFactory: factory,
+            modifierReleasePollSleep: ManualSleeper().sleep
+        )
+        var events: [ShortcutEvent] = []
+        try adapter.register(.rightOption) { events.append($0) }
+        let held = NSEvent.ModifierFlags(rawValue: Self.rightOptionHeld)
+
+        factory.emitFlagsChanged(keyCode: 61, modifierFlags: held)
+        adapter.applicationDidResignActive()
+        XCTAssertEqual(events, [.keyDown, .keyUp], "the watchdog ends the hold")
+        // The release arrives later and is not a second key-up.
+        factory.emitFlagsChanged(keyCode: 61, modifierFlags: [])
+        XCTAssertEqual(events, [.keyDown, .keyUp])
+        // The next press starts again.
+        factory.emitFlagsChanged(keyCode: 61, modifierFlags: held)
+        XCTAssertEqual(events, [.keyDown, .keyUp, .keyDown])
+        // A forced stop followed by a lost release: the next press still counts.
+        adapter.applicationDidResignActive()
+        factory.emitFlagsChanged(keyCode: 61, modifierFlags: held)
+        XCTAssertEqual(events, [.keyDown, .keyUp, .keyDown, .keyUp, .keyDown])
+        adapter.unregister()
+    }
+
+    func testReleaseProofNeedsBothTheDeviceBitAndTheFamilyFlagGone() {
+        XCTAssertTrue(ModifierKeyEdgeDetector.provesReleased(.rightOption, modifierFlags: 0))
+        XCTAssertTrue(ModifierKeyEdgeDetector.provesReleased(.rightOption, modifierFlags: NSEvent.ModifierFlags.shift.rawValue))
+        XCTAssertFalse(ModifierKeyEdgeDetector.provesReleased(.rightOption, modifierFlags: NSEvent.ModifierFlags.option.rawValue))
+        XCTAssertFalse(ModifierKeyEdgeDetector.provesReleased(.rightOption, modifierFlags: 0x40))
+        XCTAssertFalse(ModifierKeyEdgeDetector.provesReleased(.rightCommand, modifierFlags: NSEvent.ModifierFlags.command.rawValue))
+        XCTAssertFalse(ModifierKeyEdgeDetector.provesReleased(.fn, modifierFlags: NSEvent.ModifierFlags.function.rawValue))
+        XCTAssertTrue(ModifierKeyEdgeDetector.provesReleased(.rightControl, modifierFlags: NSEvent.ModifierFlags.option.rawValue))
     }
 
     func testAdapterReportsAccessibilityForAModifierOnlyKeyWhenUntrusted() throws {
@@ -253,6 +445,49 @@ final class TriggerMonitorTests: XCTestCase {
     }
 }
 
+/// A clock the test advances by hand: each `sleep` parks until
+/// `resumeAll()`, and `parked` says how many are waiting. A cancelled
+/// sleeper is resumed by throwing, as `Task.sleep` would.
+private final class ManualSleeper: @unchecked Sendable {
+    private let lock = NSLock()
+    private var waiters: [UUID: CheckedContinuation<Void, Error>] = [:]
+    private var duration: Duration?
+
+    var parked: Int { lock.withLock { waiters.count } }
+    var lastDuration: Duration? { lock.withLock { duration } }
+
+    var sleep: KeyStateWatchdog.Sleep {
+        { [self] requested in
+            let id = UUID()
+            try await withTaskCancellationHandler {
+                try await withCheckedThrowingContinuation { continuation in
+                    let cancelled = lock.withLock {
+                        duration = requested
+                        guard !Task.isCancelled else { return true }
+                        waiters[id] = continuation
+                        return false
+                    }
+                    if cancelled { continuation.resume(throwing: CancellationError()) }
+                }
+            } onCancel: {
+                let waiter = self.lock.withLock { self.waiters.removeValue(forKey: id) }
+                waiter?.resume(throwing: CancellationError())
+            }
+        }
+    }
+
+    func resumeAll() {
+        let pending = lock.withLock {
+            let all = Array(waiters.values)
+            waiters.removeAll()
+            return all
+        }
+        for waiter in pending {
+            waiter.resume()
+        }
+    }
+}
+
 /// Suspends sleepers until the test opens it. An `open()` with nobody waiting
 /// leaves one permit, so the test cannot race the sleeping task's arrival.
 private actor SleepGate {
@@ -283,6 +518,9 @@ private actor SleepGate {
 @MainActor
 private final class FakeInputMonitorFactory: InputEventMonitorFactory {
     let isAccessibilityTrusted: Bool
+    /// What `NSEvent.modifierFlags` would read; `emitFlagsChanged` keeps it
+    /// in step with the last event, as the window server would.
+    var currentModifierFlags: UInt = 0
     private(set) var installed = 0
     private(set) var removed = 0
     private var localHandlers: [NSEvent.EventTypeMask.RawValue: (NSEvent) -> NSEvent?] = [:]
@@ -324,6 +562,7 @@ private final class FakeInputMonitorFactory: InputEventMonitorFactory {
         ) else {
             return XCTFail("could not build a flagsChanged event")
         }
+        currentModifierFlags = modifierFlags.rawValue & NSEvent.ModifierFlags.deviceIndependentFlagsMask.rawValue
         globalHandlers[NSEvent.EventTypeMask.flagsChanged.rawValue]?(event)
     }
 }

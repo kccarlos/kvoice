@@ -9,6 +9,34 @@ without one is refused.
 
 ## Unreleased
 
+## 0.1.6
+
+- The built-in AI Actions now follow you when you correct yourself: say
+  "let's do two — no, wait, three" and the result says three.
+- Clean Up now also drops the Chinese filler "那个", and Translate and
+  Translate 2 drop fillers such as "um" and "嗯" before translating.
+- Translate and Translate 2 clean up the speech before translating it, so a
+  self-correction or a filler no longer shows up in the translation, and
+  the reply is the translation alone.
+- TODO List keeps every task you dictate, including changes to a plan such
+  as moving a meeting.
+- The writing actions (Prompt, Message, Notes, Writing, Email Draft,
+  Summarize, TODO List) now consistently keep the language you spoke unless
+  you ask for another one.
+- If you never edited a built-in action, it picks up the new instructions
+  on its own. Actions you edited are left exactly as they are.
+- A safeguard for Right Option and the other lone modifier keys as the
+  recording key: if KVoice misses the key's release, the next press still
+  works, and KVoice checks on its own whether the key is still held. This
+  was seen with simulated key presses; we have not reproduced it on a
+  physical keyboard.
+- With AI Actions on and the Default Action set to "None", KVoice no longer
+  runs an AI step on your dictation. As the settings say, nothing runs
+  until you choose an action. With action triggers on, starting a sentence
+  with an action's trigger word still runs that action.
+- The "KVoice Shortcut" window is now shown in Simplified Chinese when the
+  interface is in Chinese.
+
 ## 0.1.5
 
 - KVoice can now be installed and updated with Homebrew:

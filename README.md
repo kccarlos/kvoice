@@ -1,3 +1,5 @@
+<p align="center"><b>English</b> · <a href="README.zh-CN.md">简体中文</a></p>
+
 <p align="center">
   <img src="Docs/assets/kvoice-banner.jpg" alt="KVoice: speak once, get finished text in any app, polished, summarized or translated. Dictation and AI actions, on-device speech, free and open source." width="100%">
 </p>
@@ -19,6 +21,16 @@
   <a href="https://github.com/kccarlos/kvoice"><b>⭐ Star on GitHub</b></a>
   to follow new releases. It is free, and it helps other Mac users find KVoice.
 </p>
+
+<!--
+  Demo slot, the first thing a visitor sees (README.zh-CN.md has the same).
+  GitHub autoplays only animated images, so the hero is a GIF:
+  Docs/assets/kvoice-demo.gif, 10 to 15 seconds, 800 px wide, under 5 MB,
+  shown as a centred img at width 720. Under it, one line links the full
+  recording: an MP4 dragged into a GitHub comment or release on the public
+  repo gives a github.com/user-attachments/assets/… URL (a click-to-play
+  player; GitHub strips autoplay from videos).
+-->
 
 **Dictation and AI actions in one step.** Hold your shortcut, speak, let
 go, and KVoice types finished text where your cursor is: cleaned up,
@@ -43,11 +55,6 @@ Or [download the notarized DMG](https://github.com/kccarlos/kvoice/releases/late
 and drag KVoice to Applications. Needs a Mac with Apple silicon and macOS 15
 or later. A Mac App Store edition is coming; see [Download](#download) for
 how the editions differ.
-
-<!--
-  Demo GIF slot: Docs/assets/kvoice-demo.gif, about 15 seconds, 800 px wide,
-  under 5 MB. Add it here as a centred img at width 720 once it exists.
--->
 
 <p align="center">
   <img src="Docs/assets/screenshots/kvoice-1-dictate.jpg" alt="Hold a key, speak, and it's typed: the recorder under the menu bar shows the live transcript and the Clean Up action while the text goes into a document" width="720">

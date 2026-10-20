@@ -22,15 +22,11 @@
   to follow new releases. It is free, and it helps other Mac users find KVoice.
 </p>
 
-<!--
-  Demo slot, the first thing a visitor sees (README.zh-CN.md has the same).
-  GitHub autoplays only animated images, so the hero is a GIF:
-  Docs/assets/kvoice-demo.gif, 10 to 15 seconds, 800 px wide, under 5 MB,
-  shown as a centred img at width 720. Under it, one line links the full
-  recording: an MP4 dragged into a GitHub comment or release on the public
-  repo gives a github.com/user-attachments/assets/… URL (a click-to-play
-  player; GitHub strips autoplay from videos).
--->
+<p align="center">
+  <img src="Docs/assets/kvoice-demo-en.gif" alt="KVoice in 20 seconds: hold a key and speak, the words are typed into TextEdit; the same messy sentence becomes a clean transcript, a to-do list or Chinese; a dictated request lands in Codex in a terminal" width="720">
+  <br>
+  <a href="Docs/assets/kvoice-demo-en.mp4">▶ Watch it with sound (24 s)</a>
+</p>
 
 **Dictation and AI actions in one step.** Hold your shortcut, speak, let
 go, and KVoice types finished text where your cursor is: cleaned up,

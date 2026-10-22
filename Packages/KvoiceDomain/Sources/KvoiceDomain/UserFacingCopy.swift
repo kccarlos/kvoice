@@ -65,7 +65,14 @@ public enum DomainUserFacingCopy {
         return unique(all)
     }
 
-    public static var all: [String] { unique(messages + displayNames) }
+    /// The built-in AI actions' shipped names and descriptions (2026-10-22),
+    /// localized at display time while the stored text still equals them
+    /// (`PromptMode.shippedNameKey` / `shippedSummaryKey`).
+    public static var builtInActionText: [String] {
+        unique(BuiltInPromptModes.all.flatMap { [$0.name, $0.summary] }.filter { !$0.isEmpty })
+    }
+
+    public static var all: [String] { unique(messages + displayNames + builtInActionText) }
 
     private static func unique(_ strings: [String]) -> [String] {
         var seen = Set<String>()

@@ -96,7 +96,7 @@ public struct PromptModeSettingsView: View {
             )
         }
         .confirmationDialog(
-            "Delete “\(modePendingDeletion?.menuTitle ?? "")”?",
+            "Delete “\(modePendingDeletion?.displayTitle ?? "")”?",
             isPresented: Binding(
                 get: { modePendingDeletion != nil },
                 set: { if !$0 { modePendingDeletion = nil } }

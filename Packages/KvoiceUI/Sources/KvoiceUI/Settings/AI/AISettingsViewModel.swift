@@ -111,7 +111,7 @@ public final class AISettingsViewModel {
     public var activeActionName: String? {
         let ai = host.settings.ai
         guard let id = ai.activePromptModeID else { return nil }
-        return ai.promptModes.first { $0.id == id }?.name
+        return ai.promptModes.first { $0.id == id }?.displayTitle
     }
 
     /// The active configuration's name ("Local Ollama"); nil without one.

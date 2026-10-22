@@ -763,7 +763,7 @@ extension AppDelegate {
 
         for (index, mode) in modes.enumerated() {
             let item = NSMenuItem(
-                title: mode.menuTitle,
+                title: mode.displayTitle,
                 action: #selector(selectPromptMode(_:)),
                 keyEquivalent: ""
             )

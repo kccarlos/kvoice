@@ -234,9 +234,9 @@ private struct HUDContent: View {
 
                 VStack(alignment: .leading, spacing: 1) {
                     HStack(alignment: .center, spacing: 6) {
-                        titleText(size: 13)
+                        titleText(size: 13, fits: headerFit(.mini).titleFits)
                             .foregroundStyle(Color.kv.text)
-                        chips(onNotch: false)
+                        chips(onNotch: false, fit: headerFit(.mini))
                     }
                     subtitleLines(onNotch: false)
                 }
@@ -384,10 +384,10 @@ private struct HUDContent: View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(alignment: .center, spacing: 10) {
                 HUDGlyphView(glyph: state.glyph, diameter: 24, onNotch: true, level: follower.level, reduceMotion: reduceMotion)
-                chips(onNotch: true)
+                chips(onNotch: true, fit: headerFit(.notch))
 
                 VStack(alignment: .leading, spacing: 0) {
-                    titleText(size: 12)
+                    titleText(size: 12, fits: headerFit(.notch).titleFits)
                         .foregroundStyle(Color.white)
                     subtitleLines(onNotch: true)
                 }
@@ -411,12 +411,28 @@ private struct HUDContent: View {
 
     // MARK: Shared pieces
 
-    private func titleText(size: CGFloat) -> some View {
+    /// The title truncates only when it cannot fit the row even beside the
+    /// smallest chip (`HUDHeaderFit`); otherwise it keeps its full width and
+    /// the chip gives way.
+    private func titleText(size: CGFloat, fits: Bool) -> some View {
         Text(state.title)
             .font(.system(size: size, weight: .semibold))
             .lineLimit(1)
             .truncationMode(.tail)
+            .fixedSize(horizontal: fits, vertical: false)
             .layoutPriority(1)
+    }
+
+    /// How the title row degrades for this state in `style` (2026-10-22).
+    private func headerFit(_ style: HUDStyle) -> HUDHeaderFit {
+        HUDHeaderFit.resolve(
+            title: state.title,
+            ai: recording?.ai,
+            finishingBadge: state.finishingBadge,
+            style: style,
+            notchWidth: view.notchWidth,
+            clockText: recording.map { HUDViewState.formatElapsed($0.captureStarted ? $0.elapsed : .zero) } ?? "0:00"
+        )
     }
 
     /// The AI action chip while recording (ADR-021), the action's badge
@@ -424,16 +440,16 @@ private struct HUDContent: View {
     /// `ModeChip`'s cursor-soft / cursor-ink resolve to the design's notch
     /// literals (#1E2A45 / #8AB0FA) under the notch's dark scheme.
     @ViewBuilder
-    private func chips(onNotch: Bool) -> some View {
+    private func chips(onNotch: Bool, fit: HUDHeaderFit) -> some View {
         if let ai = recording?.ai {
             ModeChip(
                 text: ai.chipText,
                 symbolName: ai.chipSymbolName,
                 isActive: ai.isEnabled,
-                shortcut: ai.actionName == nil ? nil : ai.shortcutBadge
+                shortcut: fit.showsShortcut ? ai.chipShortcut : nil
             )
-            .frame(maxWidth: 140, alignment: .leading)
-            .fixedSize(horizontal: onNotch, vertical: false)
+            .frame(maxWidth: fit.chipMaxWidth ?? .infinity, alignment: .leading)
+            .fixedSize(horizontal: fit.chipMaxWidth == nil, vertical: false)
         }
         if let badge = state.processingBadge {
             ModeChip(text: badge)

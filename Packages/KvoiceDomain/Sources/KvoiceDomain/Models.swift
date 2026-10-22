@@ -1601,6 +1601,12 @@ public enum AudioCaptureWarning: Sendable, Equatable {
 
 public enum AudioCaptureEvent: Sendable, Equatable {
     case level(rmsDBFS: Float, peakDBFS: Float)
+    /// The recording starts here (2026-10-22): sent once per capture, before
+    /// that buffer's `.level`, at the first buffer with signal or — when the
+    /// input delivers only digital silence — at the first buffer after
+    /// `SpeechGate.leadingSilenceStartBoundSeconds` of it. The recorder
+    /// restarts its elapsed clock at the same buffer.
+    case captureStarted
     case elapsed(Duration)
     case deviceChanged(name: String?)
     case warning(AudioCaptureWarning)

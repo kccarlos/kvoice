@@ -19,8 +19,11 @@ public struct HUDAIIndicator: Equatable, Sendable {
     /// True when a request will actually be made after transcription (the
     /// snapshot's derived `mode != .off`), not merely when the switch is on.
     public let isEnabled: Bool
-    /// The action that would run (the snapshot's default action), shown
-    /// even while the switch is off so the user knows what ⌘⇧A would run.
+    /// The action that would run (the snapshot's default action). While the
+    /// switch is off it is no longer the chip's text (2026-10-22: "⊘
+    /// Translate 2" read as that action running, or broken); the chip says
+    /// "AI off" like the panel, Home and the menu, and the name stays in
+    /// VoiceOver's description so ⌘⇧A's target is still discoverable.
     public let actionName: String?
     /// "⌘2"-style badge for `actionName`, by its saved position; nil beyond
     /// the tenth action.
@@ -36,11 +39,12 @@ public struct HUDAIIndicator: Equatable, Sendable {
         isEnabled ? "sparkles" : "circle.slash"
     }
 
-    /// The UI v2 mode chip's text: the action name ("Clean Up"), or "AI on"
-    /// / "AI off" when the job carries no action.
+    /// The UI v2 mode chip's text: the action that will run ("Clean Up"),
+    /// "AI on" when AI is on without a named action, and "AI off" whenever
+    /// AI is off — the one wording every surface uses (`AIActionsCopy`).
     public var chipText: String {
-        if let actionName { return actionName }
-        return isEnabled ? AIActionsCopy.aiOn : AIActionsCopy.aiOff
+        guard isEnabled else { return AIActionsCopy.aiOff }
+        return actionName ?? AIActionsCopy.aiOn
     }
 
     /// The chip's leading symbol: none for a named action that will run (the
@@ -48,6 +52,13 @@ public struct HUDAIIndicator: Equatable, Sendable {
     public var chipSymbolName: String? {
         if isEnabled { return actionName == nil ? symbolName : nil }
         return symbolName
+    }
+
+    /// The ⌘-number beside the chip: only for the action that will run. With
+    /// AI off nothing runs, so "AI off ⌘2" would name a shortcut for nothing.
+    public var chipShortcut: String? {
+        guard isEnabled, actionName != nil else { return nil }
+        return shortcutBadge
     }
 
     /// One line for VoiceOver's value and the notch style's caption.

@@ -181,6 +181,7 @@ final class AudioCaptureServiceTests: XCTestCase {
         let delivered = await events.values
         XCTAssertEqual(delivered, [
             .elapsed(.zero),
+            .captureStarted,
             .level(rmsDBFS: 0, peakDBFS: 0),
             .warning(.clipping(frameCount: 200)),
         ], "every event the buffer raised is delivered, in order, before stop returns")

@@ -185,7 +185,8 @@ final class AppComposition {
             privateCloudCompute: privateCloudComputeClient
         )
         let audioRecorder = AVAudioCaptureService(
-            signalPeakThresholdDBFS: tunables.signalPeakThresholdDBFS
+            signalPeakThresholdDBFS: tunables.signalPeakThresholdDBFS,
+            leadingSilenceStartBoundSeconds: tunables.leadingSilenceStartBoundSeconds
         )
 
         // The app-bundled manifest stays a trust anchor for the uncompressed

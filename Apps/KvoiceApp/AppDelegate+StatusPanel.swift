@@ -110,7 +110,7 @@ extension AppDelegate {
                 isOn: aiOn,
                 canToggle: idle && !terminating,
                 help: Self.aiToggleToolTip(on: aiOn, configured: configured),
-                defaultActionName: aiActive ? ai.activePromptMode?.menuTitle : nil,
+                defaultActionName: aiActive ? ai.activePromptMode?.displayTitle : nil,
                 defaultActionBadge: aiActive ? ai.activePromptModeID.flatMap { promptModeSettingsViewModel.shortcutBadge(for: $0) } : nil,
                 configurationName: aiActive ? ai.activeConfiguration?.menuTitle : nil,
                 canChoose: idle && !terminating,
@@ -174,7 +174,7 @@ extension AppDelegate {
             modelName: statusPanelModelName ?? modelMenuTitle,
             microphoneName: audioInputViewModel.currentDeviceName,
             ai: ai.isEnabled && ai.mode != .off
-                ? .on(action: ai.activePromptMode?.menuTitle, configuration: ai.activeConfiguration?.menuTitle)
+                ? .on(action: ai.activePromptMode?.displayTitle, configuration: ai.activeConfiguration?.menuTitle)
                 : .off
         )
         if model.home != home {
@@ -227,7 +227,7 @@ extension AppDelegate {
         return StatusPanelChooser(choices: ai.promptModes.map { mode in
             StatusPanelChoice(
                 id: mode.id.uuidString,
-                title: mode.menuTitle,
+                title: mode.displayTitle,
                 isSelected: mode.id == ai.activePromptModeID && ai.mode != .off,
                 isEnabled: idle && mode.isUsable,
                 command: .selectDefaultAction(mode.id)

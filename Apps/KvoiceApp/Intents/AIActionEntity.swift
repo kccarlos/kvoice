@@ -1,6 +1,7 @@
 import AppIntents
 import KvoiceAppCore
 import KvoiceDomain
+import KvoiceUI
 
 /// A saved AI action (`PromptMode`) as Shortcuts sees it: the id and the
 /// name, nothing else. The prompt text never leaves the app; Start
@@ -17,7 +18,9 @@ struct AIActionEntity: AppEntity {
 
     init(_ action: PromptMode) {
         id = action.id
-        name = action.menuTitle
+        // Shown in the interface language for an unrenamed built-in
+        // (2026-10-22); the query still matches the stored name.
+        name = action.displayTitle
     }
 
     var displayRepresentation: DisplayRepresentation {

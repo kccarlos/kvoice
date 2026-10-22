@@ -242,7 +242,7 @@ public final class PromptModeSettingsViewModel {
         guard draft.isComplete, modes.firstIndex(where: { $0.id == id }) != nil else { return }
         var next = settings
         guard let index = next.promptModes.firstIndex(where: { $0.id == id }) else { return }
-        next.promptModes[index].name = uniqueName(from: draft.name, excluding: id)
+        next.promptModes[index].name = uniqueName(from: draft.storedName, excluding: id)
         next.promptModes[index].behavior = draft.behavior
         next.promptModes[index].prompt = draft.prompt
         next.promptModes[index].translationLanguage = draft.behavior == .translate
@@ -278,7 +278,10 @@ public final class PromptModeSettingsViewModel {
         var copy = original
         copy.id = UUID()
         copy.builtInKey = nil
-        copy.name = uniqueName(from: String(localized: "\(original.menuTitle) copy", bundle: .module), excluding: nil)
+        copy.name = uniqueName(from: String(localized: "\(original.displayTitle) copy", bundle: .module), excluding: nil)
+        // The copy is the user's own action: it keeps the description as
+        // shown, since a non-built-in is displayed verbatim.
+        copy.summary = original.displaySummary
         copy.triggerWords = []
         var next = settings
         next.promptModes.append(copy)
@@ -421,7 +424,7 @@ public final class PromptModeSettingsViewModel {
         previewState = .running
         previewOutput = ""
         var candidate = PromptMode(
-            name: draft.name,
+            name: draft.storedName,
             behavior: draft.behavior,
             prompt: draft.prompt,
             translationLanguage: draft.behavior == .translate ? draft.translationLanguage : nil
@@ -494,6 +497,16 @@ public struct PromptModeDraft: Equatable, Sendable {
     /// The shipped action this draft edits, if any — read only: it decides
     /// which mode settings apply (`settingsFamily`), never written back.
     public private(set) var builtInKey: String?
+    /// 2026-10-22: an unrenamed built-in's name and description are shown
+    /// in the interface language (`PromptMode.displayTitle`), but stored in
+    /// English. These remember what the sheet showed and what it stands
+    /// for, so an untouched Save writes the stored English back
+    /// (`storedName` / `storedSummary`) instead of the translation, which
+    /// would mark the built-in edited and freeze it in one language.
+    private var shippedNameShown: String?
+    private var shippedName: String?
+    private var shippedSummaryShown: String?
+    private var shippedSummary: String?
 
     public init(
         name: String = "",
@@ -524,13 +537,21 @@ public struct PromptModeDraft: Equatable, Sendable {
         builtInKey = nil
     }
 
-    public init(mode: PromptMode) {
-        name = mode.name
+    public init(mode: PromptMode, table: DomainCopy.Table = .module) {
+        name = mode.shippedNameKey == nil ? mode.name : mode.displayTitle(table: table)
+        if let key = mode.shippedNameKey {
+            shippedName = key
+            shippedNameShown = name
+        }
         behavior = mode.behavior
         prompt = mode.prompt
         translationLanguage = mode.translationLanguage
             ?? .init(bcp47: "en", displayName: "English")
-        summary = mode.summary
+        summary = mode.displaySummary(table: table)
+        if let key = mode.shippedSummaryKey {
+            shippedSummary = key
+            shippedSummaryShown = summary
+        }
         icon = mode.icon
         triggerWords = mode.triggerWords
         usesSystemInstructionsTemplate = mode.usesSystemInstructionsTemplate
@@ -545,6 +566,12 @@ public struct PromptModeDraft: Equatable, Sendable {
     public init(basedOn template: PromptMode, name: String) {
         self.init(mode: template)
         self.name = name
+        // A new action's text is the user's own data from here on: the
+        // shown (localized) description is what it keeps.
+        shippedName = nil
+        shippedNameShown = nil
+        shippedSummary = nil
+        shippedSummaryShown = nil
         triggerWords = []
         // A new action, not the shipped one: its mode settings follow
         // the new action's own family.
@@ -555,6 +582,19 @@ public struct PromptModeDraft: Equatable, Sendable {
     /// switch to Translate offers the translation settings at once).
     public var settingsFamily: PromptModeSettingsFamily {
         PromptMode(name: name, behavior: behavior, prompt: prompt, builtInKey: builtInKey).settingsFamily
+    }
+
+    /// The name to store: the shipped English while the field still shows
+    /// its untouched translation, otherwise what the user typed.
+    public var storedName: String {
+        if let shippedName, name == shippedNameShown { return shippedName }
+        return name
+    }
+
+    /// The description to store, under the same rule.
+    public var storedSummary: String {
+        if let shippedSummary, summary == shippedSummaryShown { return shippedSummary }
+        return summary
     }
 
     public var isComplete: Bool {
@@ -581,7 +621,7 @@ public struct PromptModeDraft: Equatable, Sendable {
     /// Copies the action-only fields; name, behavior, prompt, and language are
     /// written by the caller because they carry validation.
     func write(into mode: inout PromptMode) {
-        mode.summary = summary.trimmingCharacters(in: .whitespacesAndNewlines)
+        mode.summary = storedSummary.trimmingCharacters(in: .whitespacesAndNewlines)
         mode.icon = Self.singleGrapheme(icon)
         mode.triggerWords = PromptMode.normalizedTriggerWords(triggerWords)
         mode.usesSystemInstructionsTemplate = usesSystemInstructionsTemplate

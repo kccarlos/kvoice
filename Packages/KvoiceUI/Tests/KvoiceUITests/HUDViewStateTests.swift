@@ -462,7 +462,13 @@ final class HUDViewStateTests: XCTestCase {
         XCTAssertNil(on.chipSymbolName)
         XCTAssertEqual(HUDAIIndicator(isEnabled: true).chipText, "AI on")
         XCTAssertEqual(HUDAIIndicator(isEnabled: true).chipSymbolName, "sparkles")
-        XCTAssertEqual(HUDAIIndicator(isEnabled: false, actionName: "Clean Up").chipText, "Clean Up")
+        XCTAssertEqual(
+            HUDAIIndicator(isEnabled: false, actionName: "Clean Up").chipText, "AI off",
+            "AI off says so, not the default action struck through (2026-10-22)"
+        )
+        XCTAssertNil(HUDAIIndicator(isEnabled: false, actionName: "Translate 2", shortcutBadge: "⌘9").chipShortcut)
+        XCTAssertEqual(HUDAIIndicator(isEnabled: true, actionName: "Translate 2", shortcutBadge: "⌘9").chipShortcut, "⌘9")
+        XCTAssertNil(HUDAIIndicator(isEnabled: true, shortcutBadge: "⌘9").chipShortcut, "no badge without a named action")
         XCTAssertEqual(HUDAIIndicator(isEnabled: false, actionName: "Clean Up").chipSymbolName, "circle.slash")
         XCTAssertEqual(HUDAIIndicator(isEnabled: false).chipText, "AI off")
     }

@@ -87,8 +87,8 @@ struct AIActionGrid: View {
     }
 
     private func accessibilityLabel(for action: PromptMode) -> String {
-        var parts = [action.menuTitle]
-        if !action.summary.isEmpty { parts.append(action.summary) }
+        var parts = [action.displayTitle]
+        if !action.displaySummary.isEmpty { parts.append(action.displaySummary) }
         if let badge = badge(action) { parts.append(badge) }
         if action.id == defaultID { parts.append(String(localized: "default action", bundle: .module)) }
         if action.isRevisedBuiltIn { parts.append(String(localized: "edited built-in", bundle: .module)) }
@@ -124,11 +124,11 @@ struct AIActionCard: View {
                         .accessibilityHidden(true)
                 }
             }
-            Text(verbatim: action.menuTitle)
+            Text(verbatim: action.displayTitle)
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundStyle(Color.kv.text)
                 .lineLimit(1)
-            Text(verbatim: action.summary)
+            Text(verbatim: action.displaySummary)
                 .font(.system(size: 11))
                 .foregroundStyle(Color.kv.text2)
                 .lineSpacing(1.5)

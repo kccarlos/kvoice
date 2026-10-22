@@ -297,6 +297,31 @@ final class SurfaceStateMatrixTests: XCTestCase {
         }
     }
 
+    /// 2026-10-22: with AI off the recorder's chip said the default action
+    /// struck through ("⊘ Translate 2 ⌘9"), which read as that action
+    /// running. Every surface now says the one "AI off": the recorder chip,
+    /// Home's hero chip, and the panel's Off chip (its VoiceOver label is
+    /// `AIActionsCopy.aiOff`; its drawn text is the short "Off").
+    func testAIOffReadsTheSameOnTheRecorderHomeAndPanel() {
+        let recorder = HUDAIIndicator(isEnabled: false, actionName: "Translate 2", shortcutBadge: "⌘9")
+        let home = HomeHeroState(
+            readiness: HomeHeroState.preview.readiness, interaction: .pushToTalk,
+            modelName: "Whisper", microphoneName: "Mic", ai: .off
+        )
+        XCTAssertEqual(recorder.chipText, AIActionsCopy.aiOff)
+        XCTAssertEqual(home.aiChipTitle, AIActionsCopy.aiOff)
+        XCTAssertNil(recorder.chipShortcut, "no ⌘-number: nothing will run")
+        XCTAssertFalse(recorder.chipText.contains("Translate 2"))
+        XCTAssertEqual(recorder.accessibilityDescription, "AI off, Translate 2", "VoiceOver still names ⌘⇧A's target")
+
+        let on = HUDAIIndicator(isEnabled: true, actionName: "Translate 2", shortcutBadge: "⌘9")
+        let homeOn = HomeHeroState(
+            readiness: HomeHeroState.preview.readiness, interaction: .pushToTalk,
+            modelName: "Whisper", microphoneName: "Mic", ai: .on(action: "Translate 2", configuration: nil)
+        )
+        XCTAssertEqual(on.chipText, homeOn.aiChipTitle, "on: both name the action")
+    }
+
     /// A standing readiness problem (model missing, permission denied) is
     /// the same verdict on the icon, the panel, the window's sidebar pill
     /// and Home's hero; a download in flight is the fix happening.

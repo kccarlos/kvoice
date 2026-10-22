@@ -302,7 +302,8 @@ public enum SettingsResolver {
             overlappingJobs: overlapping,
             speechGate: developerRow(
                 defaults.speechGate,
-                .silencePeakThresholdDBFS, .quietPeakThresholdDBFS, .signalPeakThresholdDBFS, .trailingSilenceKeepSeconds
+                .silencePeakThresholdDBFS, .quietPeakThresholdDBFS, .signalPeakThresholdDBFS, .trailingSilenceKeepSeconds,
+                .leadingSilenceStartBoundSeconds
             ),
             hudDismissTimings: developerRow(
                 defaults.hudDismissTimings,

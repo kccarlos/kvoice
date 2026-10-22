@@ -51,6 +51,17 @@ public protocol RunningInstanceLookup {
 /// and reports `stillRunning` if they did not: killing every process with
 /// the bundle id would have quit the installed app five seconds after a
 /// test build started, and two launches would have killed each other.
+///
+/// **An instance is gone when the lookup no longer lists it** (2026-10-22).
+/// The `NSRunningApplication` the first lookup returned is a snapshot whose
+/// `isTerminated` never flipped in a process that had just launched: a
+/// probe saw the old PID leave `runningApplications` and `kill(pid, 0)`
+/// fail within 25 ms of its exit while the snapshot still said "running"
+/// seven seconds later. Every relaunch therefore waited the full schedule
+/// (5 s, `terminate()`, 1 s, `forceTerminate()`, 1 s) and logged
+/// `stillRunning` for a process that was long gone. Each poll now asks the
+/// lookup again and treats an instance as gone when its flag says so *or*
+/// its PID is no longer listed.
 @MainActor
 public struct InstanceHandoff {
     /// The launch argument `restartApp()` passes, followed by the PID of the
@@ -165,13 +176,13 @@ public struct InstanceHandoff {
         guard replacesProcessIdentifier != nil else {
             // Not a restart: nothing here is ours to remove. Report and
             // carry on; the hotkey may be contested.
-            outcome.remaining = instances.filter { !$0.isTerminated }.count
+            outcome.remaining = alive(instances).count
             outcome.waited = clock.now - started
             return outcome
         }
 
         outcome.terminateRequested = true
-        for instance in instances where !instance.isTerminated {
+        for instance in alive(instances) {
             instance.terminate()
         }
         if await waitUntilTerminated(instances, for: terminateGrace) {
@@ -180,25 +191,33 @@ public struct InstanceHandoff {
         }
 
         outcome.forceTerminateRequested = true
-        for instance in instances where !instance.isTerminated {
+        for instance in alive(instances) {
             instance.forceTerminate()
         }
-        // One last short wait so `isTerminated` can observe the kill.
+        // One last short wait so the lookup can observe the kill.
         _ = await waitUntilTerminated(instances, for: terminateGrace)
-        outcome.remaining = instances.filter { !$0.isTerminated }.count
+        outcome.remaining = alive(instances).count
         outcome.waited = clock.now - started
         return outcome
     }
 
-    /// Polls `isTerminated` up to `duration / pollInterval` times (at least
-    /// once), sleeping `pollInterval` after each miss; true once every
-    /// instance is gone.
+    /// The instances of `instances` still running: not flagged terminated
+    /// and still listed by a fresh lookup (see the type's note on why the
+    /// flag alone is not enough).
+    private func alive(_ instances: [any RunningInstance]) -> [any RunningInstance] {
+        let listed = Set(lookup.otherInstances().filter { !$0.isTerminated }.map(\.processIdentifier))
+        return instances.filter { !$0.isTerminated && listed.contains($0.processIdentifier) }
+    }
+
+    /// Polls `alive` up to `duration / pollInterval` times (at least once),
+    /// sleeping `pollInterval` after each miss; true once every instance is
+    /// gone.
     private func waitUntilTerminated(_ instances: [any RunningInstance], for duration: Duration) async -> Bool {
         let polls = max(1, Int(duration / pollInterval))
         for _ in 0..<polls {
-            if instances.allSatisfy(\.isTerminated) { return true }
+            if alive(instances).isEmpty { return true }
             try? await clock.sleep(for: pollInterval)
         }
-        return instances.allSatisfy(\.isTerminated)
+        return alive(instances).isEmpty
     }
 }

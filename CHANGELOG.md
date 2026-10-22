@@ -9,6 +9,28 @@ without one is refused.
 
 ## Unreleased
 
+## 0.1.9 — 2026-10-22
+
+- A new app icon: the menu-bar mark — orange level bars and a white
+  microphone — on the dark tile, so the Dock, Finder and the menu bar show
+  the same sign.
+- Fixed: with a muted microphone or an input that delivers only silence,
+  the recorder stayed on "Starting mic…" for as long as you held the key.
+  It now starts recording after about two and a half seconds of silence;
+  Bluetooth headsets still wait for their microphone to come up.
+- Fixed: the small recorder cut off "Starting mic…" and the AI action's
+  name ("Clean… ⌘1"). Both now read in full; when space is short the ⌘
+  number is left out first.
+- Fixed: with AI off, the recorder showed the default action struck
+  through, which looked like that action was running. It now says "AI off",
+  like the menu-bar panel and Home.
+- Fixed: relaunching after changing the interface language (or Help ›
+  Restart) left the old copy running for about seven seconds, during which
+  the shortcut was not ready.
+- The built-in AI actions (Clean Up, Polish, Translate and the others)
+  and their descriptions now appear in Chinese when the interface is in
+  Chinese. Actions you renamed keep the name you gave them.
+
 ## 0.1.8 — 2026-10-22
 
 - Fixed: Interface language, and the other drop-downs on settings cards

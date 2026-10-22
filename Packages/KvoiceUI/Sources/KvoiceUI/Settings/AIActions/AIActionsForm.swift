@@ -145,7 +145,7 @@ public struct AIActionsForm: View {
             Text("Its saved API key is removed with it. Your other configurations and your actions are kept.")
         }
         .confirmationDialog(
-            "Delete “\(actionPendingDeletion?.menuTitle ?? "")”?",
+            "Delete “\(actionPendingDeletion?.displayTitle ?? "")”?",
             isPresented: Binding(
                 get: { actionPendingDeletion != nil },
                 set: { if !$0 { actionPendingDeletion = nil } }
@@ -454,7 +454,7 @@ public struct AIActionsForm: View {
                 HStack(alignment: .center, spacing: 10) {
                     VStack(alignment: .leading, spacing: 2) {
                         HStack(spacing: 6) {
-                            Text(verbatim: "\(action.icon.isEmpty ? "" : action.icon + " ")\(action.menuTitle)")
+                            Text(verbatim: "\(action.icon.isEmpty ? "" : action.icon + " ")\(action.displayTitle)")
                                 .font(.system(size: 13, weight: .semibold))
                                 .foregroundStyle(Color.kv.text)
                             Text("Default action", bundle: .module)
@@ -476,7 +476,7 @@ public struct AIActionsForm: View {
                         Text("Edit…", bundle: .module)
                     }
                     .buttonStyle(KVButtonStyle(.standard, height: 26))
-                    .accessibilityLabel(Text("Edit \(action.menuTitle)", bundle: .module))
+                    .accessibilityLabel(Text("Edit \(action.displayTitle)", bundle: .module))
                     .accessibilityHint("Opens the action's details: instructions, mode settings, trigger words and shortcut.")
                 }
                 .accessibilityElement(children: .contain)
@@ -614,7 +614,7 @@ public struct AIActionsForm: View {
                     .foregroundStyle(.secondary)
             } else {
                 ForEach(triggered) { action in
-                    LabeledContent("\(action.icon) \(action.menuTitle)") {
+                    LabeledContent("\(action.icon) \(action.displayTitle)") {
                         Text(action.triggerWords.joined(separator: ", "))
                             .foregroundStyle(.secondary)
                             .multilineTextAlignment(.trailing)
@@ -629,7 +629,7 @@ public struct AIActionsForm: View {
         DisclosureGroup(isExpanded: $isShortcutsExpanded) {
             VStack(alignment: .leading, spacing: 4) {
                 ForEach(Array(actions.modes.prefix(10))) { action in
-                    LabeledContent("\(action.icon) \(action.menuTitle)") {
+                    LabeledContent("\(action.icon) \(action.displayTitle)") {
                         Text(actions.shortcutBadge(for: action.id) ?? "")
                             .monospaced()
                             .foregroundStyle(.secondary)
@@ -691,7 +691,7 @@ public struct AIActionsForm: View {
         ) {
             Text("None").tag(UUID?.none)
             ForEach(actions.modes.filter(\.isUsable)) { action in
-                Text("\(action.icon) \(action.menuTitle)").tag(UUID?.some(action.id))
+                Text("\(action.icon) \(action.displayTitle)").tag(UUID?.some(action.id))
             }
         }
         .frame(maxWidth: 320)

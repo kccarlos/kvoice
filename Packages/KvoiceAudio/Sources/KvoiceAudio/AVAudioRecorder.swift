@@ -34,9 +34,11 @@ private struct CaptureSnapshot: Sendable {
 private struct CaptureUpdate: Sendable {
     let reachedCap: Bool
     let failure: KVoiceError?
-    /// True for the one buffer that first carried signal (2026-09-16): the
-    /// actor restarts the elapsed clock there, so the HUD's clock and the
-    /// time-based cap count what the recording will contain.
+    /// True for the one buffer the recording starts at — the first that
+    /// carried signal (2026-09-16), or the first after the bounded wait on
+    /// digital silence (2026-10-22): the actor restarts the elapsed clock
+    /// there, so the HUD's clock and the time-based cap count what the
+    /// recording will contain.
     var signalStarted = false
 }
 
@@ -65,12 +67,20 @@ private final class ActiveCapture: @unchecked Sendable {
     /// `SpeechGate.signalPeakThresholdDBFS`. On a Bluetooth route the input
     /// delivers zero-fill for up to two seconds while it switches profiles;
     /// those buffers only lengthen the clip and inflate the real-time factor.
-    /// They are kept until `finish()` and dropped there only once signal did
-    /// arrive, so a recording that never carried signal is returned whole and
-    /// still reaches the silence outcome (`SpeechGate`) rather than an
-    /// empty-audio error.
+    /// They are kept until `finish()` and dropped there only once the
+    /// recording started (signal, or the bounded wait below ran out), so a
+    /// recording released before either is returned whole and still reaches
+    /// the silence outcome (`SpeechGate`) rather than an empty-audio error;
+    /// one started by the bound keeps its silent buffers from that point on,
+    /// which reach the same outcome.
     private var leadingSilenceSampleCount = 0
     private var signalSeen = false
+    /// After this many samples of leading silence the next buffer starts
+    /// the recording even without signal
+    /// (`SpeechGate.leadingSilenceStartBoundSeconds`, 2026-10-22): a muted
+    /// or idle input otherwise never leaves "Starting mic…". Only the
+    /// silence before that buffer is dropped, matching the restarted clock.
+    private let leadingSilenceBoundFrames: Int
     // MARK: ADR-017 streaming chunks
     /// Converted samples accepted since the last drain, kept only while a
     /// streaming sink is installed. Never a second copy of the recording:
@@ -89,8 +99,10 @@ private final class ActiveCapture: @unchecked Sendable {
         inputFormat: AudioInputFormat,
         converter: any AudioConverterAdapter,
         maximumFrames: Int,
-        signalPeakThresholdDBFS: Float = SpeechGate.signalPeakThresholdDBFS
+        signalPeakThresholdDBFS: Float = SpeechGate.signalPeakThresholdDBFS,
+        leadingSilenceBoundFrames: Int = Int(SpeechGate.leadingSilenceStartBoundSeconds * AVAudioCaptureService.transcriptionSampleRate)
     ) {
+        self.leadingSilenceBoundFrames = max(1, leadingSilenceBoundFrames)
         self.token = token
         self.jobID = jobID
         self.inputFormat = inputFormat
@@ -143,7 +155,10 @@ private final class ActiveCapture: @unchecked Sendable {
                 if let measurement = AudioLevelMeter.measure(converted.prefix(remaining)) {
                     var signalStarted = false
                     if !signalSeen {
-                        if measurement.peakDBFS > signalPeakThresholdDBFS {
+                        if measurement.peakDBFS > signalPeakThresholdDBFS
+                            || leadingSilenceSampleCount >= leadingSilenceBoundFrames {
+                            // Signal, or the bounded wait on digital silence
+                            // is over: the recording starts at this buffer.
                             signalSeen = true
                             signalStarted = true
                         } else {
@@ -152,12 +167,13 @@ private final class ActiveCapture: @unchecked Sendable {
                     }
                     peakLevelDBFS = max(peakLevelDBFS, measurement.peakDBFS)
                     clippedFrameCount += measurement.clippedFrameCount
-                    var events: [AudioCaptureEvent] = [
+                    var events: [AudioCaptureEvent] = signalStarted ? [.captureStarted] : []
+                    events.append(
                         .level(
                             rmsDBFS: measurement.rmsDBFS,
                             peakDBFS: measurement.peakDBFS
                         )
-                    ]
+                    )
                     if measurement.clippedFrameCount > 0 && !clippingWarningEmitted {
                         clippingWarningEmitted = true
                         events.append(.warning(.clipping(frameCount: measurement.clippedFrameCount)))
@@ -224,9 +240,10 @@ private final class ActiveCapture: @unchecked Sendable {
         if acceptedSamples.count >= maximumFrames {
             reachedCap = true
         }
-        // The recording starts at the first buffer that carried signal; the
-        // zero-fill before it is not part of what the user said. Never
-        // applied to a recording without signal (see the property's note).
+        // The recording starts at the first buffer that carried signal (or
+        // the first after the bounded wait); the zero-fill before it is not
+        // part of what the user said. Never applied to a recording that did
+        // not start (see the property's note).
         if signalSeen, leadingSilenceSampleCount > 0 {
             acceptedSamples.removeFirst(min(leadingSilenceSampleCount, acceptedSamples.count))
             leadingSilenceSampleCount = 0
@@ -334,6 +351,9 @@ public actor AVAudioCaptureService: KvoiceDomain.AudioCaptureService, AudioCaptu
     /// ADR-022 slice 5: the leading-silence threshold the tap applies
     /// (`SpeechGate.signalPeakThresholdDBFS` unless composed otherwise).
     private let signalPeakThresholdDBFS: Float
+    /// The bounded wait on leading digital silence, in seconds
+    /// (`SpeechGate.leadingSilenceStartBoundSeconds` unless composed otherwise).
+    private let leadingSilenceStartBoundSeconds: Double
     private var activeCapture: ActiveCapture?
     private var elapsedTask: Task<Void, Never>?
     private var lastFailureByJob: [JobID: KVoiceError] = [:]
@@ -349,9 +369,11 @@ public actor AVAudioCaptureService: KvoiceDomain.AudioCaptureService, AudioCaptu
         clock: any AudioCaptureClock = SystemAudioCaptureClock(),
         maximumDuration: Duration = AVAudioCaptureService.defaultMaximumDuration,
         inputTapBufferSize: Int = 1024,
-        signalPeakThresholdDBFS: Float = SpeechGate.signalPeakThresholdDBFS
+        signalPeakThresholdDBFS: Float = SpeechGate.signalPeakThresholdDBFS,
+        leadingSilenceStartBoundSeconds: Double = SpeechGate.leadingSilenceStartBoundSeconds
     ) {
         self.signalPeakThresholdDBFS = signalPeakThresholdDBFS
+        self.leadingSilenceStartBoundSeconds = leadingSilenceStartBoundSeconds
         self.engine = engine
         self.converterFactory = converterFactory
         self.permissionProvider = permissionProvider
@@ -563,7 +585,8 @@ public actor AVAudioCaptureService: KvoiceDomain.AudioCaptureService, AudioCaptu
             inputFormat: inputFormat,
             converter: converter,
             maximumFrames: maximumFrames,
-            signalPeakThresholdDBFS: signalPeakThresholdDBFS
+            signalPeakThresholdDBFS: signalPeakThresholdDBFS,
+            leadingSilenceBoundFrames: Int(leadingSilenceStartBoundSeconds * Self.transcriptionSampleRate)
         )
         let token = capture.token
 
@@ -668,7 +691,8 @@ public actor AVAudioCaptureService: KvoiceDomain.AudioCaptureService, AudioCaptu
     private func handleTapUpdate(_ update: CaptureUpdate, token: UUID) async {
         guard let activeCapture, activeCapture.token == token else { return }
         if update.signalStarted {
-            // The recording starts here (the buffers before it are dropped
+            // The recording starts here — signal, or the bounded wait on
+            // digital silence ran out (the buffers before it are dropped
             // in `finish()`), so the elapsed clock and the time-based cap
             // start here too. The sample cap still counts the dropped
             // buffers — at most a couple of seconds against a ten-minute

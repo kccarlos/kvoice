@@ -30,7 +30,25 @@ extension HUDViewState {
         }
         return [
             ("01-starting", HUDViewState(phase: recording(0, level: 0, captureStarted: false), facts: facts)),
+            // 2026-10-22: the widest built-in chip beside the widest title
+            // (`HUDHeaderFit`: Mini drops the ⌘-number while starting).
+            ("01b-starting-widest-action", HUDViewState(
+                phase: recording(0, level: 0, ai: HUDAIIndicator(isEnabled: true, actionName: "Translate 2", shortcutBadge: "⌘9"), captureStarted: false),
+                facts: facts
+            )),
+            ("01c-starting-chinese-action", HUDViewState(
+                phase: recording(0, level: 0, ai: HUDAIIndicator(isEnabled: true, actionName: "邮件草稿", shortcutBadge: "⌘7"), captureStarted: false),
+                facts: facts
+            )),
+            ("01d-starting-long-custom-action", HUDViewState(
+                phase: recording(0, level: 0, ai: HUDAIIndicator(isEnabled: true, actionName: "Rewrite for the investor newsletter", shortcutBadge: "⌘4"), captureStarted: false),
+                facts: facts
+            )),
             ("02-recording", HUDViewState(phase: recording(7), facts: facts)),
+            ("02b-recording-widest-action", HUDViewState(
+                phase: recording(7, ai: HUDAIIndicator(isEnabled: true, actionName: "Translate 2", shortcutBadge: "⌘9")),
+                facts: facts
+            )),
             ("03-recording-toggle", HUDViewState(phase: recording(21, mode: .toggle, ai: nil), facts: facts)),
             ("04-recording-live-text", HUDViewState(
                 phase: recording(12, ai: nil),

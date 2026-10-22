@@ -328,6 +328,50 @@ final class DictationControllerTriggerTests: XCTestCase {
         await controller.waitForCompletion()
     }
 
+    /// 2026-10-22: an input that delivers only digital silence (a muted
+    /// mic, an idle loopback device) never produced a buffer with signal, so
+    /// the HUD stayed on "Starting mic…" for as long as the key was held.
+    /// The recorder now announces its bounded start; the controller treats
+    /// it exactly like the first buffer with signal.
+    func testTheRecordersBoundedStartPlaysTheCueAndFlipsTheHUD() async {
+        var settings = DomainFixtures.settings()
+        settings.recordingFeedback.muteSystemAudioDuringRecording = true
+        let audio = FakeAudioCaptureService(deliversSignalOnStart: false)
+        let player = FakeFeedbackPlayer()
+        let muter = FakeOutputMuter()
+        let controller = DictationController(
+            audio: audio,
+            transcription: FakeTranscriptionEngine(result: transcript("hello")),
+            insertion: FakeTextInsertionService(target: target),
+            settings: FakeSettingsRepository(settings: settings),
+            clock: ManualClock(),
+            feedbackPlayer: player,
+            outputMuter: muter
+        )
+        _ = await controller.handleShortcut(.keyDown, mode: .pushToTalk)
+        await audio.deliverSilence()
+        await audio.deliverSilence()
+        var snapshot = await controller.snapshot
+        XCTAssertFalse(snapshot.captureStarted, "silence alone, inside the bound, is still the switch")
+
+        await audio.deliverBoundedStart()
+        snapshot = await controller.snapshot
+        XCTAssertTrue(snapshot.captureStarted, "the recorder's start is the capture's start, signal or not")
+        var cues = await player.cues
+        XCTAssertEqual(cues, [.start])
+        let muterCalls = await muter.calls
+        XCTAssertEqual(muterCalls, ["mute"])
+        await audio.deliverElapsed(.milliseconds(400))
+        let state = await controller.state
+        XCTAssertEqual(elapsed(of: state), .milliseconds(400), "the clock runs from the bounded start")
+
+        await audio.deliverSignal()
+        cues = await player.cues
+        XCTAssertEqual(cues, [.start], "a later signal does not start it twice")
+        _ = await controller.handleShortcut(.keyUp, mode: .pushToTalk)
+        await controller.waitForCompletion()
+    }
+
     func testEachJobPlaysItsOwnSnapshotsCueSet() async {
         var settings = DomainFixtures.settings()
         settings.recordingFeedback.cueSet = .systemClassic

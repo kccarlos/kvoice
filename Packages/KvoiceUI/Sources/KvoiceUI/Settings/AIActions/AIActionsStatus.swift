@@ -26,7 +26,7 @@ struct AIActionsStatus: Equatable {
     init(settings ai: AIEndpointSettings, configurationName: String?? = nil, test: AISettingsViewModel.TestState) {
         let configurationName = configurationName ?? ai.activeConfiguration?.menuTitle
         let action = ai.activePromptMode
-        let actionName = action.map { "\($0.icon.isEmpty ? "" : $0.icon + " ")\($0.menuTitle)" }
+        let actionName = action.map { "\($0.icon.isEmpty ? "" : $0.icon + " ")\($0.displayTitle)" }
         if !ai.isEnabled {
             tone = .idle
             if let actionName {

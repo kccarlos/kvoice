@@ -744,7 +744,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         return HUDJobFacts(
             modelName: modelName,
-            aiActionName: aiOn ? ai.activePromptMode?.name : nil,
+            aiActionName: aiOn ? ai.activePromptMode?.displayTitle : nil,
             aiProviderName: aiOn ? ai.activeConfiguration?.menuTitle : nil,
             targetAppName: snapshot.targetApplicationName,
             wordCount: wordCount

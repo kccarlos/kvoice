@@ -90,7 +90,7 @@ struct AIActionEditorView: View {
             }
         }
         .confirmationDialog(
-            "Delete “\(context.saved?.menuTitle ?? "")”?",
+            "Delete “\(context.saved?.displayTitle ?? "")”?",
             isPresented: $isConfirmingDelete,
             titleVisibility: .visible
         ) {
@@ -320,7 +320,7 @@ struct AIActionEditorView: View {
             if !isBuiltIn, draft.prompt.isEmpty {
                 Menu("Start with a Predefined Template") {
                     ForEach(BuiltInPromptModes.all) { template in
-                        Button("\(template.icon) \(template.name)") {
+                        Button("\(template.icon) \(template.displayTitle)") {
                             let keptName = draft.name
                             draft = PromptModeDraft(basedOn: template, name: keptName)
                         }

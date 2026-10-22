@@ -113,6 +113,11 @@ final class DeveloperDefaultsTests: XCTestCase {
         XCTAssertEqual(compiled.speechGate.quietPeakDBFS, SpeechGate.quietPeakThresholdDBFS)
         XCTAssertEqual(compiled.speechGate.signalPeakDBFS, SpeechGate.signalPeakThresholdDBFS)
         XCTAssertEqual(compiled.speechGate.trailingSilenceKeepSeconds, SpeechGate.trailingSilenceKeepSeconds)
+        XCTAssertEqual(compiled.speechGate.leadingSilenceStartBoundSeconds, SpeechGate.leadingSilenceStartBoundSeconds)
+        XCTAssertGreaterThan(
+            SpeechGate.leadingSilenceStartBoundSeconds, 1.75,
+            "above the AirPods zero-fill measured on 2026-09-16, or a Bluetooth switch would start the recording early"
+        )
         XCTAssertEqual(compiled.hybridTapWindow, TriggerSettings.hybridTapWindow)
         XCTAssertEqual(compiled.doublePressWindow, TriggerSettings.doublePressWindow)
         XCTAssertEqual(compiled.dictionaryReserveFraction, DictionaryTokenBudget.reserveFraction)

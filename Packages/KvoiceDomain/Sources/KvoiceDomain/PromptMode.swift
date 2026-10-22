@@ -165,6 +165,29 @@ public struct PromptMode: Codable, Sendable, Equatable, Identifiable, Hashable {
         return trimmed.isEmpty ? behavior.rawValue.capitalized : trimmed
     }
 
+    /// The shipped English name, while this built-in still carries it
+    /// exactly; nil for a user-created action or a renamed built-in
+    /// (2026-10-22). The stored `name` stays English and is never
+    /// translated — `isRevisedBuiltIn`, Reset, the 0.1.6 "unedited built-in
+    /// picks up new instructions" rule and trigger words all compare it
+    /// with the shipped text — so the UI localizes this key at display time
+    /// (`PromptMode.displayTitle`, KvoiceUI) and shows a renamed action
+    /// exactly as the user typed it.
+    public var shippedNameKey: String? {
+        guard let builtInKey, let shipped = BuiltInPromptModes.shipped(forKey: builtInKey),
+              name == shipped.name else { return nil }
+        return shipped.name
+    }
+
+    /// The shipped English description, under the same rule as
+    /// `shippedNameKey`, judged on its own: renaming a built-in keeps its
+    /// untouched description localized, and the other way round.
+    public var shippedSummaryKey: String? {
+        guard let builtInKey, let shipped = BuiltInPromptModes.shipped(forKey: builtInKey),
+              summary == shipped.summary, !summary.isEmpty else { return nil }
+        return shipped.summary
+    }
+
     /// The system prompt a request carries for this mode: the instructions,
     /// wrapped in the house template when asked, followed by the addenda the
     /// mode settings turn on. Translate placeholders are left for the request

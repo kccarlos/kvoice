@@ -34,17 +34,22 @@ public enum SpeechGate {
         public var signalPeakDBFS: Float
         /// Silence kept after the last audible frame when the tail is trimmed.
         public var trailingSilenceKeepSeconds: Double
+        /// Digital silence a capture may deliver before it counts as
+        /// started anyway (`leadingSilenceStartBoundSeconds`).
+        public var leadingSilenceStartBoundSeconds: Double
 
         public init(
             silencePeakDBFS: Float = SpeechGate.silencePeakThresholdDBFS,
             quietPeakDBFS: Float = SpeechGate.quietPeakThresholdDBFS,
             signalPeakDBFS: Float = SpeechGate.signalPeakThresholdDBFS,
-            trailingSilenceKeepSeconds: Double = SpeechGate.trailingSilenceKeepSeconds
+            trailingSilenceKeepSeconds: Double = SpeechGate.trailingSilenceKeepSeconds,
+            leadingSilenceStartBoundSeconds: Double = SpeechGate.leadingSilenceStartBoundSeconds
         ) {
             self.silencePeakDBFS = silencePeakDBFS
             self.quietPeakDBFS = quietPeakDBFS
             self.signalPeakDBFS = signalPeakDBFS
             self.trailingSilenceKeepSeconds = trailingSilenceKeepSeconds
+            self.leadingSilenceStartBoundSeconds = leadingSilenceStartBoundSeconds
         }
 
         /// The shipped values (`DeveloperDefaults.compiled.speechGate`).
@@ -66,6 +71,20 @@ public enum SpeechGate {
     /// while it switches), and the controller, which plays the start cue
     /// and stamps `captureStartMilliseconds` at that same buffer.
     public static let signalPeakThresholdDBFS: Float = -100
+
+    /// The bound on that wait (2026-10-22). A capture whose buffers carry
+    /// only digital silence — a muted microphone, a loopback device with
+    /// nothing playing — never produced a buffer above the threshold, so
+    /// the HUD stayed on "Starting mic…" for as long as the key was held and
+    /// `captureStartMilliseconds` measured the first sound, not the start.
+    /// After this much delivered silence the recorder counts the capture as
+    /// started at the next buffer: it restarts its clock there, drops only
+    /// the silence before it, and the controller plays the cue. 2.5 s sits
+    /// above the AirPods zero-fill measured on 2026-09-16 (1.6–1.75 s of
+    /// zeros after the engine started on a cold press), so a Bluetooth
+    /// switch still waits for real signal. A recording with no signal at
+    /// all still reaches the silence outcome: its peak never rises.
+    public static let leadingSilenceStartBoundSeconds: Double = 2.5
 
     static let hallucinationPhrases: [String] = [
         "thank you", "thanks", "thank you for watching", "thanks for watching",

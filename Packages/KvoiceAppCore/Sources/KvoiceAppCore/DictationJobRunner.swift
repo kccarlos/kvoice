@@ -566,22 +566,24 @@ final class DictationJobRunner {
         }
         guard isCurrent(.recording) else { return }
         switch event {
+        case .captureStarted:
+            // The recorder's own start (2026-10-22): its first buffer with
+            // signal, or the first after `leadingSilenceStartBoundSeconds`
+            // of digital silence — a muted or idle input, which used to
+            // hold "Starting mic…" for as long as the key was held.
+            await markCaptureStarted()
         case .level(let rms, let peak):
             // The recorder reports one `.level` per tap buffer, so the first
             // one above the meter's silence floor is the first buffer that
             // carried signal — the end of the zeros a Bluetooth route
-            // delivers while it switches. Detected once, here: it stamps
-            // `captureStartMilliseconds`, flips `captureStarted` for the
-            // HUD, and runs the start side effects (cue, then mute).
+            // delivers while it switches. The real recorder announces that
+            // buffer with `.captureStarted` first; this keeps a service that
+            // only reports levels starting at the same buffer.
             // Nothing per buffer is logged.
             if !captureStarted, peak > tunables.speechGate.signalPeakDBFS {
-                captureStarted = true
-                timeline?.recordCaptureStarted(at: clock.now, for: jobID)
-                if let settings = settingsSnapshot {
-                    await beginRecordingSideEffects(settings: settings)
-                    guard isCurrent(.recording) else { return }
-                }
+                await markCaptureStarted()
             }
+            guard isCurrent(.recording) else { return }
             // Map the bounded dBFS range to a small HUD-friendly level without
             // retaining audio samples or transcript content. The tap reports
             // faster than a meter should move; coalesce to 20 Hz (D.5).
@@ -603,6 +605,18 @@ final class DictationJobRunner {
             break
         case .deviceChanged:
             break
+        }
+    }
+
+    /// Detected once per job: stamps `captureStartMilliseconds`, flips
+    /// `captureStarted` for the HUD, and runs the start side effects (cue,
+    /// then mute).
+    private nonisolated(nonsending) func markCaptureStarted() async {
+        guard !captureStarted else { return }
+        captureStarted = true
+        timeline?.recordCaptureStarted(at: clock.now, for: jobID)
+        if let settings = settingsSnapshot {
+            await beginRecordingSideEffects(settings: settings)
         }
     }
 

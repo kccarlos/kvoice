@@ -162,6 +162,46 @@ final class InstanceHandoffTests: XCTestCase {
         XCTAssertEqual(outcome.waited, .milliseconds(300))
     }
 
+    /// 2026-10-22: the snapshot's `isTerminated` never flipped in the newly
+    /// launched process, so a restart whose old instance had exited still
+    /// waited 7 s, sent terminate and forceTerminate, and logged
+    /// `stillRunning`. The lookup no longer listing the PID is the exit.
+    func testAnInstanceTheLookupNoLongerListsHasExitedThoughItsFlagIsStale() async {
+        let old = FakeInstance(clock: clock, exitsAfter: nil, processIdentifier: 4242)
+        let lookup = VanishingLookup(instances: [old], clock: clock, vanishAfter: .milliseconds(250))
+        let handoff = InstanceHandoff(
+            lookup: lookup, replacesProcessIdentifier: 4242, clock: clock,
+            waitFor: .seconds(5), terminateGrace: .seconds(1), pollInterval: .milliseconds(100)
+        )
+        XCTAssertTrue(handoff.isAnotherInstanceRunning)
+
+        let outcome = await handoff.run()
+
+        XCTAssertFalse(old.isTerminated, "the stale snapshot still says running")
+        XCTAssertEqual(outcome, .init(instanceCount: 1, waited: .milliseconds(300), terminateRequested: false, forceTerminateRequested: false, remaining: 0))
+        XCTAssertEqual(outcome.reason, "exited")
+        XCTAssertEqual(old.terminateCalls, 0)
+        XCTAssertEqual(old.forceTerminateCalls, 0)
+    }
+
+    /// A process that is force-killed but whose snapshot never updates is
+    /// reported gone once the lookup drops it, not `stillRunning`.
+    func testAForceKilledInstanceTheLookupDropsIsNotReportedStillRunning() async {
+        let old = FakeInstance(clock: clock, exitsAfter: nil, processIdentifier: 4242)
+        let lookup = VanishingLookup(instances: [old], clock: clock, vanishAfter: nil)
+        lookup.vanishesOnForceTerminate = old
+        let handoff = InstanceHandoff(
+            lookup: lookup, replacesProcessIdentifier: 4242, clock: clock,
+            waitFor: .seconds(5), terminateGrace: .seconds(1), pollInterval: .milliseconds(100)
+        )
+
+        let outcome = await handoff.run()
+
+        XCTAssertTrue(outcome.forceTerminateRequested)
+        XCTAssertEqual(outcome.remaining, 0)
+        XCTAssertEqual(outcome.reason, "forceTerminated")
+    }
+
     func testReplacedProcessIdentifierIsReadFromTheLaunchArguments() {
         XCTAssertEqual(InstanceHandoff.replacedProcessIdentifier(in: ["kvoice", "--replaces-pid", "4242"]), 4242)
         XCTAssertNil(InstanceHandoff.replacedProcessIdentifier(in: ["kvoice"]), "a normal launch")
@@ -170,11 +210,59 @@ final class InstanceHandoffTests: XCTestCase {
         XCTAssertEqual(InstanceHandoff.replacesProcessArgument, "--replaces-pid", "the string restartApp() passes")
     }
 
+    /// 2026-10-22, the old half of the same bug: `restartApp()` called
+    /// `NSApp.terminate(nil)` inside a MainActor task, so `.terminateLater`'s
+    /// nested run loop ran inside a main-queue job and the reply task could
+    /// never run — the old instance hung until it was force-killed. The
+    /// terminate must be scheduled on the run loop, not called from the
+    /// relaunch's completion task.
+    func testRestartSchedulesTerminateOnTheRunLoopNotInsideATask() throws {
+        let root = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent().deletingLastPathComponent()
+            .deletingLastPathComponent().deletingLastPathComponent()
+            .deletingLastPathComponent()
+        let source = try String(
+            contentsOf: root.appendingPathComponent("Apps/KvoiceApp/AppDelegate+Settings.swift"),
+            encoding: .utf8
+        )
+        let start = try XCTUnwrap(source.range(of: "func restartApp() {"))
+        let end = try XCTUnwrap(source.range(of: "\n    }\n", range: start.upperBound..<source.endIndex))
+        let body = source[start.upperBound..<end.lowerBound]
+            .split(separator: "\n")
+            .filter { !$0.trimmingCharacters(in: .whitespaces).hasPrefix("//") }
+            .joined(separator: "\n")
+        XCTAssertFalse(body.contains("NSApp.terminate(nil)"), "terminate inside the completion task deadlocks .terminateLater")
+        XCTAssertTrue(body.contains("perform(#selector(NSApplication.terminate(_:)), with: nil, afterDelay: 0)"))
+    }
+
     // MARK: Doubles
 
     private struct FakeLookup: RunningInstanceLookup {
         let instances: [FakeInstance]
         func otherInstances() -> [any RunningInstance] { instances }
+    }
+
+    /// Lists its instances until `vanishAfter` on the fake clock (never when
+    /// nil) or until `vanishesOnForceTerminate` has been force-terminated —
+    /// the PID leaving `runningApplications` while the snapshot's flag stays
+    /// stale.
+    private final class VanishingLookup: RunningInstanceLookup {
+        let instances: [FakeInstance]
+        private let clock: AdvancingClock
+        private let vanishesAt: ContinuousClock.Instant?
+        var vanishesOnForceTerminate: FakeInstance?
+
+        init(instances: [FakeInstance], clock: AdvancingClock, vanishAfter: Duration?) {
+            self.instances = instances
+            self.clock = clock
+            vanishesAt = vanishAfter.map { clock.now + $0 }
+        }
+
+        func otherInstances() -> [any RunningInstance] {
+            if let vanishesAt, clock.now >= vanishesAt { return [] }
+            if let vanishesOnForceTerminate, vanishesOnForceTerminate.forceTerminateCalls > 0 { return [] }
+            return instances
+        }
     }
 
     /// Exits on the fake clock at `exitsAfter` (never when nil), and on

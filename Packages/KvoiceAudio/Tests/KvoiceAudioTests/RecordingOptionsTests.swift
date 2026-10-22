@@ -196,6 +196,65 @@ final class RecordingOptionsTests: XCTestCase {
         XCTAssertLessThanOrEqual(recording.peakLevelDBFS, SpeechGate.silencePeakThresholdDBFS)
     }
 
+    // MARK: Bounded wait on digital silence (2026-10-22)
+
+    func testDigitalSilenceStartsTheRecordingAfterTheBound() async throws {
+        let engine = RoutingTestEngine(inputFormat: .init(sampleRate: 16_000, channelCount: 1))
+        let service = AVAudioCaptureService(
+            engine: engine,
+            converterFactory: PassthroughConverterFactory(),
+            permissionProvider: AlwaysGrantedMicrophonePermission(),
+            deviceProvider: nil,
+            leadingSilenceStartBoundSeconds: 1
+        )
+        let events = LevelCollector()
+        let jobID = UUID()
+        try await service.start(jobID: jobID) { event in await events.append(event) }
+        // A muted input: zeros only. 1 s of them is the bound; the third
+        // buffer is where the recording starts.
+        engine.emit(samples: Array(repeating: 0, count: 8_000))
+        engine.emit(samples: Array(repeating: 0, count: 8_000))
+        engine.emit(samples: Array(repeating: 0, count: 4_000))
+        engine.emit(samples: Array(repeating: 0, count: 4_000))
+        for _ in 0..<2_000 where await events.peaks.count < 4 {
+            await Task.yield()
+        }
+        let starts = await events.captureStarts
+        XCTAssertEqual(starts, 1, "announced once, at the first buffer after the bound")
+        let recording = try await service.stop(jobID: jobID)
+
+        XCTAssertEqual(recording.samples.count, 8_000, "only the silence before the bound is dropped")
+        XCTAssertEqual(recording.duration, .seconds(0.5))
+        XCTAssertLessThanOrEqual(
+            recording.peakLevelDBFS, SpeechGate.silencePeakThresholdDBFS,
+            "still a silent recording: the silence outcome, no History row"
+        )
+    }
+
+    func testSignalInsideTheBoundStillStartsAtTheSignal() async throws {
+        let engine = RoutingTestEngine(inputFormat: .init(sampleRate: 16_000, channelCount: 1))
+        let service = AVAudioCaptureService(
+            engine: engine,
+            converterFactory: PassthroughConverterFactory(),
+            permissionProvider: AlwaysGrantedMicrophonePermission(),
+            deviceProvider: nil
+        )
+        let events = LevelCollector()
+        let jobID = UUID()
+        try await service.start(jobID: jobID) { event in await events.append(event) }
+        // 1.75 s of Bluetooth zero-fill (the 2026-09-16 measurement), then speech.
+        engine.emit(samples: Array(repeating: 0, count: 28_000))
+        engine.emit(samples: Array(repeating: 0.3, count: 4_000))
+        for _ in 0..<2_000 where await events.peaks.count < 2 {
+            await Task.yield()
+        }
+        let starts = await events.captureStarts
+        XCTAssertEqual(starts, 1)
+        let recording = try await service.stop(jobID: jobID)
+        XCTAssertEqual(recording.samples.count, 4_000, "the bound did not cut in: the recording starts at the speech")
+        XCTAssertEqual(recording.samples.first, 0.3)
+    }
+
     // MARK: Bluetooth transport (2026-09-16)
 
     func testBluetoothTransportsMapToTheDeviceFlagAndNothingElseDoes() {
@@ -351,10 +410,14 @@ private final class FakeVolumeAccess: OutputVolumeAccess, @unchecked Sendable {
 
 private actor LevelCollector {
     private(set) var peaks: [Float] = []
+    private(set) var captureStarts = 0
 
     func append(_ event: AudioCaptureEvent) {
         if case .level(_, let peak) = event {
             peaks.append(peak)
+        }
+        if case .captureStarted = event {
+            captureStarts += 1
         }
     }
 }

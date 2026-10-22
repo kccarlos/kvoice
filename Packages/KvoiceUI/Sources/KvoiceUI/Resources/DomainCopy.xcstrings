@@ -111,6 +111,16 @@
         }
       }
     },
+    "A second translation target for two-way conversations without switching back and forth.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "第二个翻译目标，用于双向对话，无需来回切换。"
+          }
+        }
+      }
+    },
     "AI Actions is off, so this has no effect until you turn it on.": {
       "localizations": {
         "zh-Hans": {
@@ -217,6 +227,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "全部时间"
+          }
+        }
+      }
+    },
+    "Answer the dictated question directly; steps or code only when needed.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "直接回答口述的问题；只在需要时给出步骤或代码。"
           }
         }
       }
@@ -391,12 +411,32 @@
         }
       }
     },
+    "Clean Up": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "清理"
+          }
+        }
+      }
+    },
     "Cloud": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
             "value": "云端"
+          }
+        }
+      }
+    },
+    "Concise bullets that keep every decision, number, and name.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "简洁的要点，保留每个决定、数字和名字。"
           }
         }
       }
@@ -417,6 +457,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "听写已取消。"
+          }
+        }
+      }
+    },
+    "Email Draft": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "邮件草稿"
           }
         }
       }
@@ -447,6 +497,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Fn"
+          }
+        }
+      }
+    },
+    "Formal rewrite: polite, concise, fixes homophone and recognition slips, keeps details.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正式改写：礼貌、简洁，修正同音字和识别错误，保留细节。"
           }
         }
       }
@@ -507,6 +567,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "混合"
+          }
+        }
+      }
+    },
+    "Improve clarity and flow, fix grammar and recognition slips; keep the language mix.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "让表达更清楚流畅，修正语法和识别错误；保留原有的语言混用。"
           }
         }
       }
@@ -611,12 +681,32 @@
         }
       }
     },
+    "Lightly clean the speech and translate it into the target language.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "轻度清理语音内容，并翻译成目标语言。"
+          }
+        }
+      }
+    },
     "MLX": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
             "value": "MLX"
+          }
+        }
+      }
+    },
+    "Message": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "消息"
           }
         }
       }
@@ -657,6 +747,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "这台 Mac 上的麦克风访问受到限制。"
+          }
+        }
+      }
+    },
+    "Minimal cleanup: remove fillers and false starts; keep wording, tone, and structure.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "最小清理：去掉口头语和说错重来的部分，保留措辞、语气和结构。"
           }
         }
       }
@@ -821,6 +921,16 @@
         }
       }
     },
+    "Notes": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "笔记"
+          }
+        }
+      }
+    },
     "Ollama (local)": {
       "localizations": {
         "zh-Hans": {
@@ -891,6 +1001,26 @@
         }
       }
     },
+    "Polish": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "润色"
+          }
+        }
+      }
+    },
+    "Polite, concise email with greeting and sign-off; facts intact.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "礼貌、简洁、带问候和落款的邮件；事实保持不变。"
+          }
+        }
+      }
+    },
     "Private Cloud Compute is available only in the Mac App Store edition of KVoice.": {
       "localizations": {
         "zh-Hans": {
@@ -921,12 +1051,32 @@
         }
       }
     },
+    "Prompt": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "提示词"
+          }
+        }
+      }
+    },
     "Push-to-Talk": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
             "value": "按住说话"
+          }
+        }
+      }
+    },
+    "Q&A": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "问答"
           }
         }
       }
@@ -981,12 +1131,32 @@
         }
       }
     },
+    "Restructure spoken thinking into short, grouped notes.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "把口述的想法整理成简短、分组的笔记。"
+          }
+        }
+      }
+    },
     "Result copied to the clipboard.": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
             "value": "结果已复制到剪贴板。"
+          }
+        }
+      }
+    },
+    "Rewrite as a clear, courteous message ready to send.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "改写成清楚、礼貌、可直接发送的消息。"
           }
         }
       }
@@ -1061,12 +1231,52 @@
         }
       }
     },
+    "Speech to one safe shell command. Nothing is executed.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "把语音变成一条安全的 Shell 命令。不会执行任何内容。"
+          }
+        }
+      }
+    },
     "Streaming": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
             "value": "流式"
+          }
+        }
+      }
+    },
+    "Summarize": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "摘要"
+          }
+        }
+      }
+    },
+    "TODO List": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "待办清单"
+          }
+        }
+      }
+    },
+    "Terminal": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "终端"
           }
         }
       }
@@ -1451,12 +1661,52 @@
         }
       }
     },
+    "Translate": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "翻译"
+          }
+        }
+      }
+    },
+    "Translate 2": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "翻译 2"
+          }
+        }
+      }
+    },
+    "Turn a spoken request into a precise prompt for an AI assistant.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "把口述的请求变成给 AI 助手的精确提示词。"
+          }
+        }
+      }
+    },
     "Turn on Apple Intelligence in System Settings.": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
             "value": "请在“系统设置”中打开 Apple 智能。"
+          }
+        }
+      }
+    },
+    "Turn speech into a checklist of actionable tasks; skip cancelled items.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "把语音变成可执行任务的清单；跳过已取消的事项。"
           }
         }
       }
@@ -1477,6 +1727,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "WhisperKit (CoreML)"
+          }
+        }
+      }
+    },
+    "Writing": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "书面语"
           }
         }
       }

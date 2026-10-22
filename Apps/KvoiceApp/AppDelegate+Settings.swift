@@ -159,7 +159,15 @@ extension AppDelegate {
                     NSSound.beep()
                     return
                 }
-                NSApp.terminate(nil)
+                // Not `NSApp.terminate(nil)` here (2026-10-22). This block is
+                // a main-queue job; `applicationShouldTerminate` answers
+                // `.terminateLater` and AppKit then spins a nested run loop
+                // *inside* that job, so the main queue never runs the
+                // MainActor task that sends the reply. The old instance hung
+                // until the new one force-killed it ~6 s later, never ran its
+                // shutdown steps or logged `app.terminate.*`. Scheduled on the
+                // run loop instead, terminate runs outside any queue job.
+                NSApp.perform(#selector(NSApplication.terminate(_:)), with: nil, afterDelay: 0)
             }
         }
     }

@@ -317,6 +317,14 @@ public actor FakeAudioCaptureService: AudioCaptureService {
         await events?(.level(rmsDBFS: -32, peakDBFS: -20))
     }
 
+    /// The recorder's explicit start (`AudioCaptureEvent.captureStarted`),
+    /// as the real recorder sends it when the bounded wait on digital
+    /// silence runs out (2026-10-22), followed by that buffer's silent level.
+    public func deliverBoundedStart() async {
+        await events?(.captureStarted)
+        await events?(.level(rmsDBFS: -120, peakDBFS: -120))
+    }
+
     /// One tap buffer of digital silence for the running capture.
     public func deliverSilence() async {
         await events?(.level(rmsDBFS: -120, peakDBFS: -120))

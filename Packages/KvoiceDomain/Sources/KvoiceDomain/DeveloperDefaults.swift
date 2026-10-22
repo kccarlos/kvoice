@@ -46,6 +46,12 @@ public struct DeveloperDefaults: Codable, Sendable, Equatable {
     public var signalPeakThresholdDBFS: Float
     /// Silence kept after the last audible frame when the tail is trimmed.
     public var trailingSilenceKeepSeconds: Double
+    /// How long a capture may deliver only digital silence before it counts
+    /// as started anyway (2026-10-22): above the AirPods zero-fill measured
+    /// on 2026-09-16 (≤ 1.75 s after the engine started), so a Bluetooth
+    /// switch still holds the cue, but a muted or idle input no longer keeps
+    /// "Starting mic…" forever.
+    public var leadingSilenceStartBoundSeconds: Double
 
     // MARK: Dictionary (ADR-018)
 
@@ -108,6 +114,7 @@ public struct DeveloperDefaults: Codable, Sendable, Equatable {
         quietPeakThresholdDBFS: Float = -28,
         signalPeakThresholdDBFS: Float = -100,
         trailingSilenceKeepSeconds: Double = 0.4,
+        leadingSilenceStartBoundSeconds: Double = 2.5,
         dictionaryReserveFraction: Double = 0.10,
         hybridTapWindowMilliseconds: Int = 250,
         doublePressWindowMilliseconds: Int = 400,
@@ -131,6 +138,7 @@ public struct DeveloperDefaults: Codable, Sendable, Equatable {
         self.quietPeakThresholdDBFS = quietPeakThresholdDBFS
         self.signalPeakThresholdDBFS = signalPeakThresholdDBFS
         self.trailingSilenceKeepSeconds = trailingSilenceKeepSeconds
+        self.leadingSilenceStartBoundSeconds = leadingSilenceStartBoundSeconds
         self.dictionaryReserveFraction = dictionaryReserveFraction
         self.hybridTapWindowMilliseconds = hybridTapWindowMilliseconds
         self.doublePressWindowMilliseconds = doublePressWindowMilliseconds
@@ -160,6 +168,7 @@ public struct DeveloperDefaults: Codable, Sendable, Equatable {
         case quietPeakThresholdDBFS
         case signalPeakThresholdDBFS
         case trailingSilenceKeepSeconds
+        case leadingSilenceStartBoundSeconds
         case dictionaryReserveFraction
         case hybridTapWindowMilliseconds
         case doublePressWindowMilliseconds
@@ -192,6 +201,8 @@ public struct DeveloperDefaults: Codable, Sendable, Equatable {
         quietPeakThresholdDBFS = try values.decodeIfPresent(Float.self, forKey: .quietPeakThresholdDBFS) ?? compiled.quietPeakThresholdDBFS
         signalPeakThresholdDBFS = try values.decodeIfPresent(Float.self, forKey: .signalPeakThresholdDBFS) ?? compiled.signalPeakThresholdDBFS
         trailingSilenceKeepSeconds = try values.decodeIfPresent(Double.self, forKey: .trailingSilenceKeepSeconds) ?? compiled.trailingSilenceKeepSeconds
+        leadingSilenceStartBoundSeconds = try values.decodeIfPresent(Double.self, forKey: .leadingSilenceStartBoundSeconds)
+            ?? compiled.leadingSilenceStartBoundSeconds
         dictionaryReserveFraction = try values.decodeIfPresent(Double.self, forKey: .dictionaryReserveFraction) ?? compiled.dictionaryReserveFraction
         hybridTapWindowMilliseconds = try values.decodeIfPresent(Int.self, forKey: .hybridTapWindowMilliseconds) ?? compiled.hybridTapWindowMilliseconds
         doublePressWindowMilliseconds = try values.decodeIfPresent(Int.self, forKey: .doublePressWindowMilliseconds) ?? compiled.doublePressWindowMilliseconds
@@ -224,6 +235,7 @@ public struct DeveloperDefaults: Codable, Sendable, Equatable {
         .quietPeakThresholdDBFS: -160...0,
         .signalPeakThresholdDBFS: -160...0,
         .trailingSilenceKeepSeconds: 0...5,
+        .leadingSilenceStartBoundSeconds: 0.5...10,
         .dictionaryReserveFraction: 0...0.9,
         .hybridTapWindowMilliseconds: 0...2_000,
         .doublePressWindowMilliseconds: 0...2_000,
@@ -262,6 +274,7 @@ public struct DeveloperDefaults: Codable, Sendable, Equatable {
         case .quietPeakThresholdDBFS: return Double(quietPeakThresholdDBFS)
         case .signalPeakThresholdDBFS: return Double(signalPeakThresholdDBFS)
         case .trailingSilenceKeepSeconds: return trailingSilenceKeepSeconds
+        case .leadingSilenceStartBoundSeconds: return leadingSilenceStartBoundSeconds
         case .dictionaryReserveFraction: return dictionaryReserveFraction
         case .hybridTapWindowMilliseconds: return Double(hybridTapWindowMilliseconds)
         case .doublePressWindowMilliseconds: return Double(doublePressWindowMilliseconds)
@@ -324,7 +337,8 @@ public struct DeveloperDefaults: Codable, Sendable, Equatable {
             silencePeakDBFS: silencePeakThresholdDBFS,
             quietPeakDBFS: quietPeakThresholdDBFS,
             signalPeakDBFS: signalPeakThresholdDBFS,
-            trailingSilenceKeepSeconds: trailingSilenceKeepSeconds
+            trailingSilenceKeepSeconds: trailingSilenceKeepSeconds,
+            leadingSilenceStartBoundSeconds: leadingSilenceStartBoundSeconds
         )
     }
 

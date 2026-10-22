@@ -3,6 +3,7 @@
   "quietPeakThresholdDBFS": -28,
   "signalPeakThresholdDBFS": -100,
   "trailingSilenceKeepSeconds": 0.4,
+  "leadingSilenceStartBoundSeconds": 2.5,
   "dictionaryReserveFraction": 0.1,
   "hybridTapWindowMilliseconds": 250,
   "doublePressWindowMilliseconds": 400,

@@ -71,7 +71,7 @@ extension AppDelegate {
         let action = settings.ai.activePromptMode
         return HUDAIIndicator(
             isEnabled: settings.ai.mode != .off,
-            actionName: action?.name,
+            actionName: action?.displayTitle,
             shortcutBadge: action.flatMap { promptModeSettingsViewModel.shortcutBadge(for: $0.id) }
         )
     }

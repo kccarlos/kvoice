@@ -253,8 +253,9 @@ public struct StatusPanelView: View {
     }
 
     private static func isDownloading(_ feed: StatusPanelState.Feed) -> Bool {
-        if case .download = feed { return true }
-        return false
+        // The arrow means bytes are coming in; loading and optimizing keep
+        // the plain glyph.
+        feed.modelPhase?.isDownload == true
     }
 
     /// The line under the title. Ready: a 7 pt ok dot and quiet words. A
@@ -332,7 +333,7 @@ public struct StatusPanelView: View {
     /// The meter exists only while a job is recording — the microphone is
     /// never open otherwise (product rule 2026-09-16); `StatusPanelState.feed`
     /// carries `.meter` for a live recording and nothing else. While a
-    /// model downloads, its progress takes the row instead.
+    /// model is on its way to ready, its phase and progress take the row.
     @ViewBuilder
     private func feedRow(_ feed: StatusPanelState.Feed) -> some View {
         switch feed {
@@ -344,7 +345,8 @@ public struct StatusPanelView: View {
                 .accessibilityElement(children: .ignore)
                 .accessibilityLabel(Text("Recording", bundle: .module))
                 .accessibilityValue(Text(verbatim: HUDViewState.formatElapsed(elapsed)))
-        case .download(let label, let fraction):
+        case .modelProgress(let label, let phase):
+            let fraction = phase.fraction
             VStack(alignment: .leading, spacing: 5) {
                 ProgressTrack(fraction: fraction, reduceMotion: reduceMotion)
                 HStack {

@@ -374,10 +374,10 @@ struct CardDivider: View {
     }
 }
 
-/// The model card's progress: a 6 pt cursor bar (a sliding segment when
-/// Core ML reports no fraction, still under Reduce Motion), the activity on
-/// the left and the percentage on the right. The width eases over 300 ms
-/// (Motion § 7) and the percentage rolls.
+/// The model card's progress: a 6 pt cursor bar (`KVProgressBar`: a sliding
+/// segment when Core ML reports no fraction, still under Reduce Motion), the
+/// activity on the left and the percentage on the right. The width eases
+/// over 300 ms (Motion § 7) and the percentage rolls.
 struct ProgressStrip: View {
     let fraction: Double?
     let label: String
@@ -386,30 +386,7 @@ struct ProgressStrip: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            GeometryReader { proxy in
-                ZStack(alignment: .leading) {
-                    Capsule().fill(Color.kv.fill)
-                    if let fraction {
-                        Capsule().fill(Color.kv.cursor)
-                            .frame(width: max(6, proxy.size.width * min(1, max(0, fraction))))
-                            .animation(reduceMotion ? nil : .easeInOut(duration: 0.3), value: fraction)
-                    } else if reduceMotion {
-                        Capsule().fill(Color.kv.cursor)
-                            .frame(width: proxy.size.width * 0.35)
-                            .offset(x: proxy.size.width * 0.325)
-                    } else {
-                        TimelineView(.animation) { context in
-                            let phase = context.date.timeIntervalSinceReferenceDate
-                                .truncatingRemainder(dividingBy: 1.4) / 1.4
-                            Capsule().fill(Color.kv.cursor)
-                                .frame(width: proxy.size.width * 0.35)
-                                .offset(x: -proxy.size.width * 0.35 + proxy.size.width * 1.35 * phase)
-                        }
-                    }
-                }
-                .clipShape(Capsule())
-            }
-            .frame(height: 6)
+            KVProgressBar(fraction: fraction, reduceMotion: reduceMotion, height: 6)
             HStack(alignment: .firstTextBaseline, spacing: 12) {
                 Text(verbatim: label)
                     .fixedSize(horizontal: false, vertical: true)

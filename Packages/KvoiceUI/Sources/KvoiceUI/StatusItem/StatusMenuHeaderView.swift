@@ -119,7 +119,7 @@ public struct StatusMenuHeaderView: View {
                     .foregroundStyle(secondaryColor(state))
                     .frame(minWidth: 32, alignment: .trailing)
             }
-        case .download(let label, let fraction):
+        case .modelProgress(let label, let fraction):
             // The bar sits under its label, the way Control Center stacks a
             // value over a slider, so the row needs no more width than the
             // label ("Downloading Whisper large-v3-turbo… 42%").

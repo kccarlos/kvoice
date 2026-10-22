@@ -464,29 +464,18 @@ struct LevelBars: View {
     }
 }
 
-/// The download's 5 pt cursor-blue bar (radius 3) on the panel fill; a nil
-/// fraction draws the design's still centre segment (35 % at 30 %). The
-/// width eases over 300 ms (Motion § 7).
+/// The progress row's 5 pt cursor-blue bar on the panel fill: the shared
+/// `KVProgressBar`, so a nil fraction (verifying, loading, the first Core ML
+/// build, a download of unknown size) slides a segment across the track —
+/// still under Reduce Motion — and a known one fills to it, easing over
+/// 300 ms (Motion § 7). Before 2026-10-22 a nil fraction drew a still
+/// segment whatever Reduce Motion said, so the panel looked stalled for the
+/// minutes a first compile takes.
 struct ProgressTrack: View {
     let fraction: Double?
     let reduceMotion: Bool
 
     var body: some View {
-        GeometryReader { proxy in
-            ZStack(alignment: .leading) {
-                RoundedRectangle(cornerRadius: 3, style: .continuous).fill(PanelColor.fill)
-                if let fraction {
-                    RoundedRectangle(cornerRadius: 3, style: .continuous).fill(Color.kv.cursor)
-                        .frame(width: proxy.size.width * CGFloat(min(max(fraction, 0), 1)))
-                } else {
-                    RoundedRectangle(cornerRadius: 3, style: .continuous).fill(Color.kv.cursor)
-                        .frame(width: proxy.size.width * 0.35)
-                        .offset(x: proxy.size.width * 0.3)
-                }
-            }
-        }
-        .frame(height: 5)
-        .animation(reduceMotion ? nil : .easeInOut(duration: 0.3), value: fraction)
-        .accessibilityHidden(true)
+        KVProgressBar(fraction: fraction, reduceMotion: reduceMotion, height: 5, track: PanelColor.fill)
     }
 }

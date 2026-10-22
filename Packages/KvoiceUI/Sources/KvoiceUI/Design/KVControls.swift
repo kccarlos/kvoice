@@ -82,6 +82,14 @@ public struct KVSelect<Value: Hashable, Options: View>: View {
             Picker(selection: $selection) { options } label: { title }
                 .pickerStyle(.inline)
                 .labelsHidden()
+                // An inline picker's choices become the menu's checkmark
+                // items through the toggle style. A card row's
+                // `KVRowToggleStyle` (inherited from `KVCard`) cannot be
+                // bridged into an `NSMenuItem`, so AppKit drew every choice
+                // disabled — the 0.1.7 "Interface language is greyed out"
+                // bug, on every `KVSelect` in a card. The menu always gets
+                // the system style.
+                .toggleStyle(.automatic)
         } label: {
             KVSelectLabel(text: current)
         }

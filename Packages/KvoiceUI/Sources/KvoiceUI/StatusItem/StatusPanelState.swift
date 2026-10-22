@@ -113,9 +113,23 @@ public struct StatusPanelState: Equatable, Sendable {
         case none
         /// The level bar and m:ss clock — recording with capture started only.
         case meter(level: Double, elapsed: Duration)
-        /// The progress bar under "Downloading <model>…", with the percent
-        /// drawn apart (`percentText`); nil is indeterminate.
-        case download(label: String, fraction: Double?)
+        /// The progress bar under the model's phase — "Downloading
+        /// <model>…" with the percent drawn apart (`percentText`), or
+        /// "Loading <model>…" / "Optimizing <model> for this Mac (first
+        /// time only)…" with an indeterminate bar (`phase.fraction` nil).
+        case modelProgress(label: String, phase: ModelReadinessPhase)
+
+        /// The bar's fraction; nil is indeterminate.
+        public var fraction: Double? {
+            if case .modelProgress(_, let phase) = self { return phase.fraction }
+            return nil
+        }
+
+        /// The model's phase while the row shows one.
+        public var modelPhase: ModelReadinessPhase? {
+            if case .modelProgress(_, let phase) = self { return phase }
+            return nil
+        }
     }
 
     /// The primary control's icon and tint.
@@ -271,18 +285,20 @@ public struct StatusPanelState: Equatable, Sendable {
         let idle = kind == .idle
 
         // The feed is the header's trailing slot: `.meter` only for a live
-        // recording, `.download` only while idle with an install running.
+        // recording, `.modelProgress` only while idle with a model on its
+        // way to ready.
         // The card draws the percent apart from the words, so the label is
         // the header's without the figure.
         let feed: Feed
         switch header.trailing {
         case .meter(let level, let elapsed):
             feed = .meter(level: level, elapsed: elapsed)
-        case .download(let label, let fraction):
-            let words = headerContext.modelInstall.map {
-                StatusMenuHeaderState.downloadLabel(.init(modelName: $0.modelName, fraction: nil))
-            } ?? label
-            feed = .download(label: words, fraction: fraction)
+        case .modelProgress(let label, let fraction):
+            if let install = headerContext.modelInstall {
+                feed = .modelProgress(label: install.phase.progressLabel(modelName: install.modelName), phase: install.phase)
+            } else {
+                feed = .modelProgress(label: label, phase: .downloading(fraction: fraction))
+            }
         case .none, .shortcut, .note:
             feed = .none
         }
@@ -348,8 +364,9 @@ public struct StatusPanelState: Equatable, Sendable {
         switch kind {
         case .idle:
             if readinessIsAttention {
-                // A download is the fix happening: amber words, plain card.
-                if case .download = feed {} else { cardTone = .warn }
+                // A model on its way to ready is the fix happening: amber
+                // words, plain card.
+                if case .modelProgress = feed {} else { cardTone = .warn }
                 readinessTone = .warn
             } else if context.memoryPressure != nil, !context.isBlocked {
                 // Advisory, not blocking: the design's amber subtitle.
@@ -480,7 +497,7 @@ public struct StatusPanelState: Equatable, Sendable {
         // `pausableDownload` for that and nothing else (cancelling a
         // verification or a first load throws the work away; cancelling a
         // download pauses it, and Speech Models offers Resume).
-        if idle, case .download = feed, let id = context.pausableDownload {
+        if idle, feed.modelPhase?.isDownload == true, let id = context.pausableDownload {
             rows.append(Row(
                 id: .pauseDownload,
                 symbol: "pause.circle",
@@ -650,9 +667,9 @@ public struct StatusPanelState: Equatable, Sendable {
         if let shortcutNote { parts.append(shortcutNote) }
         switch feed {
         case .meter(_, let elapsed): parts.append(HUDViewState.formatElapsed(elapsed))
-        case .download(let label, let fraction):
+        case .modelProgress(let label, let phase):
             parts.append(label)
-            if let percent = Self.percentText(fraction) { parts.append(percent) }
+            if let percent = Self.percentText(phase.fraction) { parts.append(percent) }
         case .none: break
         }
         // After a job the title names the outcome; the control's verb
@@ -715,7 +732,7 @@ public struct StatusPanelState: Equatable, Sendable {
         switch feed {
         case .none: feedKind = 0
         case .meter: feedKind = 1
-        case .download: feedKind = 2
+        case .modelProgress: feedKind = 2
         }
         return LayoutSignature(
             primaryGlyph: primaryGlyph,

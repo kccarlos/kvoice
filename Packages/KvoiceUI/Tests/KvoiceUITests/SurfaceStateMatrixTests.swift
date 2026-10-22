@@ -375,4 +375,166 @@ final class SurfaceStateMatrixTests: XCTestCase {
             }
         }
     }
+
+    // MARK: Model readiness phases (fix/post-0.1.7)
+
+    private static let whisperEntry = SpeechModelCatalogEntry(
+        id: "whisper", displayName: "Whisper", variantName: "Standard",
+        family: "whisper-large-v3-turbo", runtime: .whisperKitCoreML, hosting: .onDevice,
+        supportsStreaming: true, supportsBatch: true, downloadBytes: 650_000_000,
+        languageSummary: "99 languages", summary: "Default.", isRecommended: true,
+        revision: "rev", manifestResource: "whisper", manifestSHA256: String(repeating: "a", count: 64)
+    )
+
+    /// The words every surface must use for a phase. Verifying also covers
+    /// the external-folder check, which the cards call "Checking".
+    private static func phaseWords(_ phase: ModelReadinessPhase) -> [String] {
+        switch phase {
+        case .downloading: return ["Download"]
+        case .downloadPaused: return ["paused", "Paused"]
+        case .verifying: return ["Verif", "Check"]
+        case .installing: return ["Install"]
+        case .loading: return ["Load"]
+        case .optimizing: return ["Optimiz"]
+        }
+    }
+
+    /// Every other phase's words: a surface that shows one of them for this
+    /// phase has drifted (the 0.1.7 panel said "Downloading" while Speech
+    /// Models said the model was being optimized).
+    private static func otherPhaseWords(_ phase: ModelReadinessPhase) -> [String] {
+        let all: [ModelReadinessPhase] = [.downloading(fraction: nil), .downloadPaused, .verifying, .installing, .loading, .optimizing]
+        // A paused download is still about the download.
+        let mine = Set(phaseWords(phase) + (phase == .downloadPaused ? ["Download"] : []))
+        return all.filter { !Self.samePhase($0, phase) }.flatMap(phaseWords).filter { !mine.contains($0) }
+    }
+
+    private static func samePhase(_ a: ModelReadinessPhase, _ b: ModelReadinessPhase) -> Bool {
+        switch (a, b) {
+        case (.downloading, .downloading): return true
+        default: return a == b
+        }
+    }
+
+    private func assertSays(_ text: String, _ phase: ModelReadinessPhase, _ surface: String, _ tag: String, file: StaticString = #filePath, line: UInt = #line) {
+        XCTAssertTrue(Self.phaseWords(phase).contains { text.contains($0) }, "\(surface) does not name \(phase): \(tag) → \(text)", file: file, line: line)
+        for word in Self.otherPhaseWords(phase) {
+            XCTAssertFalse(text.contains(word), "\(surface) says \(word) during \(phase): \(tag) → \(text)", file: file, line: line)
+        }
+    }
+
+    /// While the default model is on its way to ready, the menu-bar icon,
+    /// the menu header, the status panel (progress row and readiness line),
+    /// the sidebar pill, Home's hero, the wizard (chip and progress label)
+    /// and Speech Models all name the same phase — under each activity the
+    /// library runs it in, because `.downloading` spans the load and the
+    /// first compile and `.installing` is the launch re-verification that
+    /// loads the default.
+    func testEveryModelLifecycleStateNamesTheSamePhaseOnEverySurface() {
+        let summary = InstalledModelSummary(modelID: "whisper", revision: "r", ownership: .managedByKvoice)
+        let failure = ModelFailure(code: KVoiceErrorCode.modelLoadFailed.rawValue, message: "Failed")
+        let states: [ModelLifecycleState] = [
+            .absent, .validatingExternal, .downloading(completed: 1, total: 4), .downloading(completed: 0, total: 0),
+            .downloadPaused(resumableBytes: 1), .verifying(completedFiles: 1, totalFiles: 2), .installing, .loading,
+            .optimizing, .ready(summary), .inference(summary, jobID: Self.job), .corrupt(failure),
+            .incompatible(failure), .deleting(summary), .error(failure), .unavailable(failure),
+        ]
+        let activities: [ModelActivity] = [.downloading("whisper"), .installing("whisper"), .loading("whisper")]
+        for state in states {
+            let phase = ModelReadinessPhase(state)
+            let tag = "\(state)"
+
+            // Readiness line: status row, panel, sidebar pill, Home hero.
+            let readinessTitle = ModelReadinessPhase.readinessTitle(for: state)
+            let sidebar = MainWindowReadiness(statusTitle: readinessTitle, isBlocked: true, shortcutGlyphs: "⌃⇧Space")
+            let home = HomeHeroState(readiness: sidebar, interaction: .pushToTalk, modelName: "Whisper", microphoneName: "Mic", ai: .off)
+            if let phase {
+                assertSays(readinessTitle, phase, "readiness", tag)
+                assertSays(home.readiness.title, phase, "Home", tag)
+            } else {
+                XCTAssertEqual(readinessTitle, "Model not ready", tag)
+            }
+            XCTAssertEqual(sidebar.tone, .warn, tag)
+            XCTAssertEqual(home.readiness.tone, sidebar.tone, tag)
+
+            // Speech Models' "In use" card (what the page renders, resident
+            // or not), its package status line, and the wizard.
+            let card = ModelSettingsViewModel.statusDescription(for: state)
+            let wizard = OnboardingViewModel(stage: .ready, modelState: state)
+            if let phase {
+                assertSays(card, phase, "Speech Models status", tag)
+                for resident in [false, true] {
+                    let models = SpeechModelsViewModel(snapshot: SpeechModelsSnapshot(
+                        catalog: SpeechModelCatalog(entries: [Self.whisperEntry]),
+                        states: ["whisper": state],
+                        defaultModelID: "whisper",
+                        residentModelID: resident ? "whisper" : nil,
+                        activity: .downloading("whisper")
+                    ))
+                    assertSays(models.defaultCard?.statusDescription ?? "", phase, "Speech Models card", "\(tag) resident \(resident)")
+                }
+                assertSays(wizard.modelChip.title, phase, "wizard chip", tag)
+                if phase != .downloadPaused {
+                    assertSays(wizard.modelActivityDescription ?? "", phase, "wizard progress", tag)
+                }
+            }
+
+            // The menu-bar surfaces, under every activity that can carry it.
+            for activity in activities {
+                let atag = "\(tag) under \(activity)"
+                let progress = ModelReadinessPhase.inProgress(activity: activity, state: state)
+                let install = progress.map { StatusMenuHeaderContext.ModelInstall(modelName: "Whisper", phase: $0.phase) }
+                let headerContext = StatusMenuHeaderContext(
+                    modelReady: false, shortcutGlyphs: "⌃⇧Space", attention: readinessTitle, modelInstall: install
+                )
+                let header = StatusMenuHeaderState(context: headerContext, hud: .idle)
+                let panel = StatusPanelState(
+                    header: header,
+                    headerContext: headerContext,
+                    context: StatusPanelTests.context(readinessTitle: readinessTitle, isBlocked: true)
+                )
+                let icon = StatusItemAppearance(dictationState: .idle, needsAttention: true, downloadFraction: install?.fraction)
+
+                if let shown = progress?.phase {
+                    if let phase, phase != .downloadPaused {
+                        XCTAssertTrue(Self.samePhase(shown, phase), "the row's phase is the state's: \(atag) → \(shown)")
+                    }
+                    guard case .modelProgress(let label, let feedPhase) = panel.feed else {
+                        return XCTFail("no progress row: \(atag)")
+                    }
+                    assertSays(label, shown, "panel row", atag)
+                    XCTAssertEqual(feedPhase, shown, atag)
+                    if case .modelProgress(let headerLabel, _) = header.trailing {
+                        assertSays(headerLabel, shown, "menu header", atag)
+                    } else {
+                        XCTFail("no header progress: \(atag)")
+                    }
+                    XCTAssertEqual(panel.cardTone, .plain, "the fix happening: \(atag)")
+                    XCTAssertEqual(
+                        panel.dictationRows.contains { $0.id == .pauseDownload }, false,
+                        "the context offers no pausable download here: \(atag)"
+                    )
+                    // The bar: determinate only for a download with a total;
+                    // every other phase slides (still under Reduce Motion).
+                    let motion = KVProgressMotion.style(fraction: panel.feed.fraction, reduceMotion: false)
+                    if case .downloading(let fraction?) = shown {
+                        XCTAssertEqual(motion, .determinate(fraction), atag)
+                        XCTAssertNotNil(icon.progress, "the icon rings a download with a total: \(atag)")
+                        XCTAssertNil(icon.badge, atag)
+                    } else {
+                        XCTAssertEqual(motion, .sliding, "an indeterminate phase animates: \(atag)")
+                        XCTAssertEqual(KVProgressMotion.style(fraction: panel.feed.fraction, reduceMotion: true), .still, atag)
+                        XCTAssertNil(icon.progress, "no ring without a fraction: \(atag)")
+                        XCTAssertEqual(icon.badge, .warning, "the standing verdict: \(atag)")
+                    }
+                } else {
+                    XCTAssertEqual(panel.feed, .none, "no progress row without a phase: \(atag)")
+                    XCTAssertNil(icon.progress, atag)
+                    XCTAssertFalse(panel.primaryAccessibilityLabel.contains("Downloading"), atag)
+                }
+                // The panel's readiness line is the status row's.
+                XCTAssertEqual(panel.readiness, readinessTitle, atag)
+            }
+        }
+    }
 }

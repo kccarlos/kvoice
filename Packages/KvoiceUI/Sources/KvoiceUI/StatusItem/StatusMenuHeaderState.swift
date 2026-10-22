@@ -7,18 +7,33 @@ import KvoiceDomain
 /// The shell fills one of these in `updateMenu(for:)` — the same call that
 /// retitles every plain item — so the row can never disagree with them.
 public struct StatusMenuHeaderContext: Equatable, Sendable {
-    /// A model package being downloaded or installed by the library
-    /// (`ModelActivity.downloading` / `.installing`). `fraction` is nil while
-    /// the byte total is unknown or the phase has no progress (verify,
-    /// install), which draws an indeterminate bar.
+    /// A model the library is bringing to ready — downloading, verifying,
+    /// installing, loading or optimizing it — and which of those it is
+    /// (`ModelReadinessPhase.inProgress(activity:state:)`, from the model's
+    /// own lifecycle state, never from the activity alone: the activity
+    /// `.downloading` spans the whole transaction, load included).
+    /// `fraction` is the download's, nil while the byte total is unknown or
+    /// the phase has no progress (verify, install, load, optimize), which
+    /// draws an indeterminate bar.
     public struct ModelInstall: Equatable, Sendable {
         public var modelName: String
-        public var fraction: Double?
+        public var phase: ModelReadinessPhase
 
-        public init(modelName: String, fraction: Double?) {
+        public init(modelName: String, phase: ModelReadinessPhase) {
             self.modelName = modelName
-            self.fraction = fraction.map { min(max($0, 0), 1) }
+            if case .downloading(let fraction?) = phase {
+                self.phase = .downloading(fraction: min(max(fraction, 0), 1))
+            } else {
+                self.phase = phase
+            }
         }
+
+        /// A download in progress (the common case in tests and previews).
+        public init(modelName: String, fraction: Double?) {
+            self.init(modelName: modelName, phase: .downloading(fraction: fraction))
+        }
+
+        public var fraction: Double? { phase.fraction }
     }
 
     public var dictationKind: DictationStateKind
@@ -97,9 +112,10 @@ public struct StatusMenuHeaderState: Equatable, Sendable {
         case note(String)
         /// The five-bar meter and the m:ss clock — recording only.
         case meter(level: Double, elapsed: Duration)
-        /// A thin progress bar with "Downloading <model>… 42%"; `fraction`
-        /// nil draws it indeterminate.
-        case download(label: String, fraction: Double?)
+        /// A thin progress bar with the model's phase — "Downloading
+        /// <model>… 42%", "Optimizing <model> for this Mac (first time
+        /// only)…"; `fraction` nil draws it indeterminate.
+        case modelProgress(label: String, fraction: Double?)
     }
 
     public let indicator: Indicator
@@ -200,7 +216,7 @@ public struct StatusMenuHeaderState: Equatable, Sendable {
     /// shortcut's not-working note; then the shortcut itself.
     private static func idleTrailing(_ context: StatusMenuHeaderContext) -> Trailing {
         if let install = context.modelInstall {
-            return .download(label: Self.downloadLabel(install), fraction: install.fraction)
+            return .modelProgress(label: Self.progressLabel(install), fraction: install.fraction)
         }
         if let attention = context.attention {
             return .note(attention)
@@ -215,13 +231,10 @@ public struct StatusMenuHeaderState: Equatable, Sendable {
     }
 
     /// "Downloading Nemotron… 42%" — or without the figure while the total
-    /// is unknown.
-    static func downloadLabel(_ install: StatusMenuHeaderContext.ModelInstall) -> String {
-        if let fraction = install.fraction {
-            let percent = Int((fraction * 100).rounded(.down))
-            return String(localized: "Downloading \(install.modelName)… \(percent)%", bundle: .module)
-        }
-        return String(localized: "Downloading \(install.modelName)…", bundle: .module)
+    /// is unknown; "Loading Nemotron…", "Optimizing Nemotron for this Mac
+    /// (first time only)…" for the phases after the download.
+    static func progressLabel(_ install: StatusMenuHeaderContext.ModelInstall) -> String {
+        install.phase.progressLabel(modelName: install.modelName, withPercent: true)
     }
 
     /// The one word for the finishing phase — the HUD's title says
@@ -270,7 +283,7 @@ public struct StatusMenuHeaderState: Equatable, Sendable {
             parts.append(note)
         case .meter(_, let elapsed):
             parts.append(HUDViewState.formatElapsed(elapsed))
-        case .download(let label, _):
+        case .modelProgress(let label, _):
             parts.append(label)
         }
         return parts.joined(separator: ", ")

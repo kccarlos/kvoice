@@ -292,7 +292,7 @@ final class StatusPanelTests: XCTestCase {
     func testDownloadingShowsTheProgressRowAndKeepsCopyLast() {
         let install = StatusMenuHeaderContext.ModelInstall(modelName: "Nemotron", fraction: 0.42)
         let state = Self.state(StatusMenuHeaderContext(shortcutGlyphs: "⌃⇧Space", modelInstall: install))
-        XCTAssertEqual(state.feed, .download(label: "Downloading Nemotron…", fraction: 0.42), "the card draws the percent apart")
+        XCTAssertEqual(state.feed, .modelProgress(label: "Downloading Nemotron…", phase: .downloading(fraction: 0.42)), "the card draws the percent apart")
         XCTAssertFalse(state.showsMeter, "a download is a progress bar, never a level")
         XCTAssertEqual(state.readiness, "Ready · Whisper large-v3-turbo", "the current model still works while another downloads")
         XCTAssertEqual(state.dictationRows.map(\.id), [.copyLastTranscription])
@@ -300,7 +300,28 @@ final class StatusPanelTests: XCTestCase {
         XCTAssertFalse(state.dictationRows.contains { $0.id == .pauseDownload }, "no Pause unless the shell says bytes are flowing")
 
         let unknownTotal = Self.state(StatusMenuHeaderContext(modelInstall: .init(modelName: "Nemotron", fraction: nil)))
-        XCTAssertEqual(unknownTotal.feed, .download(label: "Downloading Nemotron…", fraction: nil))
+        XCTAssertEqual(unknownTotal.feed, .modelProgress(label: "Downloading Nemotron…", phase: .downloading(fraction: nil)))
+    }
+
+    /// fix/post-0.1.7: while the model loads or is optimized for the first
+    /// time, the row says so (not "Downloading"), offers no Pause even if
+    /// the shell's activity is still `.downloading`, and its bar slides.
+    func testLoadingAndOptimizingAreNotADownload() {
+        var context = Self.context(readinessTitle: "Optimizing model for this Mac (first time only)…", isBlocked: true)
+        context.pausableDownload = nil
+        for (phase, label) in [(ModelReadinessPhase.loading, "Loading Whisper…"), (.optimizing, "Optimizing Whisper for this Mac (first time only)…")] {
+            let state = Self.state(
+                StatusMenuHeaderContext(modelReady: false, attention: context.readinessTitle, modelInstall: .init(modelName: "Whisper", phase: phase)),
+                context: context
+            )
+            XCTAssertEqual(state.feed, .modelProgress(label: label, phase: phase))
+            XCTAssertNil(state.feed.fraction)
+            XCTAssertFalse(state.dictationRows.contains { $0.id == .pauseDownload })
+            XCTAssertEqual(state.cardTone, .plain, "the load is the fix happening")
+            XCTAssertFalse(state.primaryAccessibilityLabel.contains("Downloading"), state.primaryAccessibilityLabel)
+            XCTAssertEqual(KVProgressMotion.style(fraction: state.feed.fraction, reduceMotion: false), .sliding, "an indeterminate phase animates")
+            XCTAssertEqual(KVProgressMotion.style(fraction: state.feed.fraction, reduceMotion: true), .still, "still under Reduce Motion")
+        }
     }
 
     // MARK: UI v2

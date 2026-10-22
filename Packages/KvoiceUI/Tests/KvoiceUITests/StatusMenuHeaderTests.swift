@@ -171,7 +171,7 @@ final class StatusMenuHeaderTests: XCTestCase {
             modelInstall: .init(modelName: "Nemotron", fraction: 0.4249)
         )
         let state = StatusMenuHeaderState(context: context, hud: .idle)
-        XCTAssertEqual(state.trailing, .download(label: "Downloading Nemotron… 42%", fraction: 0.4249))
+        XCTAssertEqual(state.trailing, .modelProgress(label: "Downloading Nemotron… 42%", fraction: 0.4249))
         XCTAssertEqual(state.indicator, .attention)
         XCTAssertFalse(state.isEnabled)
         XCTAssertEqual(state.accessibilityLabel, "Start Recording, Downloading Nemotron… 42%")
@@ -180,10 +180,29 @@ final class StatusMenuHeaderTests: XCTestCase {
             context: StatusMenuHeaderContext(modelInstall: .init(modelName: "Nemotron", fraction: nil)),
             hud: .idle
         )
-        XCTAssertEqual(unknownTotal.trailing, .download(label: "Downloading Nemotron…", fraction: nil))
+        XCTAssertEqual(unknownTotal.trailing, .modelProgress(label: "Downloading Nemotron…", fraction: nil))
 
         let clamped = StatusMenuHeaderContext.ModelInstall(modelName: "x", fraction: 1.7)
         XCTAssertEqual(clamped.fraction, 1)
+    }
+
+    /// fix/post-0.1.7: the row names the model's phase, not the activity —
+    /// a first compile under `.downloading` / `.installing` is not a download.
+    func testModelInstallNamesThePhaseAfterTheDownload() {
+        let cases: [(ModelReadinessPhase, String)] = [
+            (.verifying, "Verifying Whisper…"),
+            (.installing, "Installing Whisper…"),
+            (.loading, "Loading Whisper…"),
+            (.optimizing, "Optimizing Whisper for this Mac (first time only)…"),
+        ]
+        for (phase, label) in cases {
+            let state = StatusMenuHeaderState(
+                context: StatusMenuHeaderContext(modelReady: false, modelInstall: .init(modelName: "Whisper", phase: phase)),
+                hud: .idle
+            )
+            XCTAssertEqual(state.trailing, .modelProgress(label: label, fraction: nil), "\(phase)")
+            XCTAssertFalse(state.accessibilityLabel.contains("Downloading"), "\(phase): \(state.accessibilityLabel)")
+        }
     }
 
     func testModelInstallDoesNotReplaceTheMeterWhileRecording() {

@@ -387,25 +387,23 @@ extension AppDelegate {
         updateStatusPanel()
     }
 
-    /// The library's install in progress, for the header row's progress
-    /// bar: only while `ModelActivity` is `.downloading` / `.installing`,
-    /// with the fraction from that model's lifecycle state (refreshed on the
-    /// 250 ms poll of `withModelStatePolling`) when the byte total is known.
+    /// The model the library is bringing to ready, for the header row's and
+    /// the panel's progress row: only while `ModelActivity` names a model,
+    /// with the phase and fraction from that model's lifecycle state
+    /// (refreshed on the 250 ms poll of `withModelStatePolling`).
     private var statusMenuModelInstall: StatusMenuHeaderContext.ModelInstall? {
-        let modelID: ModelID
-        switch modelActivity {
-        case .downloading(let id), .installing(let id):
-            modelID = id
-        default:
-            return nil
-        }
-        let name = composition.modelManager?.catalog.entry(id: modelID)?.displayName
-            ?? Self.displayName(forModelID: modelID)
-        var fraction: Double?
-        if case .downloading(let completed, let total)? = speechModelState(for: modelID), total > 0 {
-            fraction = Double(completed) / Double(total)
-        }
-        return StatusMenuHeaderContext.ModelInstall(modelName: name, fraction: fraction)
+        // fix/post-0.1.7: the phase is the model's lifecycle state (what
+        // Speech Models shows), not the activity — `.downloading(id)` spans
+        // the load and the first compile too, which the row used to call
+        // "Downloading".
+        let modelID = modelActivity.modelID
+        guard let (id, phase) = ModelReadinessPhase.inProgress(
+            activity: modelActivity,
+            state: modelID.flatMap { speechModelState(for: $0) }
+        ) else { return nil }
+        let name = composition.modelManager?.catalog.entry(id: id)?.displayName
+            ?? Self.displayName(forModelID: id)
+        return StatusMenuHeaderContext.ModelInstall(modelName: name, phase: phase)
     }
 
     // MARK: Failure recovery (ADR-022 item 6)
@@ -488,15 +486,11 @@ extension AppDelegate {
     /// (which only degrades to the clipboard).
     var statusSummary: (title: String, blocked: Bool) {
         if !modelReady {
-            switch latestModelState {
-            case .downloading, .downloadPaused, .verifying, .installing, .loading, .validatingExternal:
-                return (String(localized: "Model loading…", table: "Shell"), true)
-            case .optimizing:
-                // 2026-09-29: the first Core ML build on this Mac.
-                return (String(localized: "Optimizing model for this Mac (first time only)…", table: "Shell"), true)
-            default:
-                return (String(localized: "Model not ready", table: "Shell"), true)
-            }
+            // fix/post-0.1.7: the phase's own words ("Downloading model…",
+            // "Loading the model…", "Optimizing model for this Mac (first
+            // time only)…"), the same projection the panel's progress row
+            // and Speech Models use.
+            return (ModelReadinessPhase.readinessTitle(for: latestModelState), true)
         }
         switch permissionSnapshot.microphone {
         case .granted:

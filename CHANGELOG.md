@@ -9,6 +9,20 @@ without one is refused.
 
 ## Unreleased
 
+## 0.1.8 — 2026-10-22
+
+- Fixed: Interface language, and the other drop-downs on settings cards
+  (Sound, Maximum recording length, Keep audio for, Delete transcripts
+  older than, Custom input device), showed their choices greyed out and
+  could not be changed.
+- Fixed: while a speech model was getting ready, the menu bar said it was
+  downloading even after the download had finished. The menu bar, Home and
+  Speech Models now all say the same step: downloading, verifying,
+  installing, loading, or optimizing for your Mac the first time.
+- Fixed: the progress bar in the menu-bar panel stood still while a model
+  loaded. It now moves while the time is unknown (it holds still with
+  Reduce Motion on) and fills when the download size is known.
+
 ## 0.1.7 — 2026-10-22
 
 A new look for the whole app, in light and dark.

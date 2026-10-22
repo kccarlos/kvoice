@@ -703,26 +703,6 @@
         }
       }
     },
-    "Model loading…": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "模型加载中…"
-          }
-        }
-      }
-    },
-    "Model not ready": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "模型未就绪"
-          }
-        }
-      }
-    },
     "Model: %@": {
       "localizations": {
         "zh-Hans": {
@@ -809,16 +789,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "正在为这台 Mac 优化——仅首次…"
-          }
-        }
-      }
-    },
-    "Optimizing model for this Mac (first time only)…": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "正在为这台 Mac 优化模型（仅首次）…"
           }
         }
       }

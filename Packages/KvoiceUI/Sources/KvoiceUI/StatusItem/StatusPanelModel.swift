@@ -47,13 +47,16 @@ public final class StatusPanelModel {
     /// Closes the panel before a command that must not run under it
     /// (`StatusPanelCommand.closesPanelFirst`). Installed by the presenter.
     public var requestClose: @MainActor () -> Void = {}
+    /// The clock the last transcription's "2 min ago" is read against.
+    /// The gallery pins it; the app reads the wall clock at each render.
+    public var now: @MainActor () -> Date = { Date() }
 
     public init(header: StatusMenuHeaderModel) {
         self.header = header
     }
 
     public var state: StatusPanelState {
-        StatusPanelState(header: header.state, headerContext: header.context, context: context)
+        StatusPanelState(header: header.state, headerContext: header.context, context: context, hud: header.hud)
     }
 
     public func apply(context: StatusPanelContext) {

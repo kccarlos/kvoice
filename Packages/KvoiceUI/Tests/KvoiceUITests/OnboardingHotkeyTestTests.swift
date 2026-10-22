@@ -128,7 +128,7 @@ final class OnboardingHotkeyTestTests: XCTestCase {
         let model = OnboardingViewModel(stage: .shortcut, recordingInteraction: .pushToTalk, shortcut: registered)
         model.beginHotkeyTest()
         model.reportHotkeyTestKeyDown(at: epoch)
-        model.reportHotkeyTestKeyUp(at: epoch.addingTimeInterval(0.5))
+        model.reportHotkeyTestKeyUp(at: epoch.addingTimeInterval(0.7))
         XCTAssertTrue(model.hotkeyTestSnapshot.isDone)
 
         // Pressing the (now-registered) shortcut again after success must not
@@ -144,11 +144,11 @@ final class OnboardingHotkeyTestTests: XCTestCase {
         XCTAssertTrue(model.hotkeyTestIsAvailable)
         XCTAssertFalse(model.actionBar.primaryIsEnabled)
         XCTAssertEqual(model.actionBar.primaryDisabledReason, "Press your shortcut to continue.")
-        XCTAssertEqual(model.actionBar.skipTitle, "Skip")
+        XCTAssertEqual(model.actionBar.skipTitle, "Skip Check")
 
         model.beginHotkeyTest()
         model.reportHotkeyTestKeyDown(at: epoch)
-        model.reportHotkeyTestKeyUp(at: epoch.addingTimeInterval(0.3))
+        model.reportHotkeyTestKeyUp(at: epoch.addingTimeInterval(0.7))
         XCTAssertTrue(model.actionBar.primaryIsEnabled)
         XCTAssertEqual(model.actionBar.primaryTitle, "Continue")
     }

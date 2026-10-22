@@ -291,6 +291,19 @@ public final class KeyboardShortcutsAdapter: @preconcurrency GlobalShortcutServi
 
     private var recorderWindow: ShortcutRecorderWindowController?
 
+    /// Reports the primary shortcut's recorder window opening (true) and
+    /// closing (false) — by Record, Cancel, the close button or
+    /// `dismissRecorder()`. The setup wizard shows its "Recording keys" box
+    /// from it (UI v2 fidelity F4).
+    public var onPrimaryRecorderVisibilityChanged: (@MainActor (Bool) -> Void)? = nil
+
+    /// Closes the recorder window without recording, as its Cancel does.
+    public func dismissRecorder() {
+        // `close()` reaches `windowWillClose`, which runs the window's
+        // `onClose` like its Cancel button.
+        recorderWindow?.close()
+    }
+
     /// The recorder window's name for a lone modifier key. The shell sets it
     /// to the interface-language name (`DomainCopy`, in KvoiceUI, which this
     /// package does not import); the default is the domain's English.
@@ -609,8 +622,12 @@ public final class KeyboardShortcutsAdapter: @preconcurrency GlobalShortcutServi
     /// registration transaction and its rollback still apply.
     public func presentRecorder() {
         backend.presentRecorder()
-        presentRecorderWindow(current: registeredShortcut) { [weak self] definition in
+        let opening = recorderWindow == nil
+        presentRecorderWindow(current: registeredShortcut, reportsVisibility: true) { [weak self] definition in
             self?.onShortcutRecorded?(definition)
+        }
+        if opening, recorderWindow != nil {
+            onPrimaryRecorderVisibilityChanged?(true)
         }
     }
 
@@ -624,6 +641,7 @@ public final class KeyboardShortcutsAdapter: @preconcurrency GlobalShortcutServi
 
     private func presentRecorderWindow(
         current: ShortcutDefinition?,
+        reportsVisibility: Bool = false,
         onRecorded: @escaping @MainActor (ShortcutDefinition) -> Void
     ) {
         if recorderWindow == nil {
@@ -648,9 +666,16 @@ public final class KeyboardShortcutsAdapter: @preconcurrency GlobalShortcutServi
                     onRecorded(definition)
                 },
                 onClose: { [weak self] in
-                    guard let self else { return }
-                    self.recorderWindow?.close()
+                    // Runs once: Record, Cancel and the close button all
+                    // end here (the window's close re-enters through
+                    // `windowWillClose`, which finds it already cleared).
+                    guard let self, self.recorderWindow != nil else { return }
+                    let window = self.recorderWindow
                     self.recorderWindow = nil
+                    window?.close()
+                    if reportsVisibility {
+                        self.onPrimaryRecorderVisibilityChanged?(false)
+                    }
                     if !didRecordPrimary,
                        let restoreShortcut,
                        let restoreHandler {

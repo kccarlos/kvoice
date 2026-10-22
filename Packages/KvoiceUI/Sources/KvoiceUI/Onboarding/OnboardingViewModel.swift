@@ -40,7 +40,13 @@ public final class OnboardingViewModel {
         (completedVersion ?? 0) < currentOnboardingVersion
     }
 
-    public private(set) var stage: OnboardingStage
+    public private(set) var stage: OnboardingStage {
+        didSet { navigatesForward = stage.ordinal >= oldValue.ordinal }
+    }
+    /// Motion § 9 ("Wizard pages move the way you go"): true when the last
+    /// stage change moved forward (Continue, Skip), false when it moved back
+    /// (Back, Fix… on Ready). The view slides the new page in from that side.
+    public private(set) var navigatesForward = true
     public private(set) var welcomeAcknowledged = false
     public private(set) var isFinished = false
 
@@ -81,6 +87,16 @@ public final class OnboardingViewModel {
     public private(set) var shortcut: ShortcutDefinition?
     public private(set) var shortcutRegistrationState: ShortcutRegistrationState
     public private(set) var shortcutError: String?
+    /// Why the last registration failed, when the shell knows (UI v2
+    /// fidelity F4): drives the "Taken" chip and the localized conflict
+    /// sentence instead of the raw error code.
+    public private(set) var shortcutRegistrationProblem: ShortcutRegistrationProblem?
+    /// True while the shortcut recorder window is open (the shell observes
+    /// it; F4). The Shortcut page then shows the design's "Recording keys"
+    /// box with a caret and Cancel, the footer's primary turns busy and Skip
+    /// is disabled. The keys are captured by the recorder window, which
+    /// cannot be embedded here (KvoiceUI does not see KeyboardShortcuts).
+    public private(set) var shortcutRecorderIsOpen = false
     /// Live state for the shortcut page's Try It indicator. See
     /// `HotkeyTestSnapshot`.
     public private(set) var hotkeyTestSnapshot = HotkeyTestSnapshot()
@@ -93,6 +109,16 @@ public final class OnboardingViewModel {
     public private(set) var dictationTestRequested = false
     public private(set) var dictationTestIsRecording = false
     public private(set) var dictationTestResult: DictationTestResult?
+    /// When the test recording started and stopped (the injected clock), for
+    /// the recording box's clock and the result's "Transcribed … in 0.4 s".
+    public private(set) var dictationTestStartedAt: ContinuousClock.Instant?
+    public private(set) var dictationTestStoppedAt: ContinuousClock.Instant?
+    /// Recording end to result, measured on the injected clock; nil until a
+    /// transcript arrives.
+    public private(set) var dictationTestTranscriptionTime: Duration?
+    /// The test recording's live level, smoothed (Motion § 4·6). A separate
+    /// object so its 20 Hz updates re-render the meter only, never the page.
+    public let dictationTestLevel = OnboardingLiveLevel()
     /// Set when a System Settings deep link could not be opened, so the view
     /// leads with the written path instead.
     public private(set) var systemSettingsOpenFailed: PermissionKind?
@@ -133,6 +159,20 @@ public final class OnboardingViewModel {
     /// shell assigns this to `showTutorial()`; nil (tests, previews) does
     /// nothing.
     public var openTutorialHandler: (@MainActor () -> Void)?
+
+    /// The name of the input the next recording would use (the shell's
+    /// `AudioInputViewModel` resolver, F4). Nil reads the level test's
+    /// system-default name.
+    public var inputDeviceNameProvider: (@MainActor () -> String?)?
+
+    /// The level test's input changed (the wizard's device picker): a
+    /// passed test no longer proves the chosen input, so it runs again.
+    public func microphoneInputChanged() {
+        guard !microphoneTest.isRunning else { return }
+        if microphoneTestState.isSuccessful {
+            microphoneTest.reset()
+        }
+    }
 
     private let microphonePermission: any MicrophonePermissionProviding
     private let accessibilityPermission: any AccessibilityPermissionProviding
@@ -242,8 +282,14 @@ public final class OnboardingViewModel {
             // would read as a bug.
             return String(localized: "\(runtime) · Built into macOS", bundle: .module)
         }
-        guard modelSpaceEstimate == nil else { return runtime }
-        return "\(runtime) · \(ModelSettingsViewModel.formatBytes(modelEntry.downloadBytes))"
+        // F4: the design adds "· recommended" for the catalog's pick.
+        guard modelSpaceEstimate == nil else {
+            return modelEntry.isRecommended ? String(localized: "\(runtime) · recommended", bundle: .module) : runtime
+        }
+        let size = ModelSettingsViewModel.formatBytes(modelEntry.downloadBytes)
+        return modelEntry.isRecommended
+            ? String(localized: "\(runtime) · \(size) · recommended", bundle: .module)
+            : "\(runtime) · \(size)"
     }
 
     /// The card's "where the model comes from" sentence (2026-09-29): for
@@ -255,9 +301,9 @@ public final class OnboardingViewModel {
             return String(localized: "Downloaded once, verified against the manifest bundled with this release, and used only on this Mac.", bundle: .module)
         }
         if modelEntry.isSystemManaged {
-            return String(localized: "Recommended for this Mac: ready in seconds, with nothing large to download. macOS provides the speech model, and transcription stays on this Mac.", bundle: .module)
+            return String(localized: "Ready in seconds, with nothing large to download. macOS provides the speech model, and transcription stays on this Mac.", bundle: .module)
         }
-        return String(localized: "Downloaded once, verified against the manifest bundled with this release, and used only on this Mac. The first time it loads, it is optimized for your Mac, which can take a few minutes.", bundle: .module)
+        return String(localized: "Downloaded once, verified against the manifest bundled with this release, and used only on this Mac. The first load optimizes it for your Mac, which can take a few minutes.", bundle: .module)
     }
 
     // MARK: Setup recommendation (2026-09-29)
@@ -294,7 +340,7 @@ public final class OnboardingViewModel {
             return String(localized: "\(alternativeModelEntry.displayName) also runs on this Mac: ready in seconds, with nothing large to download.", bundle: .module)
         }
         let size = ModelSettingsViewModel.formatBytes(alternativeModelEntry.downloadBytes)
-        return String(localized: "Prefer \(alternativeModelEntry.displayName)? It downloads \(size) once, and the first time it loads it is optimized for your Mac, which can take a few minutes.", bundle: .module)
+        return String(localized: "Prefer \(alternativeModelEntry.displayName)? It downloads \(size) once and is optimized for your Mac on first load.", bundle: .module)
     }
 
     /// A download in progress may be switched away from (it pauses); a
@@ -378,7 +424,7 @@ public final class OnboardingViewModel {
         let back = canGoBack
         switch stage {
         case .welcome:
-            return OnboardingActionBar(primaryTitle: String(localized: "Continue", bundle: .module), canGoBack: back)
+            return OnboardingActionBar(primaryTitle: String(localized: "Get Started", bundle: .module), canGoBack: back)
 
         case .speechModel:
             let title: String
@@ -408,6 +454,15 @@ public final class OnboardingViewModel {
                 title = modelEntry?.isSystemManaged == true
                     ? String(localized: "Install Model", bundle: .module)
                     : String(localized: "Download Model", bundle: .module)
+                // UI v2 wave 3: a download the shell measured as not fitting
+                // is refused by the manager anyway; say so on the button.
+                if modelDownloadLacksSpace {
+                    return OnboardingActionBar(
+                        primaryTitle: title, primaryIsEnabled: false,
+                        primaryDisabledReason: String(localized: "Not enough space", bundle: .module),
+                        skipTitle: String(localized: "Skip", bundle: .module), canGoBack: back
+                    )
+                }
             }
             // Same title while the press is pending, so the button does not
             // re-label itself under the pointer; only the spinner appears.
@@ -460,6 +515,14 @@ public final class OnboardingViewModel {
             return OnboardingActionBar(primaryTitle: String(localized: "Allow Accessibility", bundle: .module), skipTitle: String(localized: "Skip", bundle: .module), canGoBack: back)
 
         case .shortcut:
+            if shortcutRecorderIsOpen {
+                // F4 "Recording keys": the recorder window has the keys;
+                // the bar waits for it (Cancel lives in the box).
+                return OnboardingActionBar(
+                    primaryTitle: String(localized: "Record Shortcut…", bundle: .module), primaryIsBusy: true,
+                    skipTitle: String(localized: "Skip", bundle: .module), skipIsEnabled: false, canGoBack: back
+                )
+            }
             guard readiness.shortcut.isReady else {
                 return OnboardingActionBar(primaryTitle: String(localized: "Record Shortcut…", bundle: .module), skipTitle: String(localized: "Skip", bundle: .module), canGoBack: back)
             }
@@ -469,10 +532,14 @@ public final class OnboardingViewModel {
             if hotkeyTestSnapshot.isDone {
                 return OnboardingActionBar(primaryTitle: String(localized: "Continue", bundle: .module), canGoBack: back)
             }
+            // UI v2 wave 3: the reason follows the live check, and Skip says
+            // that only the check is skipped (the shortcut stays set up).
             return OnboardingActionBar(
                 primaryTitle: String(localized: "Continue", bundle: .module), primaryIsEnabled: false,
-                primaryDisabledReason: String(localized: "Press your shortcut to continue.", bundle: .module),
-                skipTitle: String(localized: "Skip", bundle: .module), canGoBack: back
+                primaryDisabledReason: hotkeyTestDisabledReason,
+                skipTitle: String(localized: "Skip Check", bundle: .module),
+                skipAccessibilityLabel: String(localized: "Skip the shortcut check", bundle: .module),
+                canGoBack: back
             )
 
         case .ready:
@@ -485,6 +552,19 @@ public final class OnboardingViewModel {
             }
             return OnboardingActionBar(primaryTitle: String(localized: "Finish", bundle: .module), canGoBack: back)
         }
+    }
+
+    /// Why Continue waits on the Shortcut step, following the Try It check:
+    /// nothing pressed yet, a push-to-talk or hybrid press still held, or
+    /// toggle's first press seen.
+    private var hotkeyTestDisabledReason: String {
+        if hotkeyTestSnapshot.isDown, recordingInteraction != .toggle {
+            return String(localized: "Release to finish the check.", bundle: .module)
+        }
+        if recordingInteraction == .toggle, hotkeyTestSnapshot.pressCount >= 1 {
+            return String(localized: "Press again to finish the check.", bundle: .module)
+        }
+        return String(localized: "Press your shortcut to continue.", bundle: .module)
     }
 
     /// Runs the action bar's primary button for the current screen. Async
@@ -578,7 +658,7 @@ public final class OnboardingViewModel {
         )
     }
 
-    private static func formatBytes(_ count: Int64) -> String {
+    static func formatBytes(_ count: Int64) -> String {
         ByteCountFormatter.string(fromByteCount: count, countStyle: .file)
     }
 
@@ -685,7 +765,7 @@ public final class OnboardingViewModel {
             // 2026-09-29 (owner decision 2): the first Core ML build on
             // this Mac. Indeterminate — Core ML reports no progress, and a
             // made-up percentage would be worse than none.
-            return String(localized: "Optimizing for your Mac — first time only, this can take a few minutes. You can continue setup meanwhile.", bundle: .module)
+            return String(localized: "Optimizing for your Mac — first time only, this can take a few minutes.", bundle: .module)
         case .deleting:
             return String(localized: "Removing model…", bundle: .module)
         case .ready, .inference, .absent, .downloadPaused, .corrupt,
@@ -810,6 +890,17 @@ public final class OnboardingViewModel {
     /// Alias used by window routers that describe the button as Continue.
     public func continueFromCurrentStage() {
         advance()
+    }
+
+    /// The setup window is about to be shown (Setup Guide…, Reset
+    /// Onboarding, a launch that still needs setup). A guide that was
+    /// finished starts over from Welcome: the finished Ready page has no
+    /// Back, its test, Fix… buttons, links and Finish are all inert, and it
+    /// is what Setup Guide… used to reopen (owner report 2026-10-21). A
+    /// guide closed mid-way — to grant a permission, say — keeps its place.
+    public func prepareForPresentation() {
+        guard isFinished else { return }
+        restart()
     }
 
     /// Replays the education flow from Welcome (FR-ONB-010). Facts the flow
@@ -1162,19 +1253,72 @@ public final class OnboardingViewModel {
     /// Updates registration feedback from the owning hotkey service.  A
     /// recorded candidate is not Ready after a conflict or registration
     /// failure, even though it remains available for retry in the UI.
-    public func setShortcutRegistrationState(_ state: ShortcutRegistrationState) {
+    ///
+    /// `problem` is the shell's reading of why a registration failed (UI v2
+    /// fidelity F4); the step shows a localized sentence for it — "Spotlight
+    /// already uses ⌘Space." — instead of the raw error code.
+    public func setShortcutRegistrationState(_ state: ShortcutRegistrationState, problem: ShortcutRegistrationProblem? = nil) {
         shortcutRegistrationState = state
         switch state {
         case .registered(let registeredShortcut):
             shortcut = registeredShortcut
             shortcutError = nil
+            shortcutRegistrationProblem = nil
             shortcutWasSkipped = false
         case .failed(let code):
-            shortcutError = "Shortcut registration failed (\(code.rawValue))."
+            let problem = problem ?? (code == .appBusy ? .busy : .other)
+            shortcutRegistrationProblem = problem
+            shortcutError = Self.message(for: problem, shortcut: shortcut)
         case .unregistered:
             shortcutError = nil
+            shortcutRegistrationProblem = nil
         }
         emit(.shortcutRegistrationState(state))
+    }
+
+    /// True when the last registration failed because something else owns
+    /// the keys: the chip says "Taken".
+    public var shortcutIsTaken: Bool {
+        switch shortcutRegistrationProblem {
+        case .takenBySystem, .takenByMenu: return true
+        default: return false
+        }
+    }
+
+    /// The sentence under the keys for a failed registration. A system
+    /// shortcut is named after its owner only for the few whose owner is
+    /// fixed (`ShortcutRegistrationProblem.knownSystemOwner`).
+    static func message(for problem: ShortcutRegistrationProblem, shortcut: ShortcutDefinition?) -> String {
+        let keys = shortcut.map { GeneralSettingsViewModel.glyphs(for: $0) } ?? ""
+        switch problem {
+        case .takenBySystem:
+            if let shortcut, let owner = ShortcutRegistrationProblem.knownSystemOwner(of: shortcut) {
+                return String(localized: "\(owner.localizedName) already uses \(keys). Choose another shortcut.", bundle: .module)
+            }
+            return String(localized: "macOS already uses \(keys). Choose another shortcut.", bundle: .module)
+        case .takenByMenu:
+            return String(localized: "A KVoice menu command already uses \(keys). Choose another shortcut.", bundle: .module)
+        case .needsAccessibility:
+            return String(localized: "A lone modifier key needs Accessibility. Allow it on the Accessibility step, or choose a key combination.", bundle: .module)
+        case .unavailableInEdition:
+            return String(localized: "This edition cannot watch a lone modifier key. Choose a key combination.", bundle: .module)
+        case .busy:
+            return String(localized: "Shortcut changes are available when KVoice is idle.", bundle: .module)
+        case .other:
+            return String(localized: "KVoice could not register \(keys). Choose another shortcut.", bundle: .module)
+        }
+    }
+
+    /// The shell reports the recorder window opening and closing.
+    public func setShortcutRecorderOpen(_ open: Bool) {
+        shortcutRecorderIsOpen = open
+    }
+
+    /// Cancel in the "Recording keys" box: closes the recorder window
+    /// without changing the shortcut.
+    public func cancelShortcutRecording() {
+        guard shortcutRecorderIsOpen else { return }
+        emit(.cancelShortcutRecording)
     }
 
     /// The trigger-mode picker on the shortcut step: one `SettingsIntent`
@@ -1237,6 +1381,7 @@ public final class OnboardingViewModel {
     public func reportHotkeyTestKeyDown(at now: Date = Date()) {
         guard hotkeyTestHookInstalled, !hotkeyTestSnapshot.isDone else { return }
         hotkeyTestSnapshot.isDown = true
+        hotkeyTestSnapshot.wasTooShort = false
         hotkeyTestSnapshot.downAt = now
         hotkeyTestSnapshot.heldSeconds = 0
         hotkeyTestSnapshot.pressCount += 1
@@ -1252,9 +1397,75 @@ public final class OnboardingViewModel {
         if let downAt = hotkeyTestSnapshot.downAt {
             hotkeyTestSnapshot.heldSeconds = max(0, now.timeIntervalSince(downAt))
         }
-        if recordingInteraction != .toggle {
+        switch recordingInteraction {
+        case .pushToTalk:
+            // Motion § 11: a release before 0.6 s drains the orb and asks
+            // for a longer hold — the real push-to-talk would have recorded
+            // almost nothing.
+            if (hotkeyTestSnapshot.heldSeconds ?? 0) >= Self.hotkeyTestMinimumHold {
+                hotkeyTestSnapshot.isDone = true
+                hotkeyTestSnapshot.wasTooShort = false
+            } else {
+                hotkeyTestSnapshot.wasTooShort = true
+                hotkeyTestSnapshot.heldSeconds = nil
+            }
+        case .hybrid:
+            // A short tap is hybrid's toggle start, so any release counts.
             hotkeyTestSnapshot.isDone = true
+        case .toggle:
+            break
         }
+    }
+
+    /// Motion § 11: the shortest push-to-talk hold the check accepts, and
+    /// the hold that fills the orb.
+    public static let hotkeyTestMinimumHold: TimeInterval = 0.6
+    public static let hotkeyTestFullHold: TimeInterval = 1.2
+
+    /// The orb's fill, 0…1: the hold so far over 1.2 s while a push-to-talk
+    /// or hybrid press is held, full once done, empty otherwise (a short
+    /// press drains back to empty).
+    public var hotkeyTestHoldProgress: Double {
+        if hotkeyTestSnapshot.isDone { return 1 }
+        guard hotkeyTestSnapshot.isDown, recordingInteraction != .toggle else { return 0 }
+        return min(1, max(0, (hotkeyTestSnapshot.heldSeconds ?? 0) / Self.hotkeyTestFullHold))
+    }
+
+    /// The Try It box is "live" (voice-tinted): a press is held, or
+    /// toggle's first press started it.
+    public var hotkeyTestIsLive: Bool {
+        let snapshot = hotkeyTestSnapshot
+        return !snapshot.isDone && (snapshot.isDown || (recordingInteraction == .toggle && snapshot.pressCount > 0))
+    }
+
+    /// The Try It box's title (Wizard.dc / Motion § 11).
+    public var hotkeyTestTitle: String {
+        let snapshot = hotkeyTestSnapshot
+        if snapshot.isDone { return String(localized: "Shortcut detected", bundle: .module) }
+        if recordingInteraction == .toggle {
+            return snapshot.pressCount > 0
+                ? String(localized: "Started", bundle: .module)
+                : String(localized: "Try it", bundle: .module)
+        }
+        if snapshot.isDown, let held = snapshot.heldSeconds {
+            return String(localized: "Held for \(Self.formatHeldSeconds(held)) s", bundle: .module)
+        }
+        if snapshot.wasTooShort { return String(localized: "A little longer", bundle: .module) }
+        return String(localized: "Try it", bundle: .module)
+    }
+
+    /// The Try It box's second line.
+    public var hotkeyTestDetail: String {
+        let snapshot = hotkeyTestSnapshot
+        if snapshot.isDone { return String(localized: "You’re set.", bundle: .module) }
+        if recordingInteraction == .toggle {
+            return snapshot.pressCount > 0
+                ? String(localized: "Press it again to stop.", bundle: .module)
+                : String(localized: "Press your shortcut now — anywhere, this window doesn’t need focus.", bundle: .module)
+        }
+        if snapshot.isDown { return String(localized: "Keep holding… then let go.", bundle: .module) }
+        if snapshot.wasTooShort { return String(localized: "Hold for at least half a second.", bundle: .module) }
+        return String(localized: "Press and hold your shortcut now — anywhere, this window doesn’t need focus.", bundle: .module)
     }
 
     /// Advances the live "Held for 0.8 s" reading while push-to-talk or
@@ -1280,6 +1491,9 @@ public final class OnboardingViewModel {
         }
         switch recordingInteraction {
         case .pushToTalk, .hybrid:
+            if hotkeyTestSnapshot.wasTooShort, !hotkeyTestSnapshot.isDown {
+                return String(localized: "Too short. Hold for at least half a second.", bundle: .module)
+            }
             if hotkeyTestSnapshot.isDown, let heldSeconds = hotkeyTestSnapshot.heldSeconds {
                 return String(localized: "Held for \(Self.formatHeldSeconds(heldSeconds)) s", bundle: .module)
             }
@@ -1333,8 +1547,9 @@ public final class OnboardingViewModel {
     public func requestDictationTest() {
         guard canRunDictationTest else { return }
         dictationTestRequested = true
-        dictationTestIsRecording = true
         dictationTestResult = nil
+        dictationTestStartedAt = nil
+        setDictationTestRecording(true)
         emit(.runDictationTest)
     }
 
@@ -1343,9 +1558,36 @@ public final class OnboardingViewModel {
     /// and not retained beyond this screen's state.
     public func setDictationTestResult(_ result: DictationTestResult?) {
         dictationTestResult = result
+        dictationTestTranscriptionTime = nil
         if result != nil {
-            dictationTestIsRecording = false
+            setDictationTestRecording(false)
         }
+        if case .transcript = result {
+            if let stopped = dictationTestStoppedAt {
+                dictationTestTranscriptionTime = stopped.duration(to: clock.now)
+            }
+        }
+    }
+
+    /// The recording box's clock, "0:04": time since the test recording
+    /// started, on the injected clock.
+    public func dictationTestElapsedDescription() -> String {
+        guard let started = dictationTestStartedAt else { return "0:00" }
+        let seconds = max(0, Int(started.duration(to: clock.now).components.seconds))
+        return "\(seconds / 60):" + (seconds % 60 < 10 ? "0" : "") + "\(seconds % 60)"
+    }
+
+    /// The result's first line: where and how fast it was transcribed. The
+    /// test never runs AI (in-app jobs force AI off), so it never names an
+    /// AI engine.
+    public var dictationTestResultCaption: String {
+        guard let duration = dictationTestTranscriptionTime else {
+            return String(localized: "Transcribed on this Mac. Not inserted anywhere.", bundle: .module)
+        }
+        let seconds = Double(duration.components.seconds) + Double(duration.components.attoseconds) / 1e18
+        let tenths = Int((seconds * 10).rounded())
+        let time = "\(tenths / 10).\(tenths % 10)"
+        return String(localized: "Transcribed on this Mac in \(time) s. Not inserted anywhere.", bundle: .module)
     }
 
     /// Returns to the screen that resolves a prerequisite (used by the
@@ -1366,6 +1608,14 @@ public final class OnboardingViewModel {
     /// The coordinator owns the real dictation lifecycle, so it reports when
     /// the test recording actually ends (stopped, cancelled, or completed).
     public func setDictationTestRecording(_ isRecording: Bool) {
+        if isRecording, !dictationTestIsRecording || dictationTestStartedAt == nil {
+            dictationTestStartedAt = clock.now
+            dictationTestStoppedAt = nil
+            dictationTestLevel.reset()
+        } else if !isRecording, dictationTestIsRecording {
+            dictationTestStoppedAt = clock.now
+            dictationTestLevel.reset()
+        }
         dictationTestIsRecording = isRecording
     }
 
@@ -1397,6 +1647,7 @@ public final class OnboardingViewModel {
         case .endHotkeyTest: endHotkeyTest()
         case .runDictationTest: requestDictationTest()
         case .stopDictationTest: stopDictationTest()
+        case .cancelShortcutRecording: cancelShortcutRecording()
         case .finish: finishOnboarding()
         }
     }

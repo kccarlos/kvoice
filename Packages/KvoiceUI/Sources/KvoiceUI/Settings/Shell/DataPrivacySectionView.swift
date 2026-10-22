@@ -34,19 +34,23 @@ public struct DataPrivacySectionView: View {
     }
 
     public var body: some View {
-        Form {
-            Section {
+        KVCardPage {
+            PrivacyPromiseTiles()
+            KVCardSection {
                 Toggle("Save dictation history", isOn: $history.historyEnabled)
                     .accessibilityLabel("Save dictation history")
                     .accessibilityHint("When off, new dictations are not saved. Existing entries stay until you clear them in History.")
                 if let metrics = dataPrivacy?.metricsDescription {
-                    SettingsFactRow("Stored", metrics, systemImage: "internaldrive")
+                    SettingsFactRow("Stored", metrics)
+                }
+                if let dataPrivacy {
+                    RetentionRows(viewModel: dataPrivacy)
                 }
             } header: {
                 Text("History")
             } footer: {
-                SettingsFooter(note: history.refusalNote) {
-                    Text("Whether dictations are saved at all. History is stored only on this Mac. Turning it off stops new entries; it does not delete the ones already saved.")
+                SettingsFooter(note: history.refusalNote ?? dataPrivacy?.refusalNote) {
+                    EmptyView()
                 }
             }
 
@@ -58,7 +62,6 @@ public struct DataPrivacySectionView: View {
                 isShowingLicenses = true
             }
         }
-        .formStyle(.grouped)
         .task {
             await privacy.refreshHistoryMetrics()
         }
@@ -76,87 +79,27 @@ struct DataRetentionSections: View {
     @State private var isCleanupConfirmationPresented = false
 
     var body: some View {
-        retentionSection
         audioSection
         exportSection
     }
 
     // MARK: Transcript retention
 
-    private var retentionSection: some View {
-        Section {
-            Toggle("Automatically delete transcript history", isOn: $viewModel.autoDeleteEnabled)
-            Picker("Delete transcripts older than", selection: $viewModel.textRetentionDays) {
-                ForEach(HistoryRetentionSettings.retentionChoicesInDays, id: \.self) { days in
-                    Text(days.retentionDaysLabel).tag(days)
-                }
-            }
-            // The outcome sits beside the button when there is room and
-            // under it when the pane is narrow.
-            ViewThatFits(in: .horizontal) {
-                HStack { cleanupControls }
-                VStack(alignment: .leading, spacing: 6) { cleanupControls }
-            }
-            .confirmationDialog(
-                "Delete transcripts older than \(viewModel.textRetentionDays.retentionDaysLabel) now?",
-                isPresented: $isCleanupConfirmationPresented,
-                titleVisibility: .visible
-            ) {
-                Button("Run Cleanup", role: .destructive) {
-                    Task { await viewModel.runCleanupNow() }
-                }
-                Button("Cancel", role: .cancel) {}
-            } message: {
-                Text("Older transcripts and their recordings are removed, and recordings older than \(viewModel.audioRetentionDays.retentionDaysLabel) are removed from newer transcripts. Newer transcripts, your settings, and the local model are kept. This cannot be undone.")
-            }
-        } header: {
-            Text("Transcript Retention")
-        } footer: {
-            SettingsFooter(note: viewModel.refusalNote) {
-                Text(viewModel.autoDeleteEnabled
-                    ? "Runs when KVoice launches and once a day. Transcripts older than \(viewModel.textRetentionDays.retentionDaysLabel) are removed with their recordings."
-                    : "Off: transcripts are kept until you delete them. The picker sets what Run Cleanup Now removes.")
-            }
-        }
-        .task {
-            // The folder may have come or gone since the section last
-            // looked, and the figures change with every dictation.
-            await viewModel.refreshFolderAccess()
-            await viewModel.refreshMetrics()
-        }
-    }
-
-    @ViewBuilder
-    private var cleanupControls: some View {
-        HStack(spacing: 8) {
-            Button("Run Transcript Cleanup Now…") {
-                isCleanupConfirmationPresented = true
-            }
-            .disabled(viewModel.isRunningCleanup || viewModel.runCleanup == nil)
-            if viewModel.isRunningCleanup {
-                ProgressView()
-                    .controlSize(.small)
-            }
-        }
-        if let outcome = viewModel.lastCleanupDescription {
-            Text(outcome)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-    }
-
-    // MARK: Stored audio (opt-in)
-
     private var audioSection: some View {
-        Section {
-            Toggle("Keep audio recordings", isOn: $viewModel.keepRecordings)
-                .controlSize(.mini)
+        KVCardSection {
+            Toggle(isOn: $viewModel.keepRecordings) {
+                Text("Keep audio recordings")
+                Text("16 kHz WAV, never in diagnostics")
+            }
                 .accessibilityHint("Saves each dictation's recording next to its transcript for playback and Retranscribe.")
-            Picker("Keep audio for", selection: $viewModel.audioRetentionDays) {
-                ForEach(AudioStorageSettings.retentionChoicesInDays, id: \.self) { days in
-                    Text(days.retentionDaysLabel).tag(days)
+            LabeledContent {
+                KVSelect("Keep audio for", selection: $viewModel.audioRetentionDays, current: viewModel.audioRetentionDays.retentionDaysLabel) {
+                    ForEach(AudioStorageSettings.retentionChoicesInDays, id: \.self) { days in
+                        Text(days.retentionDaysLabel).tag(days)
+                    }
                 }
+            } label: {
+                Text("Keep audio for")
             }
             .disabled(!viewModel.keepRecordings && (viewModel.metrics?.audioBytes ?? 0) == 0)
         } header: {
@@ -165,7 +108,7 @@ struct DataRetentionSections: View {
             SettingsFooter(note: viewModel.refusalNote) {
                 Text(viewModel.keepRecordings
                     ? "Each dictation's audio is saved as a 16 kHz WAV in the KVoice data folder, readable only by your account, and removed after \(viewModel.audioRetentionDays.retentionDaysLabel). Recordings enable playback and Retranscribe in History. They are never included in diagnostics."
-                    : "Off by default. When off, no audio is written; recordings already saved stay until their retention passes or you clear history.")
+                    : "Off by default.")
             }
         }
     }
@@ -173,16 +116,17 @@ struct DataRetentionSections: View {
     // MARK: Auto Daily Export
 
     private var exportSection: some View {
-        Section {
-            Toggle("Auto Daily Export", isOn: $viewModel.autoDailyExportEnabled)
+        KVCardSection {
+            Toggle(isOn: $viewModel.autoDailyExportEnabled) {
+                Text("Auto daily export")
+                Text("Appends to YYYY-MM-DD.md")
+            }
                 .disabled(viewModel.exportFolderAccess.url == nil && !viewModel.autoDailyExportEnabled)
             folderRow
         } header: {
             Text("Export")
         } footer: {
-            SettingsFooter(note: viewModel.refusalNote) {
-                Text("Appends each completed dictation to a Markdown file named for the day (YYYY-MM-DD.md) in the folder you choose.")
-            }
+            SettingsFooter(note: viewModel.refusalNote) { EmptyView() }
         }
     }
 
@@ -240,5 +184,100 @@ struct DataRetentionSections: View {
             }
             .accessibilityElement(children: .combine)
         }
+    }
+}
+
+/// UI v2 fidelity F3 (Window.dc `privacy` › History): the retention rows sit
+/// in the History card under Save and Stored — auto-delete, the age select
+/// with its "Runs automatically" sub-line, and Run Cleanup Now.
+@MainActor
+struct RetentionRows: View {
+    @Bindable var viewModel: DataPrivacyViewModel
+    @State private var isCleanupConfirmationPresented = false
+
+    var body: some View {
+        Toggle("Automatically delete transcript history", isOn: $viewModel.autoDeleteEnabled)
+        LabeledContent {
+            KVSelect("Delete transcripts older than", selection: $viewModel.textRetentionDays, current: viewModel.textRetentionDays.retentionDaysLabel) {
+                ForEach(HistoryRetentionSettings.retentionChoicesInDays, id: \.self) { days in
+                    Text(days.retentionDaysLabel).tag(days)
+                }
+            }
+        } label: {
+            Text("Delete transcripts older than")
+            Text(viewModel.autoDeleteEnabled ? "Runs automatically" : "Used by Run Cleanup Now")
+        }
+        VStack(alignment: .leading, spacing: 6) {
+            cleanupControls
+        }
+        .confirmationDialog(
+            "Delete transcripts older than \(viewModel.textRetentionDays.retentionDaysLabel) now?",
+            isPresented: $isCleanupConfirmationPresented,
+            titleVisibility: .visible
+        ) {
+            Button("Run Cleanup", role: .destructive) {
+                Task { await viewModel.runCleanupNow() }
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+                Text("Older transcripts and their recordings are removed, and recordings older than \(viewModel.audioRetentionDays.retentionDaysLabel) are removed from newer transcripts. Newer transcripts, your settings, and the local model are kept. This cannot be undone.")
+        }
+        .task {
+            await viewModel.refreshFolderAccess()
+            await viewModel.refreshMetrics()
+        }
+    }
+
+    @ViewBuilder
+    private var cleanupControls: some View {
+        HStack(spacing: 8) {
+            Button("Run Cleanup Now…") {
+                isCleanupConfirmationPresented = true
+            }
+            .disabled(viewModel.isRunningCleanup || viewModel.runCleanup == nil)
+            if viewModel.isRunningCleanup {
+                ProgressView()
+                    .controlSize(.small)
+            }
+        }
+        if let outcome = viewModel.lastCleanupDescription {
+            Text(outcome)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    // MARK: Stored audio (opt-in)
+
+}
+
+/// Window.dc `isPrivacy`: three `ok-soft` promise tiles above the cards.
+struct PrivacyPromiseTiles: View {
+    var body: some View {
+        HStack(alignment: .top, spacing: 10) {
+            tile("Audio stays here", "Transcribed on this Mac, never uploaded.")
+            tile("No account", "No analytics, no background recording.")
+            tile("Network only when asked", "Model downloads, and AI if you turn it on.")
+        }
+        .fixedSize(horizontal: false, vertical: true)
+    }
+
+    private func tile(_ title: LocalizedStringKey, _ detail: LocalizedStringKey) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(title, bundle: .module)
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(Color.kv.okInk)
+            Text(detail, bundle: .module)
+                .font(.system(size: 11))
+                .foregroundStyle(Color.kv.text2)
+                .lineSpacing(1)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(.vertical, 12)
+        .padding(.horizontal, 14)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .background(Color.kv.okSoft, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .accessibilityElement(children: .combine)
     }
 }

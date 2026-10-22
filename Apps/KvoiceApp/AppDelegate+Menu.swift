@@ -240,6 +240,17 @@ extension AppDelegate {
     private func installStatusMenuHeaderFeed() {
         composition.hudController.renderedStateObserver = { [weak self] rendered in
             self?.statusMenuHeaderModel.apply(hud: rendered)
+            // UI v2 fidelity F1 (Motion § 4·6): the menu-bar halo follows
+            // the same rendered level while a recording hears sound; the
+            // controller ignores it unless the recording halo is lit.
+            if case .recording(let recording) = rendered.phase, recording.captureStarted {
+                self?.statusIcon?.apply(level: recording.inputLevel)
+                // UI v2 fidelity F4: Ready's dictation-test box shows the
+                // same level while the wizard's test records.
+                if let self, self.inAppTestJobID != nil, self.inAppTestRequester == .onboarding {
+                    self.composition.onboardingViewModel.dictationTestLevel.apply(raw: Double(recording.inputLevel))
+                }
+            }
         }
     }
 
@@ -248,7 +259,12 @@ extension AppDelegate {
         // are not built yet, and it de-duplicates internally.
         // D.1: the warning badge stays up while idle with a missing
         // prerequisite, not only during a blocked/failed job.
-        statusIcon?.apply(StatusItemAppearance(dictationState: state, needsAttention: statusSummary.blocked))
+        // UI v2: a download with a known total rings the glyph instead.
+        statusIcon?.apply(StatusItemAppearance(
+            dictationState: state,
+            needsAttention: statusSummary.blocked,
+            downloadFraction: statusMenuModelInstall?.fraction
+        ))
 
         guard let readinessItem, let actionItem else { return }
         updateModelMenu()
@@ -402,6 +418,16 @@ extension AppDelegate {
             switch action {
             case .copy: self?.copyFailedTranscript()
             case .insertAgain: self?.insertFailedTranscriptAgain()
+            }
+        }
+        // UI v2 fidelity F5: Model unavailable's link opens Speech Models and
+        // dismisses the recorder (the fatal state never auto-dismisses).
+        composition.hudController.openSpeechModels = { [weak self] in
+            guard let self, !self.terminationInProgress else { return }
+            self.openMainWindow(section: .models)
+            Task { [weak self] in
+                guard let self else { return }
+                _ = await self.composition.dictationController.handle(AppCommand.dismiss)
             }
         }
     }
@@ -635,6 +661,21 @@ extension AppDelegate {
             ai.apply(promptMode: candidate)
         }
         ai.isEnabled = true
+        sendSettingsIntent(.setAI(ai, origin: .statusMenu))
+    }
+
+    /// UI v2 fidelity F1: the status panel's chip row is one choice — Off
+    /// or an action — so picking an action while AI is off turns AI on
+    /// with that action, in one settings write (two writes would race:
+    /// the second would read settings the first has not committed yet).
+    /// The right-click menu keeps P-D1 (picking never flips the switch).
+    /// Refused like `toggleAI` when nothing can run: AI Actions opens.
+    func useAIAction(mode: PromptMode) {
+        guard mode.isUsable else { return }
+        guard let ai = currentSettings.ai.enablingAction(mode) else {
+            openMainWindow(section: .aiActions)
+            return
+        }
         sendSettingsIntent(.setAI(ai, origin: .statusMenu))
     }
 
@@ -997,7 +1038,8 @@ extension AppDelegate {
         // must not stay up under an activating window.
         statusPanelController?.closeImmediately()
         if mainWindow == nil {
-            mainWindow = MainWindowController(appDelegate: self)
+            mainWindow = MainWindowController(appDelegate: self, requestedSection: section)
+            updateMainWindowReadiness()
         }
         mainWindow?.open(section: section)
     }

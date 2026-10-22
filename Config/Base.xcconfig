@@ -3,7 +3,7 @@ PRODUCT_BUNDLE_IDENTIFIER = io.github.kccarlos.kvoice
 // Development builds carry the version of the *next* release; a release
 // build overrides both from the tag and the Actions run number
 // (the release documentation). Bump MARKETING_VERSION here right after tagging.
-MARKETING_VERSION = 0.1.6
+MARKETING_VERSION = 0.1.7
 CURRENT_PROJECT_VERSION = 1
 MACOSX_DEPLOYMENT_TARGET = 15.0
 SUPPORTED_PLATFORMS = macosx
@@ -20,3 +20,9 @@ SWIFT_EMIT_LOC_STRINGS = YES
 // DMG, unsandboxed) unless Config/AppStore.xcconfig says `appStore`.
 // Info.plist carries it as `KvoiceDistributionEdition`.
 KVOICE_DISTRIBUTION_EDITION = developerID
+
+// UI v2: the app's AccentColor is the design's cursor blue (kv.cursor,
+// #2F6FEB), from Apps/KvoiceApp/Resources/Assets.xcassets. macOS applies an
+// app accent only while the system accent is Multicolor; the HUD and other
+// v2 surfaces use `Color.kv.cursor` directly so they never depend on it.
+ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor

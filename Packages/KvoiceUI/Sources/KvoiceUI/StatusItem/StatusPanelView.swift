@@ -9,21 +9,32 @@ import KvoiceDomain
 /// app commands at the foot. Every row the `NSMenu` shows is here; the
 /// menu itself stays as the right-click / ⌥-click fallback.
 ///
-/// Sections are accessibility containers with the menu's group names, each
-/// row is a button with its label and value, the switch announces its own
-/// state, and the primary control reads "Start Recording, Ready · Whisper
-/// large-v3-turbo, ⌃⇧Space". Keyboard: ↓ / ↑ / Return / Escape / ⌘H ⌘, ⌘Q
-/// come through `StatusPanelKeyEquivalents` (the presenter's local
-/// monitor) into `model.focus` and `perform`; Tab is the system's.
+/// UI v2 (wave 2) and fidelity F1 (2026-10-21, `Panel.dc.html`): the
+/// primary control, its subtitle, the feed, the outcome's words and the
+/// state's buttons sit on one top card whose ground says the state
+/// (`StatusPanelState.cardTone`); the idle card carries the last
+/// transcription. Model, Language and Microphone lead with the design's
+/// stroke tiles; the AI block is one chip row — Off or an action — under
+/// "AI Action" with the configuration as a link; the foot rows are text
+/// only. The marks are the design's paths (`StatusPanelGlyphs.swift`), the
+/// panel-scoped colours `PanelColor`, the rest `Color.kv` tokens. Motion
+/// follows `Motion.dc.html`: the level follows the voice (§ 4·6), the
+/// clock and the percent roll (§ 7), the check draws itself (§ 10·12),
+/// state changes cross-fade; Reduce Motion turns movement into fades.
 ///
-/// `chrome` says who draws the panel's background: `.hosted` draws none —
-/// an `NSPopover` supplies its own material (Liquid Glass on macOS 26),
-/// arrow, edge and shadow, and answers Reduce Transparency itself, so glass
-/// inside it would be glass on glass; `.standalone` draws the mock's card
-/// (glass on macOS 26, the regular material below, an opaque window colour
-/// under Reduce Transparency, a strong edge under Increase Contrast) for
-/// the gallery and any future host without chrome of its own.
+/// Sections are accessibility containers with the menu's group names, each
+/// row is a button with its label and value, the Off chip and the action
+/// chips carry the selected trait, and the primary control reads "Start
+/// Recording, Ready · Whisper large-v3-turbo, ⌃⇧Space". Keyboard: ↓ / ↑ /
+/// Return / Escape / ⌘H ⌘, ⌘Q come through `StatusPanelKeyEquivalents`
+/// (the presenter's local monitor) into `model.focus` and `perform`; Tab
+/// is the system's.
 public struct StatusPanelView: View {
+    /// Who draws the panel's ground. `.standalone` draws the design's own
+    /// (`Panel.dc.html`): the solid panel colour, a 22 pt continuous
+    /// corner and the .5 pt edge — the app's borderless status panel
+    /// (`StatusPanelController`) and the renders use it. `.hosted` draws
+    /// none, for a host that brings its own (the design gallery's frame).
     public enum Chrome: Sendable {
         case hosted
         case standalone
@@ -55,6 +66,9 @@ public struct StatusPanelView: View {
     @Environment(\.accessibilityReduceTransparency) private var environmentReduceTransparency
     @Environment(\.colorSchemeContrast) private var environmentContrast
     @FocusState private var focus: StatusPanelModel.FocusTarget?
+    /// Motion § 4·6: the level the meter and the stop disc's halo show —
+    /// fast attack, slow release — stepped on every feed tick.
+    @State private var follower = KVLevelFollower()
 
     private var reduceMotion: Bool { overrides.reduceMotion ?? environmentReduceMotion }
     private var reduceTransparency: Bool { overrides.reduceTransparency ?? environmentReduceTransparency }
@@ -68,21 +82,23 @@ public struct StatusPanelView: View {
 
     public var body: some View {
         let state = model.state
-        VStack(alignment: .leading, spacing: 0) {
-            primaryBlock(state)
-            sectionDivider
+        VStack(alignment: .leading, spacing: 10) {
+            topCard(state)
             dictationSection(state)
-            sectionDivider
             aiSection(state)
-            sectionDivider
             footBlock(state)
         }
+        .padding(12)
         .frame(width: Self.panelWidth)
         .fixedSize(horizontal: false, vertical: true)
-        .modifier(PanelChrome(chrome: chrome, reduceTransparency: reduceTransparency, increasedContrast: increasedContrast))
+        .modifier(PanelChrome(chrome: chrome, increasedContrast: increasedContrast))
         // Keyed on the layout signature, not the whole state: the level
         // and clock tick at 20 Hz and must not retrigger the row animation.
-        .animation(reduceMotion ? nil : .easeInOut(duration: 0.18), value: state.layoutSignature)
+        // Motion: state changes cross-fade (200–260 ms); under Reduce
+        // Motion a plain 150 ms fade.
+        .animation(reduceMotion ? .easeInOut(duration: 0.15) : .easeInOut(duration: 0.22), value: state.layoutSignature)
+        .onAppear { follower = KVLevelFollower(level: Self.level(of: state.feed)) }
+        .onChange(of: Self.level(of: state.feed)) { _, raw in stepLevel(raw) }
         // Focus flows both ways: ↓/↑ set `model.focus` through the key
         // router; a click or Tab that moves the system focus updates the
         // model so Return acts on what is highlighted.
@@ -98,64 +114,219 @@ public struct StatusPanelView: View {
         .accessibilityLabel(Text("KVoice", bundle: .module))
     }
 
-    // MARK: Primary block — the "slider" of the Sound module
+    private static func level(of feed: StatusPanelState.Feed) -> Double {
+        if case .meter(let level, _) = feed { return level }
+        return 0
+    }
 
-    private func primaryBlock(_ state: StatusPanelState) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Button {
-                model.perform(.toggleDictation)
-            } label: {
-                HStack(spacing: 10) {
-                    PrimaryGlyphView(glyph: state.primaryGlyph, enabled: state.primaryIsEnabled, pulses: model.isPresented, reduceMotion: reduceMotion)
-                    // The key-caps share the title's line so the readiness
-                    // line under it has the full width for a long model
-                    // name ("Ready · Whisper large-v3-turbo").
-                    VStack(alignment: .leading, spacing: 1) {
-                        HStack(spacing: 6) {
-                            Text(verbatim: state.primaryTitle)
-                                .font(.system(size: 13, weight: .semibold))
-                                .foregroundStyle(state.primaryIsEnabled ? .primary : .secondary)
-                            if let badge = state.header.finishingBadge {
-                                FinishingBadge(text: badge)
-                            }
-                            Spacer(minLength: 8)
-                            if !state.shortcutKeys.isEmpty {
-                                KeyCaps(state.shortcutKeys)
-                            } else if let note = state.shortcutNote {
-                                Text(verbatim: note)
-                                    .font(.system(size: 11))
-                                    .foregroundStyle(.tertiary)
+    private func stepLevel(_ raw: Double) {
+        follower.follow(raw: raw, at: Date())
+    }
+
+    // MARK: Top card — what is happening and what to do about it
+
+    /// The primary control, its subtitle, the trailing caps / link /
+    /// clock, the feed, the outcome's words, the state's buttons and (idle)
+    /// the last transcription, on one card whose ground says the state:
+    /// voice while recording, warn while blocked, an err edge when a job
+    /// ended without inserting (`Panel.dc.html`, "Top card · every state").
+    private func topCard(_ state: StatusPanelState) -> some View {
+        let buttons = state.dictationRows.filter { $0.id != .copyLastTranscription }
+            .sorted { Self.emphasisRank($0.emphasis) < Self.emphasisRank($1.emphasis) }
+        let copyLast = state.dictationRows.first { $0.id == .copyLastTranscription }
+        return VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 12) {
+                Button {
+                    model.perform(.toggleDictation)
+                } label: {
+                    HStack(spacing: 12) {
+                        PrimaryGlyphView(
+                            glyph: state.primaryGlyph,
+                            outcome: state.outcomeGlyph,
+                            downloading: Self.isDownloading(state.feed),
+                            enabled: state.primaryIsEnabled,
+                            level: follower.level,
+                            animates: model.isPresented && !reduceMotion,
+                            reduceMotion: reduceMotion
+                        )
+                        VStack(alignment: .leading, spacing: 2) {
+                            HStack(spacing: 6) {
+                                Text(verbatim: state.primaryTitle)
+                                    .font(.system(size: 13, weight: .semibold))
+                                    .foregroundStyle(Color.kv.text)
+                                    .opacity(Self.dimsTitle(state) ? 0.5 : 1)
                                     .lineLimit(1)
+                                    .truncationMode(.tail)
+                                if let badge = state.header.finishingBadge {
+                                    FinishingBadge(text: badge)
+                                }
                             }
+                            subtitle(state)
                         }
-                        if !state.readiness.isEmpty {
-                            Text(verbatim: state.readiness)
-                                .font(.system(size: 11))
-                                .foregroundStyle(state.readinessIsAttention ? Color.orange : Color.secondary)
-                                .lineLimit(1)
-                                .truncationMode(.middle)
-                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
                     }
+                    .contentShape(Rectangle())
                 }
-                .contentShape(Rectangle())
+                // Not dimmed as a whole: a finishing job's disc and words stay
+                // legible; only an idle Start without a model dims its title.
+                .buttonStyle(PanelRowButtonStyle(inset: -6, horizontalPadding: 0, verticalPadding: 0, dimsWhenDisabled: false))
+                .disabled(!state.primaryIsEnabled)
+                .focused($focus, equals: .primary)
+                .panelHelp(state.shortcutNote)
+                .accessibilityLabel(Text(verbatim: state.primaryAccessibilityLabel))
+
+                trailing(state)
             }
-            .buttonStyle(PanelRowButtonStyle(inset: -6))
-            .disabled(!state.primaryIsEnabled)
-            .focused($focus, equals: .primary)
-            .panelHelp(state.shortcutNote)
-            .accessibilityLabel(Text(verbatim: state.primaryAccessibilityLabel))
 
             feedRow(state.feed)
 
-            ForEach(state.dictationRows) { row in
-                commandRow(row)
+            if let text = state.resultText {
+                Text(verbatim: text)
+                    .font(.system(size: 12))
+                    .foregroundStyle(Color.kv.text)
+                    .lineSpacing(3)
+                    .lineLimit(4)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.vertical, 7)
+                    .padding(.horizontal, 9)
+                    .background(Color.kv.wash, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                    .padding(.leading, 52)
+                    .accessibilityLabel(Text(verbatim: text))
+            }
+
+            if !buttons.isEmpty {
+                KVFlowLayout(spacing: 6) {
+                    ForEach(buttons) { row in
+                        cardButton(row)
+                    }
+                }
+                .padding(.leading, 52)
+            }
+
+            if let copyLast {
+                lastTranscriptionSection(state.lastTranscription, copy: copyLast)
             }
         }
-        .padding(.horizontal, 14)
-        .padding(.top, 14)
-        .padding(.bottom, 12)
+        .padding(12)
+        .background(cardFill(state.cardTone), in: cardShape)
+        .overlay { cardShape.strokeBorder(cardEdge(state.cardTone), lineWidth: state.cardTone == .voice || state.cardTone == .err ? 1 : 0.5) }
+        .animation(reduceMotion ? nil : .easeInOut(duration: 0.22), value: state.cardTone)
         .accessibilityElement(children: .contain)
         .accessibilityLabel(Text("Dictation", bundle: .module))
+    }
+
+    private var cardShape: RoundedRectangle {
+        RoundedRectangle(cornerRadius: 14, style: .continuous)
+    }
+
+    private func cardFill(_ tone: StatusPanelState.CardTone) -> Color {
+        switch tone {
+        case .voice: return Color.kv.voiceSoft
+        case .warn: return Color.kv.warnSoft
+        case .plain, .err: return PanelColor.surface
+        }
+    }
+
+    private func cardEdge(_ tone: StatusPanelState.CardTone) -> Color {
+        switch tone {
+        case .voice: return Color.kv.voice
+        case .err: return Color.kv.err
+        case .plain, .warn: return increasedContrast ? Color.primary.opacity(0.45) : PanelColor.cardLine
+        }
+    }
+
+    /// The design dims the title (50 %) while the card cannot start a
+    /// recording yet: downloading, optimizing, blocked.
+    private static func dimsTitle(_ state: StatusPanelState) -> Bool {
+        !state.primaryIsEnabled && (state.primaryGlyph == .start || state.primaryGlyph == .attention)
+            || state.cardTone == .warn
+    }
+
+    /// Primary first, then the fix, then the plain buttons.
+    private static func emphasisRank(_ emphasis: StatusPanelState.Row.Emphasis) -> Int {
+        switch emphasis {
+        case .primary: return 0
+        case .warn: return 1
+        case .plain: return 2
+        }
+    }
+
+    private static func isDownloading(_ feed: StatusPanelState.Feed) -> Bool {
+        if case .download = feed { return true }
+        return false
+    }
+
+    /// The line under the title. Ready: a 7 pt ok dot and quiet words. A
+    /// line that asks something of the user (warn, err): the tone's ink,
+    /// semibold, no dot. Everything else: quiet words.
+    @ViewBuilder
+    private func subtitle(_ state: StatusPanelState) -> some View {
+        if !state.readiness.isEmpty {
+            // The design's subtitle is not clipped to a line: beside the key
+            // caps "Ready · Whisper large-v3-turbo" wraps to a second line
+            // (the memory-pressure line to a third).
+            HStack(alignment: .firstTextBaseline, spacing: 6) {
+                if state.readinessTone == .ok {
+                    Circle().fill(Color.kv.ok).frame(width: 7, height: 7)
+                        .alignmentGuide(.firstTextBaseline) { $0[VerticalAlignment.center] + 3.5 }
+                }
+                Text(verbatim: state.readiness)
+                    .font(.system(size: 11, weight: Self.isLoud(state.readinessTone) ? .semibold : .regular))
+                    .foregroundStyle(Self.subtitleColor(state.readinessTone))
+                    .lineLimit(3)
+                    .truncationMode(.tail)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+    }
+
+    private static func isLoud(_ tone: KVTone?) -> Bool {
+        tone == .warn || tone == .err
+    }
+
+    private static func subtitleColor(_ tone: KVTone?) -> Color {
+        switch tone {
+        case .warn?: return Color.kv.warnInk
+        case .err?: return Color.kv.errInk
+        default: return Color.kv.text2
+        }
+    }
+
+    /// The card's trailing slot, centred on the 40 pt disc: the shortcut's
+    /// caps (idle), "Set Shortcut…" when there is no working shortcut, or
+    /// the clock (recording), whose digits roll (Motion § 7).
+    @ViewBuilder
+    private func trailing(_ state: StatusPanelState) -> some View {
+        if case .meter(_, let elapsed) = state.feed {
+            Text(verbatim: HUDViewState.formatElapsed(elapsed))
+                .font(KVFont.metric(size: 14))
+                .foregroundStyle(Color.kv.text)
+                .contentTransition(.numericText())
+                .animation(reduceMotion ? nil : .spring(response: 0.32, dampingFraction: 0.8), value: HUDViewState.formatElapsed(elapsed))
+                .fixedSize()
+                .accessibilityHidden(true)
+        } else if !state.shortcutKeys.isEmpty {
+            Keycaps(state.shortcutKeys, size: .medium)
+        } else if let link = state.shortcutLink {
+            Button {
+                if let command = link.command {
+                    model.perform(command)
+                }
+            } label: {
+                Text(verbatim: link.title)
+                    .font(.system(size: 11))
+                    .foregroundStyle(Color.kv.cursorInk)
+                    .lineLimit(1)
+                    .fixedSize()
+            }
+            .buttonStyle(LinkButtonStyle())
+            .disabled(!link.isEnabled)
+            .focused($focus, equals: .row(link.id))
+            .panelHelp(link.help)
+            .accessibilityLabel(Text(verbatim: link.title))
+            .accessibilityHint(Text(verbatim: link.help ?? ""))
+        }
     }
 
     /// The meter exists only while a job is recording — the microphone is
@@ -167,48 +338,93 @@ public struct StatusPanelView: View {
         switch feed {
         case .none:
             EmptyView()
-        case .meter(let level, let elapsed):
-            HStack(spacing: 8) {
-                Image(systemName: "waveform")
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundStyle(.secondary)
-                LevelBar(level: level, reduceMotion: reduceMotion)
-                Text(verbatim: HUDViewState.formatElapsed(elapsed))
-                    .font(.system(size: 11, weight: .medium).monospacedDigit())
-                    .foregroundStyle(.secondary)
-                    .frame(minWidth: 30, alignment: .trailing)
-            }
-            .accessibilityElement(children: .ignore)
-            .accessibilityLabel(Text("Recording", bundle: .module))
-            .accessibilityValue(Text(verbatim: HUDViewState.formatElapsed(elapsed)))
+        case .meter(_, let elapsed):
+            LevelBars(level: follower.level)
+                .padding(.leading, 52)
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel(Text("Recording", bundle: .module))
+                .accessibilityValue(Text(verbatim: HUDViewState.formatElapsed(elapsed)))
         case .download(let label, let fraction):
-            HStack(spacing: 8) {
-                Image(systemName: "arrow.down.circle")
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundStyle(.secondary)
-                Group {
-                    if let fraction {
-                        ProgressView(value: fraction)
-                    } else {
-                        ProgressView()
+            VStack(alignment: .leading, spacing: 5) {
+                ProgressTrack(fraction: fraction, reduceMotion: reduceMotion)
+                HStack {
+                    Text(verbatim: label)
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                    Spacer(minLength: 6)
+                    if let percent = StatusPanelState.percentText(fraction) {
+                        Text(verbatim: percent)
+                            .font(KVFont.metric(size: 11, weight: .regular))
+                            .contentTransition(.numericText())
+                            .animation(reduceMotion ? nil : .spring(response: 0.32, dampingFraction: 0.8), value: percent)
                     }
                 }
-                .progressViewStyle(.linear)
-                .controlSize(.small)
-                // The label wins the width; the bar takes what is left
-                // ("Downloading Whisper large-v3-turbo… 42%" is the
-                // longest, and a bar of any length reads).
-                Text(verbatim: label)
-                    .font(.system(size: 11))
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-                    .truncationMode(.middle)
-                    .layoutPriority(1)
-                    .frame(maxWidth: 200, alignment: .trailing)
+                .font(.system(size: 11))
+                .foregroundStyle(Color.kv.text2)
             }
+            .padding(.leading, 52)
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(Text(verbatim: label))
+            .accessibilityValue(Text(verbatim: StatusPanelState.percentText(fraction) ?? ""))
         }
+    }
+
+    /// UI v2: the newest saved transcription under the idle controls — a
+    /// two-line preview, how long ago, and Copy. Without a preview (no
+    /// history yet, history off or unavailable) the row is a plain button,
+    /// disabled with the menu's tooltip when it cannot copy.
+    @ViewBuilder
+    private func lastTranscriptionSection(_ last: StatusPanelState.LastTranscription?, copy: StatusPanelState.Row) -> some View {
+        if let last {
+            VStack(alignment: .leading, spacing: 6) {
+                HStack {
+                    Text("Last transcription", bundle: .module)
+                        .font(.system(size: 11, weight: .semibold))
+                    Spacer()
+                    Text(verbatim: StatusPanelState.relativeTime(last.createdAt, now: model.now()))
+                        .font(.system(size: 11))
+                }
+                .foregroundStyle(Color.kv.text2)
+                Text(verbatim: last.text)
+                    .font(.system(size: 12))
+                    .foregroundStyle(Color.kv.text)
+                    .lineLimit(2)
+                    .lineSpacing(3)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .fixedSize(horizontal: false, vertical: true)
+                cardButton(copy, compact: true)
+            }
+            .padding(.top, 9)
+            .overlay(alignment: .top) {
+                Rectangle().fill(Color.kv.line2).frame(height: 1)
+            }
+            .accessibilityElement(children: .contain)
+            .accessibilityLabel(Text("Last transcription", bundle: .module))
+        } else {
+            cardButton(StatusPanelState.Row(
+                id: copy.id, symbol: copy.symbol, title: copy.title, isEnabled: copy.isEnabled,
+                help: copy.help, command: copy.command
+            ))
+            .padding(.leading, 52)
+        }
+    }
+
+    /// A state row as a card button: primary (cursor fill), warn (the fix),
+    /// or plain (outlined). Focus and VoiceOver keep the row's full title.
+    private func cardButton(_ row: StatusPanelState.Row, compact: Bool = false) -> some View {
+        Button {
+            if let command = row.command {
+                model.perform(command)
+            }
+        } label: {
+            Text(verbatim: row.buttonTitle)
+                .lineLimit(1)
+        }
+        .buttonStyle(CardButtonStyle(emphasis: row.emphasis, compact: compact, increasedContrast: increasedContrast))
+        .disabled(!row.isEnabled)
+        .focused($focus, equals: .row(row.id))
+        .panelHelp(row.help)
+        .accessibilityLabel(Text(verbatim: row.accessibilityLabel))
     }
 
     // MARK: Dictation rows — the "Output" device rows
@@ -216,94 +432,154 @@ public struct StatusPanelView: View {
     private func dictationSection(_ state: StatusPanelState) -> some View {
         VStack(alignment: .leading, spacing: 2) {
             sectionTitle(Text("Dictation", bundle: .module))
-            chooserRow(state.modelRow)
-            chooserRow(state.languageRow)
-            chooserRow(state.microphoneRow)
+                .padding(.horizontal, 6)
+                .padding(.top, 2)
+                .padding(.bottom, 4)
+            chooserRow(state.modelRow, mark: .bars, tile: .voice)
+            chooserRow(state.languageRow, mark: .globe, tile: .cursor)
+            chooserRow(state.microphoneRow, mark: .mic, tile: .voice)
         }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 8)
+        .padding(.horizontal, 4)
         .accessibilityElement(children: .contain)
         .accessibilityLabel(Text("Transcription", bundle: .module))
     }
 
-    // MARK: AI rows — the switch
+    // MARK: AI — one chip row: Off or an action
 
+    /// UI v2 fidelity F1 (`Panel.dc.html`): "Use AI Actions", Default
+    /// Action and Configuration collapse into one row — "AI Action" with
+    /// the configuration as a link, then the chips, **Off** first. Off is
+    /// the old switch (`toggleAI`, the same gate and tooltip); an action
+    /// picked while AI is off turns it on with that action
+    /// (`useAIAction`). The lit chip is what the next dictation will do.
     private func aiSection(_ state: StatusPanelState) -> some View {
-        VStack(alignment: .leading, spacing: 2) {
-            sectionTitle(Text("AI", bundle: .module))
-            HStack(spacing: 10) {
-                rowIcon("sparkles", tint: state.aiSwitch.isEnabled ? .accentColor : .secondary)
-                Text(verbatim: state.aiSwitch.title)
-                    .font(Self.rowFont)
-                    .foregroundStyle(state.aiSwitch.isEnabled ? .primary : .secondary)
-                Spacer()
-                // The switch's binding sends `toggleAI` whichever way it is
-                // flipped; the position follows the committed settings, not
-                // the flip, so a refused intent leaves it where it was.
-                Toggle(isOn: Binding(get: { state.aiIsOn }, set: { _ in model.perform(.toggleAI) })) {
-                    Text(verbatim: state.aiSwitch.title)
-                }
-                .labelsHidden()
-                .toggleStyle(.switch)
-                .controlSize(.mini)
-                .disabled(!state.aiSwitch.isEnabled)
-                .focused($focus, equals: .row(.aiSwitch))
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 8) {
+                sectionTitle(Text("AI Action", bundle: .module))
+                Spacer(minLength: 4)
+                configurationLink(state.configurationRow)
             }
-            .padding(.horizontal, 6)
-            .padding(.vertical, 5)
-            .panelHelp(state.aiSwitch.help)
-            chooserRow(state.defaultActionRow)
-            chooserRow(state.configurationRow)
+            actionChips(state)
         }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 8)
+        .padding(.top, 10)
+        .padding(.horizontal, 10)
+        .padding(.bottom, 4)
+        .overlay(alignment: .top) { sectionDivider }
         .accessibilityElement(children: .contain)
         .accessibilityLabel(Text("AI", bundle: .module))
+    }
+
+    private func actionChips(_ state: StatusPanelState) -> some View {
+        let chips = state.aiChips
+        // The row's focus target lands on the current action, else the
+        // first, whatever the switch says, so ↓ never lands on nothing.
+        let focusID = chips.first(where: \.isSelected)?.id ?? chips.first?.id
+        let off = state.aiSwitch
+        return KVFlowLayout(spacing: 5) {
+            Button {
+                if state.aiIsOn {
+                    model.perform(.toggleAI)
+                }
+            } label: {
+                Text(verbatim: off.buttonTitle).lineLimit(1)
+            }
+            .buttonStyle(ChipButtonStyle(kind: state.aiIsOn ? .off : .lit, increasedContrast: increasedContrast))
+            .disabled(!off.isEnabled)
+            .focused($focus, equals: .row(.aiSwitch))
+            .panelHelp(off.help)
+            .accessibilityLabel(Text(verbatim: AIActionsCopy.aiOff))
+            .accessibilityAddTraits(state.aiIsOn ? [] : .isSelected)
+            .accessibilityValue(Text(verbatim: KVAccessibility.selectionValue(!state.aiIsOn)))
+
+            ForEach(chips) { choice in
+                Button {
+                    if let command = Self.chipCommand(choice.command, aiIsOn: state.aiIsOn) {
+                        model.perform(command)
+                    }
+                } label: {
+                    Text(verbatim: choice.title).lineLimit(1)
+                }
+                .buttonStyle(ChipButtonStyle(kind: choice.isSelected && state.aiIsOn ? .lit : .plain, increasedContrast: increasedContrast))
+                .disabled(!choice.isEnabled || !state.defaultActionRow.isEnabled)
+                .modifier(FocusIf(active: choice.id == focusID, focus: $focus, target: .row(.defaultAction)))
+                .panelHelp(choice.help)
+                .accessibilityLabel(Text(verbatim: choice.title))
+                .accessibilityAddTraits(choice.isSelected && state.aiIsOn ? .isSelected : [])
+                .accessibilityValue(Text(verbatim: KVAccessibility.selectionValue(choice.isSelected && state.aiIsOn)))
+            }
+        }
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel(Text(verbatim: state.defaultActionRow.title))
+    }
+
+    /// While AI is off, picking an action is picking "on, with this".
+    static func chipCommand(_ command: StatusPanelCommand?, aiIsOn: Bool) -> StatusPanelCommand? {
+        guard !aiIsOn, case .selectDefaultAction(let id)? = command else { return command }
+        return .useAIAction(id)
+    }
+
+    /// "Local Ollama ›": the Configuration chooser as a link.
+    private func configurationLink(_ row: StatusPanelState.Row) -> some View {
+        Menu {
+            chooserItems(row.chooser)
+        } label: {
+            Text(verbatim: "\(row.value ?? "") ›")
+                .font(.system(size: 11))
+                .foregroundStyle(Color.kv.cursorInk)
+                .lineLimit(1)
+                .truncationMode(.tail)
+                .frame(maxWidth: 160, alignment: .trailing)
+        }
+        .menuStyle(.button)
+        .menuIndicator(.hidden)
+        .buttonStyle(.plain)
+        .fixedSize()
+        .disabled(!row.isEnabled)
+        .focused($focus, equals: .row(row.id))
+        .panelHelp(row.help)
+        .accessibilityLabel(Text(verbatim: row.accessibilityLabel))
     }
 
     // MARK: Foot — "Sound Settings…"
 
     private func footBlock(_ state: StatusPanelState) -> some View {
-        VStack(alignment: .leading, spacing: 2) {
+        VStack(alignment: .leading, spacing: 0) {
             // Request: every App-group command visible, no submenu.
             ForEach(state.footRows) { row in
                 commandRow(row)
             }
         }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 8)
+        .padding(.top, 6)
+        .padding(.horizontal, 4)
+        .overlay(alignment: .top) { sectionDivider }
         .accessibilityElement(children: .contain)
         .accessibilityLabel(Text("App", bundle: .module))
     }
 
     // MARK: Rows
 
-    /// A row that sends one command: icon (when it has one), title, key-cap.
+    /// A foot row: 26 pt, title and key-cap text, nothing else.
     private func commandRow(_ row: StatusPanelState.Row) -> some View {
         Button {
             if let command = row.command {
                 model.perform(command)
             }
         } label: {
-            HStack(spacing: row.symbol == nil ? 0 : 8) {
-                if let symbol = row.symbol {
-                    rowIcon(symbol, tint: row.isAttention ? .orange : .secondary)
-                }
+            HStack(spacing: 0) {
                 Text(verbatim: row.title)
                     .font(Self.rowFont)
-                    .foregroundStyle(row.isEnabled ? .primary : .secondary)
+                    .foregroundStyle(Color.kv.text)
                 Spacer()
                 if let keyCap = row.keyCap {
                     Text(verbatim: keyCap)
                         .font(.system(size: 12))
-                        .foregroundStyle(.tertiary)
-                } else if row.isAttention {
-                    chevron
+                        .foregroundStyle(Color.kv.text2)
                 }
             }
+            .frame(height: 26)
             .contentShape(Rectangle())
         }
-        .buttonStyle(PanelRowButtonStyle())
+        .buttonStyle(PanelRowButtonStyle(verticalPadding: 0, radius: 6))
         .disabled(!row.isEnabled)
         .focused($focus, equals: .row(row.id))
         .panelHelp(row.help)
@@ -314,50 +590,61 @@ public struct StatusPanelView: View {
     /// arrow keys, type-select, Return, Escape and VoiceOver's "menu"
     /// semantics inside it are the system's, and no second panel is
     /// stacked on the first (`popovers.md`: never a cascade of popovers).
-    private func chooserRow(_ row: StatusPanelState.Row) -> some View {
+    /// 30 pt: the design's tile, label, value (140 pt, tail-cut) and "›".
+    private func chooserRow(_ row: StatusPanelState.Row, mark: PanelGlyphShape.Mark, tile: KVTone) -> some View {
         Menu {
-            if let chooser = row.chooser {
-                ForEach(chooser.choices) { choice in
-                    chooserItem(choice)
-                    if choice.separatorAfter {
-                        Divider()
-                    }
-                }
-                if !chooser.footer.isEmpty {
-                    Divider()
-                    ForEach(chooser.footer) { choice in
-                        chooserItem(choice)
-                    }
-                }
-            }
+            chooserItems(row.chooser)
         } label: {
             HStack(spacing: 10) {
-                rowIcon(row.symbol ?? "circle", tint: row.isEnabled ? .primary : .secondary)
+                PanelIconTile(mark: mark, tone: tile, isEnabled: row.isEnabled)
                 Text(verbatim: row.title)
                     .font(Self.rowFont)
-                    .foregroundStyle(row.isEnabled ? .primary : .secondary)
+                    .foregroundStyle(Color.kv.text)
                 Spacer(minLength: 8)
                 if let value = row.value {
                     Text(verbatim: value)
                         .font(.system(size: 12))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.kv.text2)
                         .lineLimit(1)
-                        .truncationMode(.middle)
+                        .truncationMode(.tail)
+                        .frame(maxWidth: 140, alignment: .trailing)
                 }
                 if let keyCap = row.keyCap {
-                    KeyCaps([keyCap])
+                    Keycaps([keyCap], size: .compact)
                 }
-                chevron
+                Text(verbatim: "›")
+                    .font(.system(size: 13))
+                    .foregroundStyle(Color.kv.text2)
+                    .accessibilityHidden(true)
             }
+            .frame(height: 30)
             .contentShape(Rectangle())
         }
         .menuStyle(.button)
         .menuIndicator(.hidden)
-        .buttonStyle(PanelRowButtonStyle())
+        .buttonStyle(PanelRowButtonStyle(verticalPadding: 0))
         .disabled(!row.isEnabled)
         .focused($focus, equals: .row(row.id))
         .panelHelp(row.help)
         .accessibilityLabel(Text(verbatim: row.accessibilityLabel))
+    }
+
+    @ViewBuilder
+    private func chooserItems(_ chooser: StatusPanelChooser?) -> some View {
+        if let chooser {
+            ForEach(chooser.choices) { choice in
+                chooserItem(choice)
+                if choice.separatorAfter {
+                    Divider()
+                }
+            }
+            if !chooser.footer.isEmpty {
+                Divider()
+                ForEach(chooser.footer) { choice in
+                    chooserItem(choice)
+                }
+            }
+        }
     }
 
     /// A pickable choice draws as a checked menu item (a `Toggle` inside a
@@ -388,7 +675,7 @@ public struct StatusPanelView: View {
     /// the footer commands that open a window (plain rows).
     private static func isPick(_ command: StatusPanelCommand) -> Bool {
         switch command {
-        case .selectModel, .selectLanguage, .selectMicrophone, .selectDefaultAction, .selectConfiguration:
+        case .selectModel, .selectLanguage, .selectMicrophone, .selectDefaultAction, .selectConfiguration, .useAIAction:
             return true
         default:
             return false
@@ -399,245 +686,14 @@ public struct StatusPanelView: View {
 
     private var sectionDivider: some View {
         Rectangle()
-            .fill(Color.primary.opacity(increasedContrast ? 0.35 : 0.08))
+            .fill(increasedContrast ? Color.primary.opacity(0.35) : Color.kv.line2)
             .frame(height: 1)
-            .padding(.horizontal, 12)
     }
 
     private func sectionTitle(_ title: Text) -> some View {
         title
             .font(.system(size: 11, weight: .semibold))
-            .foregroundStyle(.secondary)
-            .padding(.horizontal, 6)
-            .padding(.bottom, 2)
+            .foregroundStyle(Color.kv.text2)
             .accessibilityAddTraits(.isHeader)
-    }
-
-    private func rowIcon(_ name: String, tint: Color) -> some View {
-        Image(systemName: name)
-            .font(.system(size: 12, weight: .medium))
-            .foregroundStyle(tint)
-            .frame(width: 22, height: 22)
-            .background(tint.opacity(0.12), in: Circle())
-            .accessibilityHidden(true)
-    }
-
-    private var chevron: some View {
-        Image(systemName: "chevron.right")
-            .font(.system(size: 9, weight: .semibold))
-            .foregroundStyle(.tertiary)
-            .accessibilityHidden(true)
-    }
-}
-
-private extension View {
-    /// `help(_:)` only when there is a tooltip — the menu's `toolTip`.
-    @ViewBuilder
-    func panelHelp(_ text: String?) -> some View {
-        if let text, !text.isEmpty {
-            self.help(Text(verbatim: text))
-        } else {
-            self
-        }
-    }
-}
-
-// MARK: - Chrome
-
-/// The panel's background per host; see `StatusPanelView.Chrome`. Glass
-/// answers Reduce Transparency and Increase Contrast itself
-/// (`liquid-glass.md › Which variant`); the material path and the edge
-/// are ours, as in `HUDView.miniPillBackground`.
-private struct PanelChrome: ViewModifier {
-    let chrome: StatusPanelView.Chrome
-    let reduceTransparency: Bool
-    let increasedContrast: Bool
-
-    private var shape: RoundedRectangle {
-        RoundedRectangle(cornerRadius: StatusPanelView.cornerRadius, style: .continuous)
-    }
-
-    func body(content: Content) -> some View {
-        switch chrome {
-        case .hosted:
-            content
-        case .standalone:
-            standalone(content)
-        }
-    }
-
-    @ViewBuilder
-    private func standalone(_ content: Content) -> some View {
-        if reduceTransparency {
-            content
-                .background(Color(nsColor: .windowBackgroundColor), in: shape)
-                .overlay { shape.strokeBorder(Color.primary.opacity(increasedContrast ? 0.6 : 0.2), lineWidth: 1) }
-                .shadow(color: .black.opacity(0.18), radius: 18, y: 6)
-        } else if #available(macOS 26, *) {
-            content
-                .glassEffect(.regular, in: shape)
-        } else {
-            content
-                .background(increasedContrast ? AnyShapeStyle(.thickMaterial) : AnyShapeStyle(.regularMaterial), in: shape)
-                .overlay { shape.strokeBorder(Color.primary.opacity(increasedContrast ? 0.6 : 0.08), lineWidth: 1) }
-                .shadow(color: .black.opacity(0.18), radius: 18, y: 6)
-        }
-    }
-}
-
-// MARK: - Row style
-
-/// A Control Center row: flat, with a rounded highlight under the pointer
-/// and a stronger one while pressed or focused. Opaque under Reduce
-/// Transparency, a visible edge under Increase Contrast.
-private struct PanelRowButtonStyle: ButtonStyle {
-    /// Negative to let the highlight bleed past the row's own padding (the
-    /// primary control sits in a wider block).
-    var inset: CGFloat = 0
-
-    func makeBody(configuration: Configuration) -> some View {
-        PanelRowBody(configuration: configuration, inset: inset)
-    }
-
-    private struct PanelRowBody: View {
-        let configuration: Configuration
-        let inset: CGFloat
-        @State private var hovered = false
-        @Environment(\.isEnabled) private var isEnabled
-        @Environment(\.isFocused) private var isFocused
-        @Environment(\.colorSchemeContrast) private var contrast
-
-        var body: some View {
-            configuration.label
-                .padding(.horizontal, 6)
-                .padding(.vertical, 5)
-                .background {
-                    RoundedRectangle(cornerRadius: 7, style: .continuous)
-                        .fill(fill)
-                        .padding(inset)
-                }
-                .overlay {
-                    if isFocused {
-                        RoundedRectangle(cornerRadius: 7, style: .continuous)
-                            .strokeBorder(Color.accentColor.opacity(0.9), lineWidth: 2)
-                            .padding(inset)
-                    }
-                }
-                .opacity(isEnabled ? 1 : 0.55)
-                .onHover { hovered = $0 && isEnabled }
-        }
-
-        private var fill: Color {
-            let base = contrast == .increased ? 0.22 : 0.1
-            if configuration.isPressed { return Color.primary.opacity(base + 0.08) }
-            if hovered { return Color.primary.opacity(base) }
-            return .clear
-        }
-    }
-}
-
-// MARK: - Pieces
-
-/// The primary control's disc: the recording colour while recording, the
-/// accent otherwise, secondary when disabled; the symbol says what a
-/// click does. Pulses only while the input route is coming up, only
-/// while the panel is shown, and never under Reduce Motion.
-private struct PrimaryGlyphView: View {
-    let glyph: StatusPanelState.PrimaryGlyph
-    let enabled: Bool
-    let pulses: Bool
-    let reduceMotion: Bool
-    @State private var pulsing = false
-
-    var body: some View {
-        ZStack {
-            Circle()
-                .fill(tint)
-                .frame(width: 30, height: 30)
-                .opacity(pulsing ? 0.55 : 1)
-            switch glyph {
-            case .working where !reduceMotion:
-                ProgressView()
-                    .controlSize(.small)
-                    .tint(.white)
-            default:
-                Image(systemName: symbol)
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(.white)
-            }
-        }
-        .onAppear { updatePulse() }
-        .onChange(of: glyph) { _, _ in updatePulse() }
-        .onChange(of: pulses) { _, _ in updatePulse() }
-        .accessibilityHidden(true)
-    }
-
-    private var tint: Color {
-        switch glyph {
-        case .stop: return .red
-        case .start, .starting: return enabled ? .accentColor : .secondary
-        case .working, .done, .attention: return .secondary
-        }
-    }
-
-    private var symbol: String {
-        switch glyph {
-        case .start, .starting: return "mic.fill"
-        case .stop: return "stop.fill"
-        case .working: return "hourglass"
-        case .done: return "checkmark"
-        case .attention: return "exclamationmark"
-        }
-    }
-
-    private func updatePulse() {
-        guard glyph == .starting, pulses, !reduceMotion else {
-            pulsing = false
-            return
-        }
-        withAnimation(.easeInOut(duration: 0.7).repeatForever(autoreverses: true)) {
-            pulsing = true
-        }
-    }
-}
-
-/// Key-cap glyphs for a shortcut, the way Control Center and menus show
-/// key equivalents: tertiary, small, never a control.
-private struct KeyCaps: View {
-    let keys: [String]
-    init(_ keys: [String]) { self.keys = keys }
-
-    var body: some View {
-        HStack(spacing: 2) {
-            ForEach(Array(keys.enumerated()), id: \.offset) { _, key in
-                Text(verbatim: key)
-                    .font(.system(size: 10, weight: .medium))
-                    .foregroundStyle(.secondary)
-                    .padding(.horizontal, 4)
-                    .padding(.vertical, 2)
-                    .background(Color.primary.opacity(0.07), in: RoundedRectangle(cornerRadius: 4, style: .continuous))
-            }
-        }
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(Text(verbatim: keys.joined()))
-    }
-}
-
-/// A slim horizontal level bar — the module's slider, read-only. Driven by
-/// the HUD's smoothed level; a level change is a repaint of the fill.
-private struct LevelBar: View {
-    let level: Double
-    let reduceMotion: Bool
-
-    var body: some View {
-        GeometryReader { proxy in
-            ZStack(alignment: .leading) {
-                Capsule().fill(Color.primary.opacity(0.1))
-                Capsule().fill(Color.accentColor).frame(width: proxy.size.width * min(max(level, 0), 1))
-            }
-        }
-        .frame(height: 6)
-        .animation(reduceMotion ? nil : .easeOut(duration: 0.08), value: level)
-        .accessibilityHidden(true)
     }
 }

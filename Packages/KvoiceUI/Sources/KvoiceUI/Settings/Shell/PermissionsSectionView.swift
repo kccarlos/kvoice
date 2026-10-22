@@ -32,8 +32,10 @@ public struct PermissionsSectionView: View {
     }
 
     public var body: some View {
-        Form {
-            Section {
+        KVCardPage {
+            // UI v2 fidelity F3 (Window.dc `isPerms`): three separate cards
+            // 10 pt apart, the page note and Refresh under them.
+            VStack(alignment: .leading, spacing: 10) {
                 ShortcutCardView(
                     card: ShortcutCard(
                         confirmed: general.confirmedShortcut,
@@ -62,7 +64,8 @@ public struct PermissionsSectionView: View {
                         }
                     )
                 }
-            } footer: {
+            }
+            Group {
                 // M9/P-M9 (2026-09-16): one Refresh for the page instead of
                 // one per card — every card already refreshes itself once a
                 // second while the page is open, so the footer no longer
@@ -76,9 +79,12 @@ public struct PermissionsSectionView: View {
                     }
                     .accessibilityHint("Reads the shortcut, microphone, and Accessibility status again, without prompting.")
                 }
+                .font(.system(size: 11))
+                .foregroundStyle(Color.kv.text2)
+                .buttonStyle(.kv)
+                .padding(.horizontal, 2)
             }
         }
-        .formStyle(.grouped)
         .task {
             refreshShortcut()
             // Non-prompting reads only. Cancelled when the section disappears.

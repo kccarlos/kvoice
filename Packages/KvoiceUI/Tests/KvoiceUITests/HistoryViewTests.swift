@@ -7,6 +7,15 @@ import KvoiceTestSupport
 
 @MainActor
 final class HistoryViewTests: XCTestCase {
+    /// Q2: the Details "Target" row printed the raw role class.
+    func testTheTargetRowNamesTheRoleClassInWords() {
+        XCTAssertEqual(HistoryEntry.targetDisplayName("other"), "Another app")
+        XCTAssertEqual(HistoryEntry.targetDisplayName("textEdit"), "TextEdit")
+        XCTAssertEqual(HistoryEntry.targetDisplayName("none"), "No app in front")
+        XCTAssertEqual(HistoryEntry.targetDisplayName("secure"), "Secure text field")
+        XCTAssertEqual(HistoryEntry.targetDisplayName(HistoryEntry.fileTargetClass), "Audio or video file")
+    }
+
     func testViewModelLoadsCopiesDeletesAndClearsHistory() async {
         let first = makeEntry(createdAt: Date(timeIntervalSince1970: 2), rawText: "first")
         let second = makeEntry(createdAt: Date(timeIntervalSince1970: 1), rawText: "second")

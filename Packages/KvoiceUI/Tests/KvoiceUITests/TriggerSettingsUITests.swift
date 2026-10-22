@@ -91,10 +91,10 @@ final class TriggerSettingsUITests: XCTestCase {
             ).detail
         }
         // H5: appended to the release instruction, never replacing it.
-        XCTAssertEqual(detail(at: 300, limit: .seconds(600)), "Release to stop · Long dictation — recording stops automatically at 10:00.")
-        XCTAssertEqual(detail(at: 300, limit: .seconds(1_800)), "Release to stop · Long dictation — recording stops automatically at 30:00.")
-        XCTAssertEqual(detail(at: 300, limit: .seconds(3_600)), "Release to stop · Long dictation — recording stops automatically at 60:00.")
-        XCTAssertEqual(detail(at: 300, limit: nil), "Release to stop · Long dictation — KVoice works best with shorter input.",
+        XCTAssertEqual(detail(at: 300, limit: .seconds(600)), "Release to stop · Stops automatically at 10:00")
+        XCTAssertEqual(detail(at: 300, limit: .seconds(1_800)), "Release to stop · Stops automatically at 30:00")
+        XCTAssertEqual(detail(at: 300, limit: .seconds(3_600)), "Release to stop · Stops automatically at 60:00")
+        XCTAssertEqual(detail(at: 300, limit: nil), "Release to stop · Shorter input works best",
                        "No limit: the clock line is omitted")
         XCTAssertEqual(detail(at: 10, limit: nil), "Release to stop")
     }

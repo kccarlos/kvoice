@@ -43,40 +43,32 @@ struct SettingsFactRow: View {
     }
 }
 
-/// How a `StatusLabel` reads: the color always lives on the SF Symbol, never
-/// on the word, so shape and text carry the meaning together
+/// How a `StatusLabel` reads: the color lives on the dot (the symbol under
+/// Increase Contrast), and the words say it too
 /// (`color.md › Best practices`; M1/W6, design review 2026-09-16 — plain
 /// `Color.green`/`Color.orange` text was ~2.2:1 in light mode).
 enum StatusTone {
-    /// A good status: green symbol, `.secondary` text ("Ready").
+    /// A good status: ok dot, secondary text ("Ready").
     case positive
-    /// Needs attention, a warning, or an error: orange symbol, `.primary`
-    /// text so it still reads as more urgent than a status line.
+    /// Needs attention, a warning, or an error: warn dot and warn-ink text
+    /// so it reads as more urgent than a status line.
     case attention
-    /// In progress or unknown: `.secondary` symbol and text.
+    /// In progress or unknown: secondary dot and text.
     case neutral
 
-    /// The symbol's color. Exposed so a caller drawing its own `Image`
-    /// (rather than going through `StatusLabel`) still uses the one mapping.
-    var symbolColor: Color {
+    /// UI v2 wave 4: the same meaning as a design tone, for a
+    /// `StatusPill` chip (good → ok, attention → warn, neutral → neutral).
+    var kvTone: KVTone {
         switch self {
-        case .positive: .green
-        case .attention: .orange
-        case .neutral: .secondary
-        }
-    }
-
-    /// The text's color — never the tone's color; only `.primary`/`.secondary`.
-    var textColor: Color {
-        switch self {
-        case .attention: .primary
-        case .positive, .neutral: .secondary
+        case .positive: .ok
+        case .attention: .warn
+        case .neutral: .neutral
         }
     }
 }
 
-/// A status or error row whose meaning is carried by the SF Symbol and the
-/// word, not by colored text (M1/W6). Use this instead of coloring a `Text`
+/// A status or error row whose meaning is carried by a dot and the words,
+/// never by colour alone (M1/W6; UI v2 wave 4). Use this instead of coloring a `Text`
 /// or `Label` green or orange directly.
 struct StatusLabel: View {
     let text: String
@@ -89,14 +81,29 @@ struct StatusLabel: View {
         self.tone = tone
     }
 
+    @Environment(\.colorSchemeContrast) private var contrast
+
+    /// UI v2 wave 4: the design's status form everywhere in the window — a
+    /// dot in the tone's solid colour and the words (secondary for a good or
+    /// neutral state, warn-ink for one that needs the user). `symbol` is
+    /// kept for Increase Contrast, where the shape carries the meaning a
+    /// second time beside the words.
     var body: some View {
-        Label {
+        HStack(spacing: 6) {
+            if contrast == .increased {
+                Image(systemName: symbol)
+                    .foregroundStyle(tone.kvTone.solid.color)
+                    .accessibilityHidden(true)
+            } else {
+                Circle()
+                    .fill(tone.kvTone.solid.color)
+                    .frame(width: 7, height: 7)
+                    .accessibilityHidden(true)
+            }
             Text(text)
-                .foregroundStyle(tone.textColor)
-        } icon: {
-            Image(systemName: symbol)
-                .foregroundStyle(tone.symbolColor)
+                .foregroundStyle(tone == .attention ? Color.kv.warnInk : Color.kv.text2)
         }
+        .accessibilityElement(children: .combine)
     }
 }
 
@@ -157,22 +164,42 @@ struct SettingsResetRow: View {
     private var changed: Set<ResettableSetting> { host.effective.changedFromDefault }
 
     var body: some View {
+        // UI v2 fidelity F3 (Window.dc `group(…, { reset: true })`): one
+        // 11 pt `cursor-ink` link at the trailing end of the section header.
         if rows.contains(where: changed.contains) {
-            HStack {
-                Label("Changed from default", systemImage: "pencil")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                Spacer()
-                Button("Reset to Default") {
-                    for row in rows where changed.contains(row) {
-                        host.send(.resetToDefault(row, origin: origin))
-                    }
+            Button {
+                for row in rows where changed.contains(row) {
+                    host.send(.resetToDefault(row, origin: origin))
                 }
-                .controlSize(.small)
-                .accessibilityHint("Puts this section's settings back to the values KVoice ships with.")
+            } label: {
+                Text("Changed · Reset to Default", bundle: .module)
+                    .font(.system(size: 11, weight: .regular))
             }
-            .accessibilityElement(children: .contain)
-            .accessibilityLabel("Changed from default")
+            .buttonStyle(.plain)
+            .foregroundStyle(Color.kv.cursorInk)
+            .accessibilityLabel(Text("Reset to Default", bundle: .module))
+            .accessibilityValue(Text("Changed from default", bundle: .module))
+            .accessibilityHint(Text("Puts this section's settings back to the values KVoice ships with.", bundle: .module))
+        }
+    }
+}
+
+/// A section header with a trailing accessory — the reset link, a status
+/// line, an "Add…" link (Window.dc's `h3` + right-aligned item).
+struct KVHeaderRow<Trailing: View>: View {
+    let title: Text
+    @ViewBuilder let trailing: () -> Trailing
+
+    init(_ title: LocalizedStringKey, @ViewBuilder trailing: @escaping () -> Trailing) {
+        self.title = Text(title, bundle: .module)
+        self.trailing = trailing
+    }
+
+    var body: some View {
+        HStack(alignment: .firstTextBaseline, spacing: 8) {
+            title.accessibilityAddTraits(.isHeader)
+            Spacer(minLength: 8)
+            trailing()
         }
     }
 }

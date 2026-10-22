@@ -158,6 +158,18 @@ final class RuntimeCardViewModelTests: XCTestCase {
 
     // MARK: Placement formatting
 
+    func testPlacementBarsShowTheNeuralEngineShareOfEachPlannedGraph() {
+        let model = RuntimeCardViewModel(snapshot: snapshot(placement: ModelPlacementReport(
+            modelID: "turbo",
+            computeUnits: .neuralEngineAndCPU,
+            encoder: placement(970, 0, 30),
+            decoder: nil
+        )))
+        XCTAssertEqual(model.placementBars.map(\.label), ["Encoder"], "a graph without a plan draws no bar")
+        XCTAssertEqual(model.placementBars.first?.share ?? 0, 0.97, accuracy: 0.0001)
+        XCTAssertTrue(RuntimeCardViewModel(snapshot: snapshot(placement: nil)).placementBars.isEmpty)
+    }
+
     func testPlacementLinesFormatSharesAndFallBackHonestly() {
         let model = RuntimeCardViewModel(snapshot: snapshot(placement: ModelPlacementReport(
             modelID: "turbo",

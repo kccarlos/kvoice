@@ -41,7 +41,7 @@ public struct StatusMenuHeaderView: View {
                 .lineLimit(1)
                 .padding(.leading, 4)
             if let badge = state.finishingBadge {
-                FinishingBadge(text: badge)
+                ModeChip(text: badge).fixedSize()
                     .padding(.leading, 6)
             }
             Spacer(minLength: 12)

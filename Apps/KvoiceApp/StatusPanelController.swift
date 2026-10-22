@@ -2,91 +2,99 @@ import AppKit
 import KvoiceUI
 import SwiftUI
 
-/// Presents the status panel (P-D4) as a transient `NSPopover` anchored to
-/// the status item's button, hosting `StatusPanelView` over the shell's
-/// `StatusPanelModel`. Owns the popover, the two event monitors that live
-/// only while it is shown, and nothing else; the model and the commands
-/// are the app delegate's (`AppDelegate+StatusPanel.swift`).
+/// Presents the status panel (P-D4) as the design draws it (UI v2 fidelity
+/// F1, `Panel.dc.html`): an arrowless, solid panel under the status item —
+/// not an `NSPopover`, whose arrow and system material (Liquid Glass on
+/// macOS 26) the design does not have. Hosts `StatusPanelView` with the
+/// `.standalone` chrome (the design's panel ground, 22 pt corner, .5 pt
+/// edge) over the shell's `StatusPanelModel`. Owns the panel, the monitors
+/// that live only while it is shown, and nothing else; the model and the
+/// commands are the app delegate's (`AppDelegate+StatusPanel.swift`).
 ///
-/// **What is native and what is built** (the design review's table,
-/// `Docs/Design/Design-Review-2026-09-16.md` § 1; the human rows are in
-/// `Docs/Verification.md`):
+/// The contract the shell relies on is the popover's, unchanged: `toggle`,
+/// `show`, `close`, `closeImmediately`, `isShown`, `ownsDeactivation` and
+/// `model.requestClose`. What the popover gave for free is built here:
 ///
-/// - *Chrome*: the popover's own material — Liquid Glass on macOS 26 —,
-///   arrow, edge, shadow, Reduce Transparency: native. The view draws no
-///   background of its own inside it (`StatusPanelView.Chrome.hosted`).
-/// - *Click-away*: `behavior = .transient` is native once the popover's
-///   window is key (below); a global mouse-down monitor closes it as well,
-///   for the case where it is not. Mouse events need no permission.
-/// - *Escape, ⌘H, ⌘,, ⌘Q, ↓, ↑, Return*: built — a local key-down monitor
-///   routes through `StatusPanelKeyEquivalents` (pure, tested) into the
-///   model. Tab / Shift-Tab between the controls: native (Full Keyboard
-///   Access). Type-select: not built; the right-click menu has it.
-/// - *Keyboard reaching the panel at all*: `_NSPopoverWindow` is a
-///   non-activating panel that can become key (probed on macOS 26 with a
-///   throwaway status-item app, 2026-09-16), so `makeKey()` after `show`
-///   gives it the keys **without activating the app** —
-///   `NSWorkspace.frontmostApplication`, which the insertion tiers target,
-///   stays the user's app, and the app is not activated the way a window
-///   would. The key window is ours while the panel is open, though, which
-///   is why the panel is closed — synchronously, `closeImmediately` —
-///   before any command that may insert text
-///   (`StatusPanelCommand.closesPanelFirst`) and on the edge that ends a
-///   recording (`AppDelegate.applyDictationSnapshot`): insertion posts to
-///   the PID captured at job start, so nothing types into the popover, but
-///   the target's `AXFocusedUIElement` may fail to resolve while our
-///   window is key, and the typed tier would then post to a PID with no
-///   key window and the text would be dropped.
+/// - *Window*: a borderless `.nonactivatingPanel` that can become key
+///   (`KeyablePanel`), so `makeKey()` gives it the keys **without activating
+///   the app** — `NSWorkspace.frontmostApplication`, which the insertion
+///   tiers target, stays the user's app. The key window is ours while the
+///   panel is open, though, which is why the panel is closed —
+///   synchronously, `closeImmediately` — before any command that may insert
+///   text (`StatusPanelCommand.closesPanelFirst`) and on the edge that ends
+///   a recording (`AppDelegate.applyDictationSnapshot`): insertion posts to
+///   the PID captured at job start, but the target's `AXFocusedUIElement`
+///   may fail to resolve while our window is key.
+/// - *Every Space and over full-screen apps*: `.canJoinAllSpaces`,
+///   `.fullScreenAuxiliary`, `.transient`, at the status-bar level (the
+///   chooser menus open above it).
+/// - *Placement*: centred under the status item, kept 8 pt inside the
+///   visible frame of the item's screen, 6 pt below the menu bar. A size
+///   change keeps the top edge and is never animated (Motion: animate the
+///   content inside a fixed panel, never the panel frame).
+/// - *Shadow*: the window server's, from the panel's opaque shape — the
+///   design's 50 pt blur would need a transparent margin that swallows
+///   clicks next to the panel.
+/// - *Show / close*: a 180 ms fade in, 120 ms out (Reduce Motion: 150 ms
+///   fades, which the spec keeps); `closeImmediately` is instant.
+/// - *Click-away*: a global mouse-down monitor (other apps), a local one
+///   (our own windows other than the panel and the status item, whose
+///   click toggles), and another app becoming active (⌘-Tab). Mouse events
+///   need no permission.
+/// - *Escape, ⌘H, ⌘,, ⌘Q, ↓, ↑, Return*: a local key-down monitor routes
+///   through `StatusPanelKeyEquivalents` (pure, tested) into the model.
+///   Tab / Shift-Tab: native (Full Keyboard Access).
 /// - *Escape while a job runs*: the job's `ActiveJobEscapeMonitor` has a
 ///   local half installed before ours, so `AppDelegate.syncEscapeMonitoring`
 ///   skips it while the panel is shown; Escape closes the panel, the next
 ///   Escape cancels the job.
-/// - *App activation*: `makeKey()` makes `NSApp.isActive` read true and the
-///   close resigns it; `AppDelegate.applicationDidBecomeActive` /
-///   `DidResignActive` skip their window-activation work for the panel
-///   (`isShown`, `ownsDeactivation`).
-/// - *Reduce Motion*: `animates` follows the system setting at show time;
-///   the resize between phases (idle → recording adds the meter row) is
-///   set with a zero-duration context under it.
-/// - *Resize*: the view reports its ideal height (`onGeometryChange` on the
-///   fixed-height content); the popover's `contentSize` follows. The
-///   hosting controller has `sizingOptions = []` so SwiftUI never fights
-///   the popover for the frame.
-/// - *VoiceOver*: the popover is announced natively; the rows, sections and
-///   the switch carry their labels in the view.
+/// - *App activation*: a non-activating panel normally leaves the app
+///   inactive; if the app was active (a KVoice window in front), closing
+///   the key panel can still resign it, so `ownsDeactivation` keeps
+///   `AppDelegate.applicationDidResignActive` from treating that as an
+///   input-delivery boundary (it would force-stop a held push-to-talk
+///   recording).
+/// - *VoiceOver*: the panel is a popover-role window labelled "KVoice";
+///   the rows, sections and chips carry their labels in the view.
 @MainActor
-final class StatusPanelController: NSObject, NSPopoverDelegate {
+final class StatusPanelController: NSObject {
     let model: StatusPanelModel
-    private let popover = NSPopover()
+    private let panel: KeyablePanel
     private let hosting: NSHostingController<AnyView>
     private weak var anchor: NSStatusBarButton?
     private var keyMonitor: Any?
     private var clickAwayMonitor: Any?
+    private var localClickMonitor: Any?
     private var deactivationObserver: NSObjectProtocol?
-    /// The last content height the view reported, so a show can size the
-    /// popover before its first layout instead of at the default size.
+    private var otherAppObserver: NSObjectProtocol?
+    /// The last content height the view reported.
     private var contentHeight: CGFloat = 0
-    /// Set when the popover is asked to close for a command, so the close
-    /// notification does not run a second time on the same close.
+    /// Set while a close is fading out, so a second close (or the toggle)
+    /// does not run the teardown twice.
     private var isClosing = false
     /// True from a close until the app has finished resigning "active" for
-    /// it: the panel's window was key, so closing it resigns active, and
-    /// `AppDelegate.applicationDidResignActive` must not treat that as an
-    /// input-delivery boundary (it would force-stop a held push-to-talk
-    /// recording). Cleared a beat after the close notification, which is
-    /// after the deactivation AppKit posts on the same turn.
+    /// it; see the type comment. Cleared a beat after the close.
     private(set) var ownsDeactivation = false
 
-    var isShown: Bool { popover.isShown }
+    /// Gap between the menu bar and the panel's top edge.
+    static let menuBarGap: CGFloat = 6
+    /// The panel keeps this far inside the screen's visible frame.
+    static let screenMargin: CGFloat = 8
+
+    var isShown: Bool { panel.isVisible && !isClosing }
 
     init(model: StatusPanelModel) {
         self.model = model
-        // The root reports its ideal height; `contentHeightChanged` is
-        // installed after `super.init` because it captures self.
         self.hosting = NSHostingController(rootView: AnyView(EmptyView()))
+        self.panel = KeyablePanel(
+            contentRect: NSRect(x: 0, y: 0, width: StatusPanelView.panelWidth, height: 200),
+            styleMask: [.borderless, .nonactivatingPanel],
+            backing: .buffered,
+            defer: true
+        )
         super.init()
         hosting.rootView = AnyView(
-            StatusPanelView(model: model, chrome: .hosted)
+            StatusPanelView(model: model, chrome: .standalone)
                 .onGeometryChange(for: CGFloat.self) { proxy in
                     proxy.size.height
                 } action: { [weak self] height in
@@ -94,9 +102,21 @@ final class StatusPanelController: NSObject, NSPopoverDelegate {
                 }
         )
         hosting.sizingOptions = []
-        popover.contentViewController = hosting
-        popover.behavior = .transient
-        popover.delegate = self
+        panel.contentViewController = hosting
+        panel.isOpaque = false
+        panel.backgroundColor = .clear
+        panel.hasShadow = true
+        panel.level = .statusBar
+        panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .transient, .ignoresCycle]
+        panel.hidesOnDeactivate = false
+        panel.isReleasedWhenClosed = false
+        panel.animationBehavior = .none
+        panel.isMovable = false
+        panel.becomesKeyOnlyIfNeeded = false
+        panel.setAccessibilityRole(.popover)
+        panel.setAccessibilityLabel("KVoice")
+        hosting.view.wantsLayer = true
+        hosting.view.layer?.backgroundColor = NSColor.clear.cgColor
         model.requestClose = { [weak self] in
             self?.closeImmediately()
         }
@@ -106,7 +126,7 @@ final class StatusPanelController: NSObject, NSPopoverDelegate {
 
     /// Left-click on the status item: toggles the panel.
     func toggle(relativeTo button: NSStatusBarButton) {
-        if popover.isShown {
+        if isShown {
             close()
         } else {
             show(relativeTo: button)
@@ -114,54 +134,74 @@ final class StatusPanelController: NSObject, NSPopoverDelegate {
     }
 
     func show(relativeTo button: NSStatusBarButton) {
-        guard !popover.isShown else { return }
+        guard !isShown else { return }
+        if isClosing {
+            // A show during the fade-out: finish the close first.
+            finishClose()
+        }
         anchor = button
-        popover.animates = !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
         model.focus = nil
         model.isPresented = true
-        // Measure before showing so the popover opens at the phase's height
-        // instead of resizing after its first layout; `onGeometryChange`
-        // keeps it in step from then on.
+        // Measure before showing so the panel opens at the phase's height
+        // instead of resizing after its first layout.
         let measured = hosting.sizeThatFits(in: NSSize(width: StatusPanelView.panelWidth, height: 4_000)).height
         if measured > 0 {
             contentHeight = measured
         }
-        popover.contentSize = NSSize(width: StatusPanelView.panelWidth, height: max(contentHeight, 200))
-        popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
-        // Key without activation: see the type comment. `makeKey` on a
-        // non-activating panel routes key events here while the frontmost
-        // application stays the user's.
-        hosting.view.window?.makeKey()
+        panel.setFrame(frame(height: max(contentHeight, 200), under: button), display: false)
+        panel.alphaValue = 0
+        panel.orderFrontRegardless()
+        // Key without activation: see the type comment.
+        panel.makeKey()
+        NSAnimationContext.runAnimationGroup { context in
+            context.duration = Self.reduceMotion ? 0.15 : 0.18
+            context.timingFunction = CAMediaTimingFunction(name: .easeOut)
+            panel.animator().alphaValue = 1
+        }
         button.highlight(true)
         installMonitors()
+        // The shadow was computed when the content was not drawn yet; redo
+        // it once SwiftUI has drawn the rounded panel.
+        DispatchQueue.main.async { [weak self] in
+            self?.panel.invalidateShadow()
+        }
     }
 
-    /// The user's close (Escape, click-away, the toggle): animated unless
-    /// Reduce Motion. `performClose` is asynchronous when animated; the
-    /// delegate callback finishes the teardown either way.
+    /// The user's close (Escape, click-away, the toggle): a short fade.
     func close() {
-        guard popover.isShown, !isClosing else { return }
+        guard panel.isVisible, !isClosing else { return }
         isClosing = true
         ownsDeactivation = true
-        popover.performClose(nil)
+        removeMonitors()
+        NSAnimationContext.runAnimationGroup { context in
+            context.duration = Self.reduceMotion ? 0.15 : 0.12
+            context.timingFunction = CAMediaTimingFunction(name: .easeIn)
+            panel.animator().alphaValue = 0
+        } completionHandler: { [weak self] in
+            MainActor.assumeIsolated {
+                guard let self, self.isClosing else { return }
+                self.finishClose()
+            }
+        }
     }
 
     /// The close a command or a lifecycle edge needs *now*: before Insert
     /// Transcript Again, before a window opens, and on the edge that ends
     /// a recording. Synchronous and unanimated, so the target app's focused
     /// element can resolve once our window has stopped being key rather
-    /// than racing a fade; `show` restores `animates`.
+    /// than racing a fade.
     func closeImmediately() {
-        guard popover.isShown, !isClosing else { return }
+        guard panel.isVisible else { return }
         isClosing = true
         ownsDeactivation = true
-        popover.animates = false
-        popover.close()
+        finishClose()
     }
 
-    func popoverDidClose(_ notification: Notification) {
-        isClosing = false
+    private func finishClose() {
         removeMonitors()
+        panel.orderOut(nil)
+        panel.alphaValue = 1
+        isClosing = false
         anchor?.highlight(false)
         model.isPresented = false
         model.focus = nil
@@ -170,27 +210,53 @@ final class StatusPanelController: NSObject, NSPopoverDelegate {
         }
     }
 
-    /// Monitors are removed in `popoverDidClose`; this covers a controller
-    /// released while shown (`isolated deinit`, as `ActiveJobEscapeMonitor`).
+    /// Monitors are removed on close; this covers a controller released
+    /// while shown (`isolated deinit`, as `ActiveJobEscapeMonitor`).
     isolated deinit {
         removeMonitors()
     }
 
-    // MARK: Sizing
+    private static var reduceMotion: Bool {
+        NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+    }
+
+    // MARK: Placement and sizing
+
+    /// Centred under the status item, inside the item's screen, the top
+    /// edge `menuBarGap` below the menu bar.
+    private func frame(height: CGFloat, under button: NSStatusBarButton) -> NSRect {
+        let width = StatusPanelView.panelWidth
+        guard let window = button.window else {
+            return NSRect(x: 0, y: 0, width: width, height: height)
+        }
+        let item = window.convertToScreen(button.convert(button.bounds, to: nil))
+        let screen = window.screen ?? NSScreen.screens.first { $0.frame.intersects(item) } ?? NSScreen.main
+        return Self.placement(item: item, visibleFrame: screen?.visibleFrame ?? item, size: NSSize(width: width, height: height))
+    }
+
+    /// Pure: where a panel of `size` goes under a status item at `item`
+    /// (screen coordinates) on a screen whose visible frame is
+    /// `visibleFrame`.
+    static func placement(item: NSRect, visibleFrame: NSRect, size: NSSize) -> NSRect {
+        let top = min(item.minY, visibleFrame.maxY) - menuBarGap
+        var x = item.midX - size.width / 2
+        x = min(x, visibleFrame.maxX - screenMargin - size.width)
+        x = max(x, visibleFrame.minX + screenMargin)
+        return NSRect(x: x.rounded(), y: (top - size.height).rounded(), width: size.width, height: size.height)
+    }
 
     private func contentHeightChanged(_ height: CGFloat) {
         guard height > 0, height != contentHeight else { return }
         contentHeight = height
-        guard popover.isShown else { return }
-        let size = NSSize(width: StatusPanelView.panelWidth, height: height)
-        if NSWorkspace.shared.accessibilityDisplayShouldReduceMotion {
-            NSAnimationContext.runAnimationGroup { context in
-                context.duration = 0
-                popover.contentSize = size
-            }
-        } else {
-            popover.contentSize = size
-        }
+        guard panel.isVisible else { return }
+        // The top edge stays where it is; the frame is never animated.
+        var frame = panel.frame
+        frame.origin.y = frame.maxY - height
+        frame.size.height = height
+        panel.setFrame(frame, display: true, animate: false)
+        // A transparent window's shadow is computed from its content; redo
+        // it for the new shape.
+        panel.invalidateShadow()
     }
 
     // MARK: Monitors
@@ -198,15 +264,14 @@ final class StatusPanelController: NSObject, NSPopoverDelegate {
     private func installMonitors() {
         removeMonitors()
         keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
-            // Only keys addressed to the popover's own window: a chooser
-            // `Menu` open over it tracks ↓ / ↑ / Return / Escape itself.
-            guard let self, self.popover.isShown, event.window === self.hosting.view.window else { return event }
+            // Only keys addressed to the panel itself: a chooser `Menu`
+            // open over it tracks ↓ / ↑ / Return / Escape itself.
+            guard let self, self.isShown, event.window === self.panel else { return event }
             return self.handle(keyDown: event) ? nil : event
         }
-        // Belt and braces for click-away: a transient popover closes on a
-        // click outside once its window is key; this covers the case where
-        // it is not. Global monitors only see other apps' events, so the
-        // status item's own click (which toggles) is never doubled.
+        // Click-away in other apps. Global monitors only see other apps'
+        // events, so the status item's own click (which toggles) is never
+        // doubled.
         clickAwayMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown, .otherMouseDown]) { [weak self] _ in
             // A hop rather than `assumeIsolated`: the thread a global
             // monitor's block runs on is not documented.
@@ -214,11 +279,32 @@ final class StatusPanelController: NSObject, NSPopoverDelegate {
                 self?.close()
             }
         }
+        // Click-away in our own windows (a KVoice window, the HUD), but not
+        // the panel and not the status item, whose click toggles.
+        localClickMonitor = NSEvent.addLocalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown, .otherMouseDown]) { [weak self] event in
+            guard let self else { return event }
+            if event.window !== self.panel, event.window !== self.anchor?.window, event.window?.level != .popUpMenu {
+                self.close()
+            }
+            return event
+        }
         deactivationObserver = NotificationCenter.default.addObserver(
             forName: NSApplication.didResignActiveNotification,
             object: nil,
             queue: .main
         ) { [weak self] _ in
+            MainActor.assumeIsolated {
+                self?.close()
+            }
+        }
+        // ⌘-Tab or a click in the Dock: another app came to the front.
+        otherAppObserver = NSWorkspace.shared.notificationCenter.addObserver(
+            forName: NSWorkspace.didActivateApplicationNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] note in
+            let app = note.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication
+            guard app?.processIdentifier != ProcessInfo.processInfo.processIdentifier else { return }
             MainActor.assumeIsolated {
                 self?.close()
             }
@@ -234,9 +320,17 @@ final class StatusPanelController: NSObject, NSPopoverDelegate {
             NSEvent.removeMonitor(clickAwayMonitor)
             self.clickAwayMonitor = nil
         }
+        if let localClickMonitor {
+            NSEvent.removeMonitor(localClickMonitor)
+            self.localClickMonitor = nil
+        }
         if let deactivationObserver {
             NotificationCenter.default.removeObserver(deactivationObserver)
             self.deactivationObserver = nil
+        }
+        if let otherAppObserver {
+            NSWorkspace.shared.notificationCenter.removeObserver(otherAppObserver)
+            self.otherAppObserver = nil
         }
     }
 
@@ -263,4 +357,11 @@ final class StatusPanelController: NSObject, NSPopoverDelegate {
         }
         return true
     }
+}
+
+/// A borderless, non-activating panel that still takes the keys (a
+/// borderless window refuses key status by default).
+private final class KeyablePanel: NSPanel {
+    override var canBecomeKey: Bool { true }
+    override var canBecomeMain: Bool { false }
 }

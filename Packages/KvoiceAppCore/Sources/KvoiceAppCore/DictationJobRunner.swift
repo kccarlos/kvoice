@@ -302,7 +302,7 @@ final class DictationJobRunner {
             updateJob(for: event, suppliedJob: suppliedJob, nextState: next)
             // The reducer is pure and never sees the job aggregate; attach the
             // AI fallback and duration-cap context here so the HUD can show
-            // "Inserted local transcript; AI unavailable" (D.4).
+            // "Inserted without AI" (D.4, UI v2 copy).
             if case .completed(let jobID, let summary) = next, let job, job.id == jobID {
                 next = .completed(
                     jobID,

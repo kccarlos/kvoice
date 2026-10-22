@@ -252,6 +252,10 @@ public actor HistorySQLiteStore: HistoryRepository {
                 conditions.append("created_at < ?")
                 bindings.append(.double(before.timeIntervalSince1970))
             }
+            if filter.onlyWithAI {
+                conditions.append("ai_status = ?")
+                bindings.append(.text(HistoryAIStatus.succeeded.rawValue))
+            }
             if let lower = filter.minimumDurationMilliseconds {
                 conditions.append("recording_duration_ms >= ?")
                 bindings.append(.int(lower))

@@ -267,7 +267,9 @@ struct ShortcutRecorderView: View {
 }
 
 @MainActor
-final class ShortcutRecorderWindowController: NSWindowController {
+final class ShortcutRecorderWindowController: NSWindowController, NSWindowDelegate {
+    private let onClose: () -> Void
+
     init(
         currentShortcut: ShortcutDefinition?,
         onRecorded: @escaping (ShortcutDefinition) -> Void,
@@ -285,7 +287,12 @@ final class ShortcutRecorderWindowController: NSWindowController {
         // the SwiftUI literals below resolve against the same table.
         window.title = String(localized: "KVoice Shortcut")
         window.isReleasedWhenClosed = false
+        self.onClose = onClose
         super.init(window: window)
+        // The title bar's close button ends the recording like Cancel:
+        // without this the adapter kept a closed window and never restored
+        // the suspended shortcut (found in UI v2 fidelity F4).
+        window.delegate = self
 
         window.contentView = NSHostingView(
             rootView: ShortcutRecorderView(
@@ -304,5 +311,9 @@ final class ShortcutRecorderWindowController: NSWindowController {
     @available(*, unavailable)
     required init?(coder: NSCoder) {
         fatalError("ShortcutRecorderWindowController does not support NSCoder construction")
+    }
+
+    func windowWillClose(_ notification: Notification) {
+        onClose()
     }
 }

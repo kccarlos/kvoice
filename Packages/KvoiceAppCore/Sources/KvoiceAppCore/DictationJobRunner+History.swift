@@ -67,7 +67,7 @@ extension DictationJobRunner {
             mode: job.modeSnapshot,
             insertionOutcome: outcome,
             errorCode: job.fallbackReason,
-            modelID: job.modelIDSnapshot,
+            modelID: job.historyModelID,
             translationTarget: job.modeSnapshot == .translate
                 ? job.translationTargetSnapshot?.bcp47
                 : nil,

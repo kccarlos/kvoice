@@ -70,7 +70,8 @@ final class StatusPanelTests: XCTestCase {
         StatusPanelState(
             header: StatusMenuHeaderState(context: headerContext, hud: hud),
             headerContext: headerContext,
-            context: context
+            context: context,
+            hud: hud
         )
     }
 
@@ -98,6 +99,13 @@ final class StatusPanelTests: XCTestCase {
         XCTAssertEqual(state.shortcutKeys, [])
         XCTAssertEqual(state.shortcutNote, "No Shortcut")
         XCTAssertEqual(state.primaryAccessibilityLabel, "Start Recording, Ready · Whisper large-v3-turbo, No Shortcut")
+        // F1: the note is a link to the Shortcuts page, first in the order.
+        XCTAssertEqual(state.shortcutLink?.title, "Set Shortcut…")
+        XCTAssertEqual(state.shortcutLink?.command, .openShortcuts)
+        XCTAssertEqual(state.shortcutLink?.help, "No Shortcut")
+        XCTAssertEqual(state.rowsInOrder.first?.id, .setShortcut)
+        XCTAssertTrue(StatusPanelCommand.openShortcuts.closesPanelFirst, "it opens a window")
+        XCTAssertNil(Self.state().shortcutLink, "a working shortcut is caps, not a link")
     }
 
     func testValueRowsCarryTheMenuTitlesValuesAndChoosers() {
@@ -159,6 +167,7 @@ final class StatusPanelTests: XCTestCase {
         XCTAssertEqual(state.shortcutKeys, [], "the shortcut caps belong to Start Recording")
         XCTAssertEqual(state.dictationRows.map(\.id), [.cancel])
         XCTAssertEqual(state.dictationRows.first?.title, "Cancel Current Dictation")
+        XCTAssertEqual(state.dictationRows.first?.buttonTitle, "Cancel  ⎋", "the design's Cancel with the Escape glyph")
         XCTAssertEqual(state.dictationRows.first?.command, .cancelCurrentDictation)
         XCTAssertTrue(state.dictationRows.first!.isEnabled)
         XCTAssertEqual(state.primaryAccessibilityLabel, "Stop Recording, Recording · MacBook Pro Microphone, 0:07")
@@ -170,6 +179,7 @@ final class StatusPanelTests: XCTestCase {
         XCTAssertEqual(state.primaryGlyph, .starting)
         XCTAssertEqual(state.readiness, "MacBook Pro Microphone")
         XCTAssertEqual(state.feed, .none, "capture not started: no meter, no clock — as on the recorder")
+        XCTAssertEqual(state.dictationRows.first?.buttonTitle, "Cancel", "the design's starting card: no Escape glyph yet")
         XCTAssertFalse(state.showsMeter)
     }
 
@@ -180,11 +190,24 @@ final class StatusPanelTests: XCTestCase {
         XCTAssertEqual(state.primaryAccessibilityLabel, "Stop Recording, 1 finishing, Recording · MacBook Pro Microphone, 0:03")
     }
 
+    /// Q2b: the recorder's ⌘digit switches the action for the running job
+    /// only, so while it polishes the card names the job's action (the
+    /// recorder's badge), not the saved default.
+    func testPolishingNamesTheRunningJobsActionNotTheSavedDefault() {
+        let hud = HUDViewState(
+            phase: .processingAI(HUDProcessingAIState(mode: .polish)),
+            facts: HUDJobFacts(aiActionName: "Email Draft")
+        )
+        let state = Self.state(StatusMenuHeaderContext(dictationKind: .processingAI), hud: hud)
+        XCTAssertEqual(hud.processingBadge, "Email Draft")
+        XCTAssertEqual(state.readiness, "Polishing with Email Draft…", "the context's default is Polish")
+    }
+
     func testFinishingPhasesShowTheVerbAndTheCancelRowLikeTheMenu() {
         let cases: [(DictationStateKind, HUDViewState, String, String, Bool)] = [
             (.finalizing, HUDViewState(phase: .finalizing), "Preparing…", "Cancel Current Dictation", true),
             (.transcribing, HUDViewState(phase: .transcribing), "Transcribing…", "Cancel Current Dictation", true),
-            (.processingAI, HUDViewState(phase: .processingAI(HUDProcessingAIState(mode: .polish))), "Polishing…", "Use Raw Transcript Now", true),
+            (.processingAI, HUDViewState(phase: .processingAI(HUDProcessingAIState(mode: .polish))), "Polishing with Polish…", "Use Raw Transcript Now", true),
             (.inserting, HUDViewState(phase: .inserting), "Inserting…", "Cancel Current Dictation", false),
         ]
         for (kind, hud, readiness, cancelTitle, cancelEnabled) in cases {
@@ -205,9 +228,11 @@ final class StatusPanelTests: XCTestCase {
             StatusMenuHeaderContext(dictationKind: .completed),
             hud: HUDViewState(phase: .completed(HUDCompletionState(kind: .success)))
         )
-        XCTAssertEqual(inserted.primaryTitle, "Dismiss")
+        XCTAssertEqual(inserted.primaryTitle, "Inserted", "F1: the outcome is the title")
+        XCTAssertEqual(inserted.primaryActionTitle, "Dismiss", "a click still dismisses, as the menu's header says")
+        XCTAssertEqual(inserted.primaryAccessibilityLabel, "Inserted, Dismiss")
         XCTAssertEqual(inserted.primaryGlyph, .done)
-        XCTAssertEqual(inserted.readiness, "Inserted")
+        XCTAssertEqual(inserted.readiness, "", "no words or app known")
         XCTAssertFalse(inserted.readinessIsAttention)
         XCTAssertEqual(inserted.dictationRows, [], "no Cancel, no Copy Last: the row is Dismiss")
 
@@ -216,7 +241,8 @@ final class StatusPanelTests: XCTestCase {
             hud: HUDViewState(phase: .failed(HUDFailureState(code: "x", message: "Nothing.")))
         )
         XCTAssertEqual(failed.primaryGlyph, .attention)
-        XCTAssertEqual(failed.readiness, "Nothing inserted")
+        XCTAssertEqual(failed.primaryTitle, "Nothing inserted")
+        XCTAssertEqual(failed.readiness, "Nothing.", "the reason under the outcome")
     }
 
     func testRecoverableFailureAddsCopyAndInsertAgainRows() {
@@ -248,7 +274,8 @@ final class StatusPanelTests: XCTestCase {
         XCTAssertEqual(state.primaryGlyph, .attention)
         XCTAssertEqual(state.readiness, "Model not ready")
         XCTAssertTrue(state.readinessIsAttention)
-        XCTAssertEqual(state.shortcutKeys, ["⌃", "⇧", "Space"], "the shortcut is still shown; it just will not work yet")
+        XCTAssertEqual(state.shortcutKeys, [], "F1: caps only on a card that can start now")
+        XCTAssertNil(state.shortcutLink)
         XCTAssertEqual(state.dictationRows.map(\.id), [.fix])
         XCTAssertEqual(state.dictationRows.first?.title, "Fix in Speech Models…")
         XCTAssertEqual(state.dictationRows.first?.command, .openStatusTarget)
@@ -265,14 +292,133 @@ final class StatusPanelTests: XCTestCase {
     func testDownloadingShowsTheProgressRowAndKeepsCopyLast() {
         let install = StatusMenuHeaderContext.ModelInstall(modelName: "Nemotron", fraction: 0.42)
         let state = Self.state(StatusMenuHeaderContext(shortcutGlyphs: "⌃⇧Space", modelInstall: install))
-        XCTAssertEqual(state.feed, .download(label: "Downloading Nemotron… 42%", fraction: 0.42))
+        XCTAssertEqual(state.feed, .download(label: "Downloading Nemotron…", fraction: 0.42), "the card draws the percent apart")
         XCTAssertFalse(state.showsMeter, "a download is a progress bar, never a level")
         XCTAssertEqual(state.readiness, "Ready · Whisper large-v3-turbo", "the current model still works while another downloads")
         XCTAssertEqual(state.dictationRows.map(\.id), [.copyLastTranscription])
-        XCTAssertEqual(state.primaryAccessibilityLabel, "Start Recording, Ready · Whisper large-v3-turbo, ⌃⇧Space, Downloading Nemotron… 42%")
+        XCTAssertEqual(state.primaryAccessibilityLabel, "Start Recording, Ready · Whisper large-v3-turbo, ⌃⇧Space, Downloading Nemotron…, 42%")
+        XCTAssertFalse(state.dictationRows.contains { $0.id == .pauseDownload }, "no Pause unless the shell says bytes are flowing")
 
         let unknownTotal = Self.state(StatusMenuHeaderContext(modelInstall: .init(modelName: "Nemotron", fraction: nil)))
         XCTAssertEqual(unknownTotal.feed, .download(label: "Downloading Nemotron…", fraction: nil))
+    }
+
+    // MARK: UI v2
+
+    func testPauseAppearsOnlyWhileTheShellSaysBytesAreFlowing() {
+        let install = StatusMenuHeaderContext.ModelInstall(modelName: "Nemotron", fraction: 0.42)
+        var context = Self.context()
+        context.pausableDownload = "nemotron"
+        let state = Self.state(StatusMenuHeaderContext(shortcutGlyphs: "⌃⇧Space", modelInstall: install), context: context)
+        XCTAssertEqual(state.dictationRows.map(\.id), [.copyLastTranscription, .pauseDownload])
+        let pause = try? XCTUnwrap(state.dictationRows.last)
+        XCTAssertEqual(pause?.command, .pauseModelDownload("nemotron"))
+        XCTAssertEqual(pause?.buttonTitle, "Pause")
+        XCTAssertEqual(pause?.title, "Pause Download", "VoiceOver reads the whole command")
+        XCTAssertFalse(StatusPanelCommand.pauseModelDownload("nemotron").closesPanelFirst, "the card shows the pause in place")
+
+        // No download on the card (it finished, or the header has none): no Pause.
+        let noFeed = Self.state(context: context)
+        XCTAssertFalse(noFeed.dictationRows.contains { $0.id == .pauseDownload })
+    }
+
+    func testTheCardToneFollowsThePhase() {
+        XCTAssertEqual(Self.state().cardTone, .plain)
+        XCTAssertEqual(Self.state().readinessTone, .ok, "ready is a green dot and quiet words")
+
+        let recording = Self.state(StatusMenuHeaderContext(dictationKind: .recording), hud: Self.recordingHUD)
+        XCTAssertEqual(recording.cardTone, .voice)
+        XCTAssertNil(recording.readinessTone, "the orange card already says it")
+        let starting = Self.state(StatusMenuHeaderContext(dictationKind: .recording), hud: Self.startingHUD)
+        XCTAssertEqual(starting.cardTone, .plain, "no voice ground until sound is heard")
+
+        let blocked = Self.state(
+            StatusMenuHeaderContext(shortcutGlyphs: "⌃⇧Space", attention: "Microphone denied"),
+            context: Self.context(readinessTitle: "Microphone denied", isBlocked: true, fixTitle: "Fix in Permissions…")
+        )
+        XCTAssertEqual(blocked.cardTone, .warn)
+        XCTAssertEqual(blocked.readinessTone, .warn)
+        XCTAssertEqual(blocked.dictationRows.first?.emphasis, .warn)
+
+        let finishing = Self.state(StatusMenuHeaderContext(dictationKind: .transcribing), hud: HUDViewState(phase: .transcribing))
+        XCTAssertEqual(finishing.cardTone, .plain)
+        XCTAssertNil(finishing.outcomeGlyph)
+    }
+
+    /// After a job the card speaks the recorder's glyph: blue check,
+    /// amber clipboard, red mark with an err edge when nothing went in.
+    func testOutcomesBorrowTheRecordersGlyph() {
+        let inserted = Self.state(StatusMenuHeaderContext(dictationKind: .completed), hud: HUDViewState(phase: .completed(HUDCompletionState(kind: .success))))
+        XCTAssertEqual(inserted.outcomeGlyph?.tone, .cursor)
+        XCTAssertEqual(inserted.cardTone, .plain)
+        XCTAssertEqual(inserted.readinessTone, .neutral)
+
+        let clipboard = Self.state(StatusMenuHeaderContext(dictationKind: .completed), hud: HUDViewState(phase: .completed(HUDCompletionState(kind: .clipboardFallback))))
+        XCTAssertEqual(clipboard.outcomeGlyph?.mark, .symbol("doc.on.clipboard"))
+        XCTAssertEqual(clipboard.readinessTone, .warn)
+
+        let failed = Self.state(
+            StatusMenuHeaderContext(dictationKind: .failed),
+            hud: HUDViewState(phase: .failed(HUDFailureState(code: "x", message: "Nothing."))),
+            context: Self.context(canRecoverFailedInsertion: true)
+        )
+        XCTAssertEqual(failed.cardTone, .err)
+        XCTAssertEqual(failed.readinessTone, .err)
+        XCTAssertEqual(failed.dictationRows.map(\.buttonTitle), ["Copy", "Insert Again"])
+        XCTAssertEqual(failed.dictationRows.map(\.emphasis), [.plain, .primary])
+    }
+
+    func testCancelIsShortOnTheCardButKeepsItsFullName() {
+        let recording = Self.state(StatusMenuHeaderContext(dictationKind: .recording), hud: Self.recordingHUD)
+        XCTAssertEqual(recording.dictationRows.first?.buttonTitle, "Cancel  ⎋")
+        XCTAssertEqual(recording.dictationRows.first?.accessibilityLabel, "Cancel Current Dictation")
+        let polishing = Self.state(StatusMenuHeaderContext(dictationKind: .processingAI), hud: HUDViewState(phase: .transcribing))
+        XCTAssertEqual(polishing.dictationRows.first?.buttonTitle, "Use Raw Transcript Now")
+    }
+
+    func testLastTranscriptionShowsOnlyOnTheIdleReadyCard() {
+        let entry = StatusPanelContext.LastTranscription(text: "Move the review to Thursday.", createdAt: Date(timeIntervalSince1970: 1_000))
+        var context = Self.context()
+        context.lastTranscription = entry
+        XCTAssertEqual(Self.state(context: context).lastTranscription, entry)
+
+        var blocked = Self.context(readinessTitle: "Microphone denied", isBlocked: true)
+        blocked.lastTranscription = entry
+        XCTAssertNil(Self.state(StatusMenuHeaderContext(attention: "Microphone denied"), context: blocked).lastTranscription, "the fix takes the card")
+        XCTAssertNil(Self.state(StatusMenuHeaderContext(dictationKind: .recording), hud: Self.recordingHUD, context: context).lastTranscription)
+        XCTAssertNotEqual(Self.state().layoutSignature, Self.state(context: context).layoutSignature)
+    }
+
+    /// The context holds a preview, never the whole entry: one line, cut.
+    func testLastTranscriptionKeepsAShortOneLinePreview() {
+        let long = String(repeating: "word ", count: 200)
+        let preview = StatusPanelContext.LastTranscription(text: "  first\nsecond  ", createdAt: Date())
+        XCTAssertEqual(preview.text, "first second")
+        let cut = StatusPanelContext.LastTranscription(text: long, createdAt: Date())
+        XCTAssertEqual(cut.text.count, StatusPanelContext.LastTranscription.previewLimit + 1)
+        XCTAssertTrue(cut.text.hasSuffix("…"))
+    }
+
+    func testRelativeTimeIsReadAgainstTheInjectedClock() {
+        let now = Date(timeIntervalSince1970: 10_000)
+        let english = Locale(identifier: "en_US")
+        // ICU's exact spelling moves between releases ("2 min. ago"); the
+        // number and the direction are what the card relies on.
+        let twoMinutes = StatusPanelState.relativeTime(now.addingTimeInterval(-120), now: now, locale: english)
+        XCTAssertTrue(twoMinutes.hasPrefix("2 min"), twoMinutes)
+        XCTAssertTrue(twoMinutes.hasSuffix("ago"), twoMinutes)
+        XCTAssertEqual(StatusPanelState.relativeTime(now.addingTimeInterval(-20), now: now, locale: english), "now")
+        XCTAssertEqual(StatusPanelState.relativeTime(now.addingTimeInterval(30), now: now, locale: english), "now", "a clock skew never reads as the future")
+    }
+
+    /// P-D1: the chips are the saved actions; none is lit while AI is off.
+    func testChipsAreTheSavedActions() {
+        let state = Self.state()
+        XCTAssertEqual(state.aiChips.map(\.title), ["Polish"])
+        XCTAssertTrue(state.aiChips[0].isSelected)
+        XCTAssertTrue(state.aiIsOn)
+        XCTAssertEqual(StatusPanelState.percentText(0.429), "42%")
+        XCTAssertNil(StatusPanelState.percentText(nil))
     }
 
     func testMemoryPressureAddsUnloadModelNow() {
@@ -311,6 +457,118 @@ final class StatusPanelTests: XCTestCase {
         XCTAssertEqual(StatusPanelState.keyCaps("Right Option"), ["Right Option"], "a modifier-only shortcut is one cap")
         XCTAssertEqual(StatusPanelState.keyCaps(nil), [])
         XCTAssertEqual(StatusPanelState.keyCaps(""), [])
+    }
+
+    // MARK: Fidelity F1
+
+    func testMemoryPressureIsAnAmberSubtitleNotABlock() {
+        let state = Self.state(context: Self.context(memoryPressure: .init(canUnloadNow: true, isUnloading: false)))
+        XCTAssertEqual(state.readiness, "Memory pressure — dictation may be slower")
+        XCTAssertEqual(state.readinessTone, .warn)
+        XCTAssertEqual(state.cardTone, .plain, "advisory, not blocking")
+        XCTAssertEqual(state.shortcutKeys, ["⌃", "⇧", "Space"])
+        XCTAssertTrue(state.primaryIsEnabled)
+    }
+
+    func testInsertedSaysHowManyWordsWentWhereAndShowsThem() {
+        var context = Self.context()
+        context.jobResult = .init(text: "Move the review to Thursday.", appName: "Notes")
+        let state = Self.state(
+            StatusMenuHeaderContext(dictationKind: .completed),
+            hud: HUDViewState(phase: .completed(HUDCompletionState(kind: .success))),
+            context: context
+        )
+        XCTAssertEqual(state.primaryTitle, "Inserted")
+        XCTAssertEqual(state.readiness, "5 words → Notes")
+        XCTAssertEqual(state.readinessTone, .neutral, "quiet words, no dot")
+        XCTAssertEqual(state.resultText, "Move the review to Thursday.")
+        XCTAssertEqual(state.primaryAccessibilityLabel, "Inserted, 5 words → Notes, Dismiss")
+
+        XCTAssertEqual(StatusPanelState.insertedLine(words: 1, app: "Notes"), "1 word → Notes")
+        XCTAssertEqual(StatusPanelState.insertedLine(words: 3, app: nil), "3 words")
+        XCTAssertEqual(StatusPanelState.insertedLine(words: nil, app: "Notes"), "Into Notes")
+        XCTAssertNil(StatusPanelState.insertedLine(words: nil, app: nil))
+    }
+
+    func testClipboardNamesTheKeyAndWhyAndFailureKeepsTheText() {
+        var context = Self.context(canRecoverFailedInsertion: true)
+        context.jobResult = .init(text: "ls -la", appName: "Terminal")
+        let clipboard = Self.state(
+            StatusMenuHeaderContext(dictationKind: .completed),
+            hud: HUDViewState(phase: .completed(HUDCompletionState(kind: .clipboardFallback, clipboardReason: .notEditable))),
+            context: context
+        )
+        XCTAssertEqual(clipboard.primaryTitle, "Copied to clipboard")
+        XCTAssertEqual(clipboard.readiness, "This field doesn’t accept typing — press ⌘V", "F5: the recorder's line")
+        XCTAssertNil(clipboard.resultText, "the design shows no text on the clipboard card")
+        context.jobResult = .init(text: nil, appName: nil)
+        let unnamed = Self.state(
+            StatusMenuHeaderContext(dictationKind: .completed),
+            hud: HUDViewState(phase: .completed(HUDCompletionState(kind: .clipboardFallback))),
+            context: context
+        )
+        XCTAssertEqual(unnamed.readiness, "Press ⌘V to paste")
+
+        let failed = Self.state(
+            StatusMenuHeaderContext(dictationKind: .failed),
+            hud: HUDViewState(
+                phase: .failed(HUDFailureState(code: "x", message: "The app lost focus before insertion.")),
+                recoverableTranscript: "Kept words.",
+                canRecoverFailedInsertion: true
+            ),
+            context: context
+        )
+        XCTAssertEqual(failed.primaryTitle, "Not inserted — transcript kept")
+        XCTAssertEqual(failed.readiness, "The app lost focus before insertion.")
+        XCTAssertEqual(failed.readinessTone, .err)
+        XCTAssertEqual(failed.resultText, "Kept words.")
+        XCTAssertTrue(failed.layoutSignature.hasResultText)
+    }
+
+    func testABlockedJobSaysTheReasonUnderTheTitleNotTheTitleTwice() {
+        let state = Self.state(
+            StatusMenuHeaderContext(dictationKind: .blocked),
+            hud: HUDViewState(phase: .blocked(HUDBlockedState(code: "mic", message: "Microphone access is off."))),
+            context: Self.context(readinessTitle: "Microphone denied", isBlocked: true, fixTitle: "Fix in Permissions…")
+        )
+        XCTAssertEqual(state.primaryTitle, "KVoice needs attention")
+        XCTAssertEqual(state.readiness, "Microphone access is off.")
+        XCTAssertNotEqual(state.primaryTitle, state.readiness)
+    }
+
+    func testJobResultCountsWordsTheWayTheLanguageDoes() {
+        XCTAssertEqual(StatusPanelContext.JobResult.wordCount("Let’s move the review."), 4)
+        XCTAssertEqual(StatusPanelContext.JobResult.wordCount(""), 0)
+        XCTAssertGreaterThan(StatusPanelContext.JobResult.wordCount("把设计评审改到星期四"), 1, "Chinese has no spaces but still has words")
+        let long = String(repeating: "word ", count: 100)
+        let result = StatusPanelContext.JobResult(text: long, appName: "")
+        XCTAssertEqual(result.wordCount, 100, "counted before the preview cut")
+        XCTAssertLessThanOrEqual(result.text?.count ?? 0, StatusPanelContext.LastTranscription.previewLimit + 1)
+        XCTAssertNil(result.appName, "an empty name is no name")
+    }
+
+    func testTheOffChipIsTheSwitchAndAnActionChipTurnsAIOnWhileOff() {
+        let on = Self.state()
+        XCTAssertEqual(on.aiSwitch.buttonTitle, "Off")
+        XCTAssertEqual(on.aiSwitch.command, .toggleAI, "Off while AI is on turns it off")
+        let off = Self.state(context: Self.context(ai: StatusPanelContext.AI(isOn: false, canToggle: true)))
+        XCTAssertNil(off.aiSwitch.command, "a lit Off has nothing to do")
+        let id = UUID()
+        XCTAssertEqual(StatusPanelView.chipCommand(.selectDefaultAction(id), aiIsOn: false), .useAIAction(id))
+        XCTAssertEqual(StatusPanelView.chipCommand(.selectDefaultAction(id), aiIsOn: true), .selectDefaultAction(id))
+        XCTAssertNil(StatusPanelView.chipCommand(nil, aiIsOn: false))
+        XCTAssertFalse(StatusPanelCommand.useAIAction(id).closesPanelFirst, "the chip lights in place")
+    }
+
+    func testPanelColoursAreThePanelDesignsValues() {
+        // Panel.dc.html, where it differs from the shared tokens.
+        XCTAssertEqual(PanelColor.hex("panel")?.light, 0xF7F7F9)
+        XCTAssertEqual(PanelColor.hex("panel")?.dark, 0x1E2029)
+        XCTAssertEqual(PanelColor.hex("surface")?.dark, 0x282B36)
+        XCTAssertEqual(PanelColor.hex("fill")?.dark, 0x363948)
+        XCTAssertEqual(PanelColor.hex("key")?.light, 0xF5F5F7)
+        XCTAssertEqual(PanelColor.hex("key-line")?.light, 0xDCDCE2)
+        XCTAssertNil(PanelColor.hex("nope"))
     }
 
     func testRowsInOrderIsTheMenusReadingOrder() {
@@ -401,7 +659,7 @@ final class StatusPanelTests: XCTestCase {
     func testEveryCommandHasAClosePolicy() {
         let keepsOpen: [StatusPanelCommand] = [
             .toggleDictation, .cancelCurrentDictation, .copyTranscript, .copyLastTranscription, .unloadModel,
-            .selectModel("m"), .selectLanguage(nil), .selectMicrophone(uid: nil), .toggleAI,
+            .pauseModelDownload("m"), .selectModel("m"), .selectLanguage(nil), .selectMicrophone(uid: nil), .toggleAI,
             .selectDefaultAction(UUID()), .selectConfiguration(UUID()),
         ]
         let closesFirst: [StatusPanelCommand] = [
@@ -432,6 +690,26 @@ final class StatusPanelTests: XCTestCase {
 
     /// The click split: left-click → panel; right-click, ⌥-click or
     /// ⌃-click → the menu, unchanged.
+    /// Q2: the status item was announced as nothing and AXShowMenu did
+    /// nothing, so a VoiceOver user could reach neither surface's menu.
+    func testStatusItemIsLabelledAndOffersTheMenuToAccessibility() throws {
+        XCTAssertEqual(StatusItemClick.accessibilityLabel, "KVoice")
+        XCTAssertFalse(StatusItemClick.showMenuActionName.isEmpty)
+        let glue = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent().deletingLastPathComponent()
+            .deletingLastPathComponent().deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .appendingPathComponent("Apps/KvoiceApp/AppDelegate+StatusPanel.swift")
+        let code = try String(contentsOf: glue, encoding: .utf8)
+        XCTAssertTrue(code.contains("setAccessibilityLabel(StatusItemClick.accessibilityLabel)"))
+        XCTAssertTrue(code.contains("NSAccessibilityCustomAction(name: StatusItemClick.showMenuActionName)"))
+    }
+
+    func testOnlyTheLitChipReportsSelectedToAccessibility() {
+        XCTAssertEqual(KVAccessibility.selectionValue(true), "Selected")
+        XCTAssertEqual(KVAccessibility.selectionValue(false), "")
+    }
+
     func testClickSplitSendsOnlyAPlainLeftClickToThePanel() {
         XCTAssertEqual(StatusItemClick.surface(isRightButton: false, option: false, control: false), .panel)
         XCTAssertEqual(StatusItemClick.surface(isRightButton: true, option: false, control: false), .menu)

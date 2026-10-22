@@ -1,10 +1,14 @@
 import KvoiceDomain
 import SwiftUI
 
-/// The body of the "AI Actions" section (hosted by `AIActionsSectionView`): one place for the master switch, the saved AI
-/// configurations, the default action grid, the selected action's mode
-/// settings, the Selection Action slots, the user profile, action triggers,
-/// and the ⌘1–⌘0 explanation. It replaces the separate AI and Modes tabs.
+/// The body of the "AI Actions" section (hosted by `AIActionsSectionView`).
+/// Q3's information architecture (design-v2 `qa/q3-ai-actions-ia.md`), in
+/// the order a user asks: (1) is AI on and what will a dictation do — the
+/// master switch and its status line; (2) where AI runs — the
+/// configurations; (3) which action runs — the grid, the default strip,
+/// and one action detail sheet holding everything per action; (4) More —
+/// the global settings (trigger words, ⌘1–⌘0, Selection Action, user
+/// profile). It replaces the separate AI and Modes tabs.
 ///
 /// Two view models back it, as the settings-list pattern prescribes: the
 /// configurations half (`AISettingsViewModel`) and the actions half
@@ -73,17 +77,12 @@ public struct AIActionsForm: View {
     }
 
     public var body: some View {
-        Form {
+        KVCardPage {
             enableSection
             configurationsSection
-            defaultActionSection
-            modeSettingsSection
-            selectionActionSection
-            userProfileSection
-            triggersSection
-            shortcutsSection
+            actionsSection
+            moreSection
         }
-        .formStyle(.grouped)
         // Sizing belongs to the host window, not the section content.
         .navigationTitle("AI Actions")
         .animation(reduceMotion ? nil : .default, value: actions.modes)
@@ -117,6 +116,11 @@ public struct AIActionsForm: View {
                 draft: $actionDraft,
                 isBuiltIn: isBuiltIn(target),
                 availability: availability,
+                context: detailContext(target),
+                onSetDefault: { savedAction(target).map { actions.selectMode(id: $0.id) } },
+                onDuplicate: { duplicateFromDetail(target) },
+                onReset: { resetFromDetail(target) },
+                onDelete: { deleteFromDetail(target) },
                 onSave: { saveAction(target) },
                 onCancel: {
                     actions.clearPreview()
@@ -183,53 +187,54 @@ public struct AIActionsForm: View {
         actions.flushPendingChanges()
     }
 
-    // MARK: Enable
+    // MARK: 1 · Use AI Actions
 
+    /// Q3: the headerless top card — the master switch and one status line
+    /// saying what a dictation does right now (`AIActionsStatus`: the same
+    /// "action · configuration" words as Home's chip, "tested OK" only
+    /// after a test). The get-started prompt stays while nothing is set up.
     private var enableSection: some View {
-        Section {
-            Toggle("Enable AI Actions", isOn: $actions.isEnabled)
-                .accessibilityHint("When on, the default action runs after each transcription.")
+        let status = AIActionsStatus(
+            settings: actions.settings,
+            configurationName: .some(configurations.configurations.first { $0.id == configurations.activeConfigurationID }?.menuTitle),
+            test: configurations.testState
+        )
+        return KVCardSection {
+            Toggle(isOn: $actions.isEnabled) {
+                Text("Use AI Actions", bundle: .module)
+                Text(verbatim: status.line)
+                    .foregroundStyle(status.tone == .attention ? Color.kv.warnInk : Color.kv.text2)
+            }
+            .accessibilityHint("When on, the default action runs after each transcription.")
 
             if !actions.canEnableProcessing {
                 HStack(alignment: .top, spacing: 10) {
                     Image(systemName: "info.circle.fill")
-                        .foregroundStyle(Color.accentColor)
+                        .foregroundStyle(Color.kv.cursorInk)
                         .accessibilityHidden(true)
                     VStack(alignment: .leading, spacing: 6) {
                         Text("Add an AI configuration to get started.")
-                            .font(.callout.weight(.medium))
+                            .font(.system(size: 13, weight: .semibold))
                         Text("AI Actions need an endpoint and a model, or Apple Intelligence on this Mac. Nothing runs until one is configured and set as active.")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .font(.system(size: 11))
+                            .foregroundStyle(Color.kv.text2)
+                            .fixedSize(horizontal: false, vertical: true)
                         Button("Add Configuration…") { presentNewConfiguration() }
                     }
                 }
                 .padding(.vertical, 4)
                 .accessibilityElement(children: .combine)
-            } else if let active = actions.activeMode {
-                Text(actions.isEnabled
-                    ? "Only one action is active at a time. It auto-applies after each transcription while AI Actions is on. Current: \(active.icon) \(active.menuTitle)."
-                    : "AI Actions is off. The default action (\(active.icon) \(active.menuTitle)) is remembered for when it is turned on.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            } else {
-                Text("Choose a default action below. Nothing runs until one is selected.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
             }
-        } header: {
-            Text("AI Actions")
         } footer: {
             // Both models write the same `AIEndpointSettings` block through
             // one `.setAI` each, gated the same way — whichever one just
             // attempted a send carries the note.
-            SettingsFooter(note: configurations.refusalNote ?? actions.refusalNote) {
-                Text("Use AI to enhance, translate, or transform your transcriptions. Only the transcript — and any context an action opts into — is sent to your configured endpoint; audio, history, and target-app data stay local.")
+            if let note = configurations.refusalNote ?? actions.refusalNote {
+                Text(verbatim: note)
             }
         }
     }
-
-    // MARK: Configurations
+    // MARK: 2 · Where AI runs
 
     private func presentNewConfiguration() {
         configurationDraft = AISettingsViewModel.Draft()
@@ -244,81 +249,109 @@ public struct AIActionsForm: View {
         configurationSheet = .existing(configuration.id)
     }
 
+    /// Window.dc "Where AI runs": radio rows (name, sub-line, This Mac /
+    /// Cloud chip, Edit) and a footer row with Add Configuration… and Test
+    /// Active, the test's result at the header's right.
     private var configurationsSection: some View {
-        Section {
-            if configurations.configurations.isEmpty {
-                Text("No AI configurations yet.")
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
-            } else {
-                ForEach(configurations.configurations) { configuration in
-                    configurationRow(configuration)
+        KVBlockSection(padding: nil) {
+            VStack(alignment: .leading, spacing: 0) {
+                if configurations.configurations.isEmpty {
+                    Text("No AI configurations yet.")
+                        .font(.system(size: 12))
+                        .foregroundStyle(Color.kv.text2)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 12)
+                } else {
+                    ForEach(Array(configurations.configurations.enumerated()), id: \.element.id) { index, configuration in
+                        if index > 0 { KVRowDivider() }
+                        AIConfigurationRow(
+                            configuration: configuration,
+                            isActive: configuration.id == configurations.activeConfigurationID,
+                            subtitle: configurationSubtitle(configuration),
+                            subtitleNeedsAttention: subtitleNeedsAttention(configuration),
+                            unavailableReason: unavailableReason(configuration),
+                            showsQuotaOptions: configuration.kind.transport == .privateCloudCompute
+                                && availability.privateCloudComputeQuota?.canRequestIncrease == true
+                                && availability.privateCloudComputeQuotaLine != nil,
+                            onSelect: { configurations.selectConfiguration(id: configuration.id) },
+                            onEdit: { presentEdit(configuration) },
+                            onDelete: { configurationPendingDeletion = configuration }
+                        )
+                    }
                 }
-            }
-
-            // Add and Test share a line when there is room; a long failure
-            // message drops the test control under the button instead of
-            // squeezing it.
-            ViewThatFits(in: .horizontal) {
-                HStack {
+                KVRowDivider()
+                HStack(spacing: 8) {
                     addConfigurationButton
-                    Spacer()
-                    testConfigurationControl
+                    Spacer(minLength: 8)
+                    Button {
+                        configurations.flushPendingChanges()
+                        Task { await configurations.testConfiguration() }
+                    } label: {
+                        Text("Test Active", bundle: .module)
+                    }
+                    .buttonStyle(KVButtonStyle(.standard, height: 26))
+                    .disabled(!configurations.canTestConfiguration || configurations.testState == .testing)
+                    .accessibilityHint("Sends one harmless test request. It is never sent automatically during dictation.")
                 }
-                VStack(alignment: .leading, spacing: 8) {
-                    addConfigurationButton
-                    testConfigurationControl
+                .padding(.horizontal, 14)
+                .padding(.vertical, 10)
+                if case .failed(let message) = configurations.testState {
+                    StatusLabel(message, symbol: "exclamationmark.triangle.fill", tone: .attention)
+                        .labelStyle(.titleAndIcon)
+                        .font(.system(size: 11))
+                        .fixedSize(horizontal: false, vertical: true)
+                        .padding(.horizontal, 14)
+                        .padding(.bottom, 10)
                 }
             }
         } header: {
-            Text("AI Configurations")
+            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                Text("Where AI runs", bundle: .module)
+                Spacer(minLength: 8)
+                testStatus
+            }
         } footer: {
             Text("Each configuration stores a provider, endpoint, model, and its own key — or uses an Apple model with none of those: on this Mac, or on Apple's Private Cloud Compute. The active one is used by every action; switch from here or the menu bar.")
         }
+        .animation(reduceMotion ? nil : .easeOut(duration: 0.2), value: configurations.testState)
+    }
+
+    /// Window.dc draws "Active configuration works" permanently; it is
+    /// shown only after a test of the active configuration succeeded (the
+    /// app never checks on its own), and says so when the test failed.
+    @ViewBuilder
+    private var testStatus: some View {
+        switch configurations.testState {
+        case .idle:
+            EmptyView()
+        case .testing:
+            HStack(spacing: 6) {
+                ProgressView().controlSize(.mini)
+                Text("Testing…", bundle: .module)
+            }
+            .font(.system(size: 11, weight: .semibold))
+            .foregroundStyle(Color.kv.text2)
+        case .succeeded:
+            statusDot(Text("Active configuration works", bundle: .module), tone: .ok)
+        case .failed:
+            statusDot(Text("Active configuration failed", bundle: .module), tone: .err)
+        }
+    }
+
+    private func statusDot(_ text: Text, tone: KVTone) -> some View {
+        HStack(spacing: 6) {
+            Circle().fill(tone.solid.color).frame(width: 7, height: 7)
+            text
+        }
+        .font(.system(size: 11, weight: .semibold))
+        .foregroundStyle(tone.ink.color)
+        .accessibilityElement(children: .combine)
     }
 
     private var addConfigurationButton: some View {
         Button("Add Configuration…") { presentNewConfiguration() }
+            .buttonStyle(KVButtonStyle(.standard, height: 26))
             .accessibilityHint("Choose a provider and name a new AI configuration.")
-    }
-
-    private func configurationRow(_ configuration: AIConfiguration) -> some View {
-        let isActive = configuration.id == configurations.activeConfigurationID
-        // Name and buttons on one line when there is room; the buttons move
-        // under the name when the pane is narrow, so a long model ID never
-        // pushes them out of view.
-        return ViewThatFits(in: .horizontal) {
-            HStack {
-                configurationIdentity(configuration, isActive: isActive)
-                Spacer()
-                configurationButtons(configuration, isActive: isActive)
-            }
-            VStack(alignment: .leading, spacing: 6) {
-                configurationIdentity(configuration, isActive: isActive)
-                HStack {
-                    Spacer(minLength: 0)
-                    configurationButtons(configuration, isActive: isActive)
-                }
-            }
-        }
-        .accessibilityElement(children: .contain)
-        .accessibilityLabel(isActive ? String(localized: "\(configuration.menuTitle), active", bundle: .module) : configuration.menuTitle)
-    }
-
-    private func configurationIdentity(_ configuration: AIConfiguration, isActive: Bool) -> some View {
-        HStack {
-            Image(systemName: isActive ? "largecircle.filled.circle" : "circle")
-                .foregroundStyle(isActive ? Color.accentColor : Color.secondary)
-                .accessibilityHidden(true)
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text(configuration.menuTitle)
-                Text(configurationSubtitle(configuration))
-                    .font(.caption)
-                    .foregroundStyle(subtitleNeedsAttention(configuration) ? Color.orange : Color.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-        }
     }
 
     /// Provider and model for an endpoint; for the on-device kind (ADR-024)
@@ -360,64 +393,28 @@ public struct AIActionsForm: View {
         }
     }
 
-    @ViewBuilder
-    private func configurationButtons(_ configuration: AIConfiguration, isActive: Bool) -> some View {
-        if !isActive {
-            Button("Set as Active") { configurations.selectConfiguration(id: configuration.id) }
-                .disabled(unavailableReason(configuration) != nil)
-                .help(Text(verbatim: unavailableReason(configuration) ?? String()))
-                .accessibilityLabel("Set \(configuration.menuTitle) as active")
-        }
-        // ADR-027: Apple's own "raise your limit" UI, only when offered.
-        if configuration.kind.transport == .privateCloudCompute,
-           availability.privateCloudComputeQuota?.canRequestIncrease == true,
-           availability.privateCloudComputeQuotaLine != nil {
-            Button("Show Options…") { AIActionsHooks.showPrivateCloudComputeQuotaOptions() }
-                .help("Apple's options for a higher Private Cloud Compute limit.")
-        }
-        Button("Edit") { presentEdit(configuration) }
-            .accessibilityLabel("Edit \(configuration.menuTitle)")
-        Button(role: .destructive) {
-            configurationPendingDeletion = configuration
-        } label: {
-            Image(systemName: "trash")
-        }
-        .help("Delete \(configuration.menuTitle)")
-        .accessibilityLabel("Delete \(configuration.menuTitle)")
-    }
+    // MARK: 3 · Actions
 
-    @ViewBuilder
-    private var testConfigurationControl: some View {
-        HStack(spacing: 8) {
-            Button("Test Active Configuration") {
-                configurations.flushPendingChanges()
-                Task { await configurations.testConfiguration() }
+    /// Q3: "Actions" over the 4-column grid (Window.dc), the default strip
+    /// under it, and the footnote with Reset Built-in Actions…. A click
+    /// makes a tile the default (a radio choice, like the panel's chips and
+    /// the menu's Default Action); double-click, Return, Edit… or the
+    /// strip's Edit… opens the action detail.
+    private var actionsSection: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                Text("Actions", bundle: .module)
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(Color.kv.text)
+                    .accessibilityAddTraits(.isHeader)
+                Spacer(minLength: 8)
+                Button("Add Action…") { presentNewAction() }
+                    .buttonStyle(.plain)
+                    .font(.system(size: 11))
+                    .foregroundStyle(Color.kv.cursorInk)
             }
-            .disabled(!configurations.canTestConfiguration || configurations.testState == .testing)
-            .accessibilityHint("Sends one harmless test request. It is never sent automatically during dictation.")
+            .padding(.horizontal, 2)
 
-            switch configurations.testState {
-            case .idle:
-                EmptyView()
-            case .testing:
-                ProgressView().controlSize(.small).accessibilityHidden(true)
-            case .succeeded:
-                StatusLabel(String(localized: "Works", bundle: .module), symbol: "checkmark.circle.fill", tone: .positive)
-                    .labelStyle(.titleAndIcon)
-            case .failed(let message):
-                StatusLabel(message, symbol: "exclamationmark.triangle.fill", tone: .attention)
-                    .labelStyle(.titleAndIcon)
-                    .font(.caption)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-        }
-        .animation(reduceMotion ? nil : .default, value: configurations.testState)
-    }
-
-    // MARK: Default action
-
-    private var defaultActionSection: some View {
-        Section {
             AIActionGrid(
                 actions: actions.modes,
                 defaultID: actions.activeModeID,
@@ -429,34 +426,75 @@ public struct AIActionsForm: View {
                 onReset: { actions.resetBuiltIn(id: $0.id) }
             )
 
-            ViewThatFits(in: .horizontal) {
-                HStack {
-                    addActionButton
-                    Spacer()
-                    resetBuiltInActionsButton
-                }
-                VStack(alignment: .leading, spacing: 8) {
-                    addActionButton
-                    resetBuiltInActionsButton
-                }
+            defaultStrip
+                .padding(.top, 4)
+
+            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                Text("Click an action to make it the default. Double-click it, or press Edit…, to open everything it does.")
+                    .fixedSize(horizontal: false, vertical: true)
+                Spacer(minLength: 8)
+                Button("Reset Built-in Actions…") { isConfirmingResetAll = true }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(Color.kv.cursorInk)
+                    .accessibilityHint("Restores every shipped action's text and trigger words and adds back any that is missing.")
             }
-        } header: {
-            Text("Default Action")
-        } footer: {
-            Text("Click to set the default; double-click to edit; right-click for more. Built-in actions can be edited but not deleted. Reset anytime to restore the original text and trigger words.")
+            .font(.system(size: 11))
+            .foregroundStyle(Color.kv.text2)
+            .padding(.horizontal, 2)
         }
     }
 
-    private var addActionButton: some View {
-        Button("Add Action…") {
-            actionDraft = PromptModeDraft()
-            editing = .new
+    /// The default action at a glance — what runs after each transcription,
+    /// its behaviour, mode settings, trigger words and shortcut — and the
+    /// visible door to its detail. Says so when none is chosen.
+    @ViewBuilder
+    private var defaultStrip: some View {
+        KVCard {
+            if let action = actions.activeMode {
+                HStack(alignment: .center, spacing: 10) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        HStack(spacing: 6) {
+                            Text(verbatim: "\(action.icon.isEmpty ? "" : action.icon + " ")\(action.menuTitle)")
+                                .font(.system(size: 13, weight: .semibold))
+                                .foregroundStyle(Color.kv.text)
+                            Text("Default action", bundle: .module)
+                                .font(.system(size: 10, weight: .semibold))
+                                .foregroundStyle(Color.kv.cursorInk)
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(Color.kv.cursorSoft, in: Capsule())
+                        }
+                        Text(verbatim: AIActionFacts.line(for: action, badge: actions.shortcutBadge(for: action.id), triggersOn: actions.actionTriggersEnabled))
+                            .font(.system(size: 11))
+                            .foregroundStyle(Color.kv.text2)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    Spacer(minLength: 8)
+                    Button {
+                        presentEdit(action)
+                    } label: {
+                        Text("Edit…", bundle: .module)
+                    }
+                    .buttonStyle(KVButtonStyle(.standard, height: 26))
+                    .accessibilityLabel(Text("Edit \(action.menuTitle)", bundle: .module))
+                    .accessibilityHint("Opens the action's details: instructions, mode settings, trigger words and shortcut.")
+                }
+                .accessibilityElement(children: .contain)
+            } else {
+                Text(actions.modes.isEmpty
+                    ? "No actions. Add one, or reset the built-in actions."
+                    : "No default action. Click an action above to choose what runs after each transcription.")
+                    .font(.system(size: 12))
+                    .foregroundStyle(Color.kv.warnInk)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
         }
     }
 
-    private var resetBuiltInActionsButton: some View {
-        Button("Reset Built-in Actions…") { isConfirmingResetAll = true }
-            .accessibilityHint("Restores every shipped action's text and trigger words and adds back any that is missing.")
+    private func presentNewAction() {
+        actionDraft = PromptModeDraft()
+        actions.clearPreview()
+        editing = .new
     }
 
     private func presentEdit(_ action: PromptMode) {
@@ -465,13 +503,28 @@ public struct AIActionsForm: View {
         editing = .existing(action.id)
     }
 
+    private func savedAction(_ target: ActionEditorTarget) -> PromptMode? {
+        guard case .existing(let id) = target else { return nil }
+        return actions.modes.first { $0.id == id }
+    }
+
     private func isBuiltIn(_ target: ActionEditorTarget) -> Bool {
-        switch target {
-        case .new:
-            return false
-        case .existing(let id):
-            return actions.modes.first { $0.id == id }?.isBuiltIn ?? false
+        savedAction(target)?.isBuiltIn ?? false
+    }
+
+    private func detailContext(_ target: ActionEditorTarget) -> AIActionDetailContext {
+        guard let saved = savedAction(target) else { return AIActionDetailContext() }
+        let slots = actions.selectionActionSlots.enumerated().compactMap { slot, id in
+            id == saved.id
+                ? AIActionDetailContext.SelectionSlotBinding(slot: slot, shortcut: AIActionsHooks.selectionActionShortcutDescription(slot))
+                : nil
         }
+        return AIActionDetailContext(
+            saved: saved,
+            isDefault: saved.id == actions.activeModeID,
+            shortcutBadge: actions.shortcutBadge(for: saved.id),
+            selectionSlots: slots
+        )
     }
 
     private func saveAction(_ target: ActionEditorTarget) {
@@ -485,49 +538,131 @@ public struct AIActionsForm: View {
         editing = nil
     }
 
-    // MARK: Mode settings
+    /// Duplicate from the detail: the copy opens in its place.
+    private func duplicateFromDetail(_ target: ActionEditorTarget) {
+        guard let saved = savedAction(target), let copy = actions.duplicateMode(id: saved.id) else { return }
+        actions.clearPreview()
+        actionDraft = PromptModeDraft(mode: copy)
+        editing = .existing(copy.id)
+    }
 
-    @ViewBuilder
-    private var modeSettingsSection: some View {
-        if let action = actions.activeMode {
-            Section {
-                AIActionModeSettingsView(action: action) { options in
-                    actions.updateOptions(id: action.id, options)
-                }
-            } header: {
-                Text("Mode Settings · \(action.menuTitle)")
-            } footer: {
-                Text("Settings for the default action. Each one appends a shipped instruction block; the action's own text is untouched.")
-            }
+    /// Reset from the detail commits at once and reloads the draft, so a
+    /// later Save cannot write the old text back.
+    private func resetFromDetail(_ target: ActionEditorTarget) {
+        guard let saved = savedAction(target) else { return }
+        actions.resetBuiltIn(id: saved.id)
+        if let reset = actions.modes.first(where: { $0.id == saved.id }) {
+            actionDraft = PromptModeDraft(mode: reset)
         }
     }
 
-    // MARK: Selection action
+    private func deleteFromDetail(_ target: ActionEditorTarget) {
+        guard let saved = savedAction(target) else { return }
+        actions.clearPreview()
+        editing = nil
+        actions.deleteMode(id: saved.id)
+    }
 
-    private var selectionActionSection: some View {
-        Section {
-            ForEach(0..<AIEndpointSettings.selectionActionSlotCount, id: \.self) { slot in
-                selectionSlotRow(slot)
-            }
-            // On the rows, not the Section: the footer's link must stay live.
-            .disabled(!availability.isEnabled(.selectionAction))
+    // MARK: 4 · More
+
+    /// Q3: every global AI setting in one card, each row with its one-line
+    /// explanation — trigger words, the ⌘1–⌘0 switch, the Selection Action
+    /// slots, the user profile. Per-action settings live in the detail.
+    private var moreSection: some View {
+        KVCardSection {
+            triggersRow
+            shortcutsRow
+            selectionActionRow
+            userProfileRow
         } header: {
-            Text("Selection Action")
-        } footer: {
+            Text("More", bundle: .module)
+        }
+    }
+
+    private func rowTitle(_ title: LocalizedStringKey, _ detail: Text) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(title, bundle: .module)
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(Color.kv.text)
+            detail
+                .font(.system(size: 11))
+                .foregroundStyle(Color.kv.text2)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .accessibilityElement(children: .combine)
+    }
+
+    private var triggersRow: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            // The switch's name is only "Trigger words": the sentence is a
+            // caption and the VoiceOver hint, so the name stays short.
+            let explanation = availability.disabledReason(.aiActionSettings)
+                ?? String(localized: "When on, a dictation that begins with an action's trigger word runs that action instead of the default; the trigger word is removed from the text.", bundle: .module)
+            Toggle(isOn: $actions.actionTriggersEnabled) {
+                Text("Trigger words", bundle: .module)
+            }
+            .accessibilityHint(Text(verbatim: explanation))
+            Text(verbatim: explanation)
+                .font(.system(size: 11))
+                .foregroundStyle(Color.kv.text2)
+                .fixedSize(horizontal: false, vertical: true)
+                .accessibilityHidden(true)
+            let triggered = actions.modes.filter { !$0.triggerWords.isEmpty }
+            if triggered.isEmpty {
+                Text("No action has trigger words yet. Add them in an action's details.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            } else {
+                ForEach(triggered) { action in
+                    LabeledContent("\(action.icon) \(action.menuTitle)") {
+                        Text(action.triggerWords.joined(separator: ", "))
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.trailing)
+                    }
+                }
+            }
+        }
+        .disabled(!availability.isEnabled(.aiActionSettings))
+    }
+
+    private var shortcutsRow: some View {
+        DisclosureGroup(isExpanded: $isShortcutsExpanded) {
+            VStack(alignment: .leading, spacing: 4) {
+                ForEach(Array(actions.modes.prefix(10))) { action in
+                    LabeledContent("\(action.icon) \(action.menuTitle)") {
+                        Text(actions.shortcutBadge(for: action.id) ?? "")
+                            .monospaced()
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+            .padding(.top, 6)
+        } label: {
+            rowTitle("Action shortcuts ⌘1–⌘0", Text("Switch between your actions by their place in the grid. Works while a dictation is in progress, and on this page when the KVoice window is focused.", bundle: .module))
+        }
+    }
+
+    private var selectionActionRow: some View {
+        VStack(alignment: .leading, spacing: 8) {
             // ADR-026: the App Store edition cannot read another app's
             // selection; the reason replaces the description, with the
             // pointer to the full edition under it.
             if let reason = availability.disabledReason(.selectionAction) {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(reason)
-                    FullEditionLink(url: availability.fullEditionLink)
-                }
+                rowTitle("Selection Action", Text(verbatim: reason))
+                FullEditionLink(url: availability.fullEditionLink)
+                    .font(.system(size: 11))
             } else {
-                Text("Select text in any app, press a slot's shortcut, and KVoice runs that action on the selection and inserts the result in its place through Accessibility — never a simulated paste. Experimental.")
+                rowTitle("Selection Action", Text("Select text in any app, press a slot's shortcut, and KVoice runs that action on the selection and inserts the result in its place through Accessibility — never a simulated paste. Experimental.", bundle: .module))
             }
+            Group {
+                ForEach(0..<AIEndpointSettings.selectionActionSlotCount, id: \.self) { slot in
+                    selectionSlotRow(slot)
+                }
+            }
+            // On the rows, not the title: the full-edition link stays live.
+            .disabled(!availability.isEnabled(.selectionAction))
         }
     }
-
     private func selectionSlotRow(_ slot: Int) -> some View {
         // Picker and recorder side by side when there is room; the recorder
         // drops under the picker in a narrow pane.
@@ -562,173 +697,93 @@ public struct AIActionsForm: View {
         .frame(maxWidth: 320)
     }
 
-    // MARK: User profile
-
-    private var userProfileSection: some View {
-        Section {
+    private var userProfileRow: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            rowTitle("User profile", Text("Optional. Name, role, industry, tech stack, communication style, languages. Sent with every AI Action request as a separate <USER_PROFILE> block; stored in settings, never in the secrets file.", bundle: .module))
             TextEditor(text: $actions.userProfile)
-                .frame(minHeight: 80)
+                .font(.system(size: 12))
+                .frame(minHeight: 70)
+                .scrollContentBackground(.hidden)
+                .padding(4)
+                .background(Color.kv.bg, in: RoundedRectangle(cornerRadius: 7, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 7, style: .continuous).strokeBorder(Color.kv.line))
                 .accessibilityLabel("User profile")
-            HStack(alignment: .firstTextBaseline) {
-                Text("Optional. Name, role, industry, tech stack, communication style, languages.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
+            HStack {
                 Spacer()
                 Text("\(actions.userProfile.count) / \(AIEndpointSettings.userProfileMaximumCharacters)")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .monospacedDigit()
             }
-        } header: {
-            Text("User Profile")
-        } footer: {
-            Text("Included in every AI Action request as a separate <USER_PROFILE> block. Stored in settings, never in the secrets file.")
-        }
-    }
-
-    // MARK: Triggers
-
-    private var triggersSection: some View {
-        Section {
-            Toggle("Enable Action Triggers", isOn: $actions.actionTriggersEnabled)
-            let triggered = actions.modes.filter { !$0.triggerWords.isEmpty }
-            if triggered.isEmpty {
-                Text("No action has trigger words yet. Add them in an action's editor.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            } else {
-                ForEach(triggered) { action in
-                    LabeledContent("\(action.icon) \(action.menuTitle)") {
-                        Text(action.triggerWords.joined(separator: ", "))
-                            .foregroundStyle(.secondary)
-                            .multilineTextAlignment(.trailing)
-                    }
-                }
-            }
-        } header: {
-            Text("Action Triggers")
-        } footer: {
-            // The projection's reason (switch off, or no endpoint) replaces
-            // the sentence this footer used to compose itself.
-            Text(availability.disabledReason(.aiActionSettings)
-                ?? String(localized: "When enabled, a transcript that begins with an action's trigger word runs that action instead of the default. The trigger phrase is removed from the text.", bundle: .module))
-        }
-        .disabled(!availability.isEnabled(.aiActionSettings))
-    }
-
-    // MARK: Shortcuts
-
-    private var shortcutsSection: some View {
-        Section {
-            DisclosureGroup("AI Action Shortcuts", isExpanded: $isShortcutsExpanded) {
-                Text("Switch between your saved actions with ⌘1–⌘0, in the order they are saved. The shortcut works while a dictation is in progress, and on this page when the KVoice window is focused.")
-                    .font(.callout)
-                let listed = Array(actions.modes.prefix(10))
-                ForEach(listed) { action in
-                    LabeledContent("\(action.icon) \(action.menuTitle)") {
-                        Text(actions.shortcutBadge(for: action.id) ?? "")
-                            .monospaced()
-                            .foregroundStyle(.secondary)
-                    }
-                }
-            }
         }
     }
 }
 
-/// The per-action Mode Settings card. Which toggles appear depends on the
-/// action's family; every change is a button press and commits at once.
+/// An action's mode settings (Q3: in the action detail, on the draft, saved
+/// by its Save). Which toggles appear depends on the action's family.
 @MainActor
 struct AIActionModeSettingsView: View {
-    let action: PromptMode
-    let onChange: (PromptModeOptions) -> Void
-
-    @State private var secondTargetName: String = ""
-    @State private var secondTargetCode: String = ""
+    let family: PromptModeSettingsFamily
+    /// The draft's target language, shown for a Translate action.
+    let translationLanguage: TranslationLanguage?
+    @Binding var options: PromptModeOptions
 
     var body: some View {
-        switch action.settingsFamily {
+        switch family {
         case .polish:
-            Toggle("Formal Writing Mode", isOn: binding(\.formalWriting))
+            Toggle("Formal Writing Mode", isOn: $options.formalWriting)
             Text("Rewrite into formal, concise, polite written style suitable for professional communication.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
-            Toggle("Professional Mode (High-EQ)", isOn: binding(\.professionalTone))
+            Toggle("Professional Mode (High-EQ)", isOn: $options.professionalTone)
             Text("Transform into diplomatic, tactful, emotionally intelligent workplace communication.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
         case .translate:
             LabeledContent("Translation target") {
-                Text(action.translationLanguage.map { "\($0.displayName) (\($0.bcp47))" } ?? "—")
+                Text(translationLanguage.map { "\($0.displayName) (\($0.bcp47))" } ?? "—")
                     .foregroundStyle(.secondary)
             }
-            Text("Change the target language in the action's editor.")
-                .font(.caption)
-                .foregroundStyle(.secondary)
             Toggle(
                 "Enable Second Translation",
                 isOn: Binding(
-                    get: { action.options.secondTranslationLanguage != nil },
+                    get: { options.secondTranslationLanguage != nil },
                     set: { enabled in
-                        var options = action.options
                         options.secondTranslationLanguage = enabled
                             ? TranslationLanguage(bcp47: "zh-Hans", displayName: "Chinese, Simplified")
                             : nil
-                        onChange(options)
                     }
                 )
             )
             Text("Also produce the translation in a second target language.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
-            if let second = action.options.secondTranslationLanguage {
+            if let second = options.secondTranslationLanguage {
                 HStack {
-                    TextField("Second target language", text: $secondTargetName)
-                        .textFieldStyle(.roundedBorder)
-                    TextField("Code", text: $secondTargetCode)
-                        .textFieldStyle(.roundedBorder)
-                        .frame(width: 90)
-                    Button("Apply") {
-                        let name = secondTargetName.trimmingCharacters(in: .whitespacesAndNewlines)
-                        let code = secondTargetCode.trimmingCharacters(in: .whitespacesAndNewlines)
-                        guard !name.isEmpty, !code.isEmpty else { return }
-                        var options = action.options
-                        options.secondTranslationLanguage = TranslationLanguage(bcp47: code, displayName: name)
-                        onChange(options)
-                    }
-                    .disabled(secondTargetName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-                        || secondTargetCode.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                }
-                .onAppear {
-                    secondTargetName = second.displayName
-                    secondTargetCode = second.bcp47
+                    TextField("Second target language", text: Binding(
+                        get: { second.displayName },
+                        set: { options.secondTranslationLanguage = TranslationLanguage(bcp47: second.bcp47, displayName: $0) }
+                    ))
+                    .textFieldStyle(.roundedBorder)
+                    TextField("Code", text: Binding(
+                        get: { second.bcp47 },
+                        set: { options.secondTranslationLanguage = TranslationLanguage(bcp47: $0, displayName: second.displayName) }
+                    ))
+                    .textFieldStyle(.roundedBorder)
+                    .frame(width: 90)
                 }
             }
-            Toggle("Show original transcript", isOn: binding(\.showsOriginalTranscript))
+            Toggle("Show original transcript", isOn: $options.showsOriginalTranscript)
             Text("Add the original text below the translation output.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
         case .questionAnswer:
-            Toggle("Show question before answer", isOn: binding(\.showsQuestionBeforeAnswer))
+            Toggle("Show question before answer", isOn: $options.showsQuestionBeforeAnswer)
             Text("Include the original question above the answer.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
         case .none:
-            Text("This action has no extra settings. Edit it to change its instructions, trigger words, or context awareness.")
-                .font(.caption)
-                .foregroundStyle(.secondary)
+            EmptyView()
         }
-    }
-
-    private func binding(_ keyPath: WritableKeyPath<PromptModeOptions, Bool>) -> Binding<Bool> {
-        Binding(
-            get: { action.options[keyPath: keyPath] },
-            set: { value in
-                var options = action.options
-                options[keyPath: keyPath] = value
-                onChange(options)
-            }
-        )
     }
 }

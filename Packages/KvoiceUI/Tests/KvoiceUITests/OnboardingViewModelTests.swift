@@ -185,7 +185,7 @@ final class OnboardingViewModelTests: XCTestCase {
             accessibilityPermission: accessibility
         )
 
-        XCTAssertEqual(model.actionBar, OnboardingActionBar(primaryTitle: "Continue", canGoBack: false))
+        XCTAssertEqual(model.actionBar, OnboardingActionBar(primaryTitle: "Get Started", canGoBack: false))
 
         model.advance()
         XCTAssertEqual(model.actionBar.primaryTitle, "Download Model")
@@ -233,10 +233,11 @@ final class OnboardingViewModelTests: XCTestCase {
         XCTAssertEqual(model.actionBar.primaryTitle, "Continue")
         XCTAssertFalse(model.actionBar.primaryIsEnabled, "Continue waits for one press/release")
         XCTAssertEqual(model.actionBar.primaryDisabledReason, "Press your shortcut to continue.")
-        XCTAssertEqual(model.actionBar.skipTitle, "Skip")
+        XCTAssertEqual(model.actionBar.skipTitle, "Skip Check", "only the check is skipped; the shortcut stays")
         model.beginHotkeyTest()
-        model.reportHotkeyTestKeyDown()
-        model.reportHotkeyTestKeyUp()
+        let pressed = Date()
+        model.reportHotkeyTestKeyDown(at: pressed)
+        model.reportHotkeyTestKeyUp(at: pressed.addingTimeInterval(1))
         XCTAssertTrue(model.hotkeyTestSnapshot.isDone)
         XCTAssertTrue(model.actionBar.primaryIsEnabled)
         XCTAssertNil(model.actionBar.skipTitle)
@@ -523,7 +524,7 @@ final class OnboardingViewModelTests: XCTestCase {
         model.setModelEntry(whisper)
         XCTAssertEqual(model.modelDisplayName, whisper.fullDisplayName, "the same name the Speech Models page shows")
         XCTAssertEqual(model.modelDisplayName, "Whisper large-v3-turbo — Standard")
-        XCTAssertEqual(model.modelDetailLine, "WhisperKit (CoreML) · \(ModelSettingsViewModel.formatBytes(1_640_000_000))")
+        XCTAssertEqual(model.modelDetailLine, "WhisperKit (CoreML) · \(ModelSettingsViewModel.formatBytes(1_640_000_000)) · recommended")
 
         // The user picks Parakeet in Speech Models; the shell's next refresh
         // reports that entry and the card follows.

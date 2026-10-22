@@ -7,7 +7,7 @@ import SwiftUI
 /// A macOS modal is expected to confirm on Return and dismiss on Escape;
 /// `.defaultAction` and `.cancelAction` are what provide that, and they also
 /// give the confirm button its accent styling for free.
-struct SheetButtonBar: View {
+struct SheetButtonBar<Leading: View>: View {
     let confirmTitle: String
     let isConfirmEnabled: Bool
     let onCancel: () -> Void
@@ -17,22 +17,30 @@ struct SheetButtonBar: View {
     /// cannot be completed instead of leaving a dead button.
     var disabledReason: String?
 
+    /// Buttons at the bar's leading edge that act on the item itself
+    /// (the action detail's Duplicate / Reset to Default / Delete…).
+    private let leading: Leading
+
     init(
         confirmTitle: String,
         isConfirmEnabled: Bool,
         disabledReason: String? = nil,
         onCancel: @escaping () -> Void,
-        onConfirm: @escaping () -> Void
+        onConfirm: @escaping () -> Void,
+        @ViewBuilder leading: () -> Leading
     ) {
         self.confirmTitle = confirmTitle
         self.isConfirmEnabled = isConfirmEnabled
         self.disabledReason = disabledReason
         self.onCancel = onCancel
         self.onConfirm = onConfirm
+        self.leading = leading()
     }
 
     var body: some View {
         HStack(spacing: 12) {
+            leading
+
             if let disabledReason, !isConfirmEnabled {
                 Text(disabledReason)
                     .font(.caption)
@@ -53,5 +61,24 @@ struct SheetButtonBar: View {
         .padding(.vertical, 14)
         // Keeps the bar legible when the form scrolls underneath it.
         .background(.bar)
+    }
+}
+
+extension SheetButtonBar where Leading == EmptyView {
+    init(
+        confirmTitle: String,
+        isConfirmEnabled: Bool,
+        disabledReason: String? = nil,
+        onCancel: @escaping () -> Void,
+        onConfirm: @escaping () -> Void
+    ) {
+        self.init(
+            confirmTitle: confirmTitle,
+            isConfirmEnabled: isConfirmEnabled,
+            disabledReason: disabledReason,
+            onCancel: onCancel,
+            onConfirm: onConfirm,
+            leading: { EmptyView() }
+        )
     }
 }

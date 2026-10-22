@@ -79,7 +79,7 @@ final class DesignGalleryTests: XCTestCase {
         for (appearanceLabel, appearance) in Self.appearances {
             let sidebar = List(selection: .constant(Optional(MainWindowSection.recording))) {
                 ForEach(MainWindowSectionGroup.allCases) { group in
-                    Section(group.title) {
+                    Section(group.title ?? "") {
                         ForEach(group.sections) { section in
                             Label(section.title, systemImage: section.symbolName).tag(section)
                         }

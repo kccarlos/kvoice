@@ -318,3 +318,25 @@ public struct AIConfiguration: Codable, Sendable, Equatable, Identifiable, Hasha
         return model.isEmpty ? kind.displayName : model
     }
 }
+
+extension AIConfiguration {
+    /// UI v2 (Window.dc "Where AI runs": the This Mac / Cloud chip): whether
+    /// a request stays on this Mac — the on-device model (ADR-024), or an
+    /// endpoint whose host is loopback (`localhost`, `127.0.0.1`, `::1`),
+    /// whatever its preset. Decided by the host, never by the kind: an
+    /// Ollama preset pointed at another machine leaves this Mac, a Custom
+    /// one on localhost does not. Private Cloud Compute (ADR-027) and an
+    /// endpoint not filled in yet count as leaving it.
+    public var runsOnThisMac: Bool {
+        switch kind.transport {
+        case .appleIntelligence:
+            return true
+        case .privateCloudCompute:
+            return false
+        case .openAICompatible:
+            guard let host = baseURL?.host(percentEncoded: false) else { return false }
+            let normalized = host.trimmingCharacters(in: CharacterSet(charactersIn: "[]")).lowercased()
+            return normalized == "localhost" || normalized == "127.0.0.1" || normalized == "::1"
+        }
+    }
+}

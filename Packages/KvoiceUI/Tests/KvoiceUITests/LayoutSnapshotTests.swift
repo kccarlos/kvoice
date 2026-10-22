@@ -102,8 +102,44 @@ final class LayoutSnapshotTests: XCTestCase {
         }
     }
 
+    /// UI v2: every recorder state the app can reach
+    /// (`HUDViewState.galleryStates`) as Mini light, Mini dark and Notch —
+    /// the Notch rendered in a light window to show it stays dark:
+    /// `fidelity-hud/<mini-light|mini-dark|notch>-<state>.png`, at 2×, with
+    /// Reduce Motion forced so every still is the settled state (UI v2
+    /// fidelity F5).
+    func testRenderEveryHUDState() throws {
+        guard let directory = ProcessInfo.processInfo.environment["KVOICE_LAYOUT_SNAPSHOTS"] else {
+            throw XCTSkip("Set KVOICE_LAYOUT_SNAPSHOTS=<dir> to render layout snapshots")
+        }
+        let outputURL = URL(fileURLWithPath: directory, isDirectory: true).appendingPathComponent("fidelity-hud", isDirectory: true)
+        try FileManager.default.createDirectory(at: outputURL, withIntermediateDirectories: true)
+
+        let variants: [(String, HUDStyle, NSAppearance.Name)] = [
+            ("mini-light", .mini, .aqua), ("mini-dark", .mini, .darkAqua), ("notch", .notch, .aqua)
+        ]
+        for (name, state) in HUDViewState.galleryStates {
+            for (label, style, appearance) in variants {
+                let tall = state.recoverableTranscript != nil
+                let size = NSSize(width: 460, height: tall ? 240 : (state.partialTranscript != nil ? 140 : 120))
+                let view = HUDView(
+                    state: state, style: style, notchWidth: 380, recoveryActions: HUDRecoveryActions { _ in },
+                    openSpeechModels: {}, reduceMotionOverride: true
+                )
+                    .frame(width: size.width, height: size.height)
+                    .background(appearance == .darkAqua ? Color(red: 0.17, green: 0.18, blue: 0.22) : Color(red: 0.89, green: 0.90, blue: 0.92))
+                let image = Self.render(view, size: size, appearance: appearance, scale: 2)
+                try Self.write(image, to: outputURL.appendingPathComponent("\(label)-\(name).png"))
+            }
+        }
+    }
+
     static func content(for section: MainWindowSection) -> AnyView {
         switch section {
+        case .home:
+            let model = MainWindowModel(selection: .home)
+            model.home = .preview
+            return AnyView(HomeView(model: model, history: HistoryViewModel(repository: PreviewHistoryRepository())))
         case .history:
             return AnyView(HistoryView(viewModel: HistoryViewModel(
                 repository: PreviewHistoryRepository()

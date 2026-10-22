@@ -74,7 +74,7 @@ final class OnboardingModelActivityTests: XCTestCase {
     /// Owner decision 2: the first Core ML build says what it is, how long,
     /// that it is once, and that setup can go on — with no percentage.
     func testTheFirstCompileIsIndeterminateAndSaysFirstTimeOnly() {
-        let model = OnboardingViewModel()
+        let model = OnboardingViewModel(stage: .speechModel)
         model.setModelState(.optimizing)
 
         XCTAssertTrue(model.modelIsBusy)
@@ -83,8 +83,9 @@ final class OnboardingModelActivityTests: XCTestCase {
         XCTAssertNil(model.modelPrimaryAction, "nothing to press while it compiles")
         XCTAssertEqual(
             model.modelActivityDescription,
-            "Optimizing for your Mac — first time only, this can take a few minutes. You can continue setup meanwhile."
+            "Optimizing for your Mac — first time only, this can take a few minutes."
         )
+        XCTAssertEqual(model.modelCardLine?.text, "You can continue setup meanwhile.", "the card says setup can go on")
         XCTAssertEqual(model.actionBar.primaryTitle, "Continue", "setup is not held hostage by the compile")
         XCTAssertEqual(model.readiness.model, .notReady)
     }

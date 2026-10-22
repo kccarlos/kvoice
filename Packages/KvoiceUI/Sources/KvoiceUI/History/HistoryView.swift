@@ -3,7 +3,11 @@ import SwiftUI
 import UniformTypeIdentifiers
 import KvoiceDomain
 
-/// Native SwiftUI History surface.  App-shell routing and settings
+/// Native SwiftUI History surface, drawn to Window.dc (UI v2 fidelity F3b):
+/// the stats strip, then one bordered container with the 300 pt list column
+/// (search, ＋ / ⤴︎, filter chips, rows) beside the detail (title, Original
+/// / Enhanced, the transcript, Copy, the recording, the facts). With nothing
+/// saved the page is one empty card instead. App-shell routing and settings
 /// persistence remain outside this view; `HistoryViewModel` exposes the
 /// repository, audio store, engine, and enable-toggle seams the shell wires.
 @MainActor
@@ -11,35 +15,38 @@ public struct HistoryView: View {
     @Bindable private var viewModel: HistoryViewModel
     @State private var isClearConfirmationPresented = false
     @State private var isBulkDeleteConfirmationPresented = false
+    @FocusState private var listFocused: Bool
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.colorSchemeContrast) private var contrast
+
+    /// Window.dc: the list column is 300 pt.
+    static let listWidth: CGFloat = 300
 
     public init(viewModel: HistoryViewModel) {
         self.viewModel = viewModel
     }
 
     public var body: some View {
-        VStack(spacing: 0) {
-            HistoryDashboardView(dashboard: viewModel.dashboard, isFiltered: viewModel.isFiltered)
-            Divider()
-            // `columnVisibility: .constant(.all)` (user report, 2026-09-16):
-            // without an explicit binding this nested split view manages its
-            // own visibility, and — being itself inside the outer window's
-            // `NavigationSplitView` detail pane rather than a top-level one —
-            // could silently collapse to `.detailOnly` while the window was
-            // dragged narrower, with nothing here able to notice or reopen
-            // it. Pinning both columns open always trades away the automatic
-            // collapse this view never wanted in the first place (the list
-            // is core navigation, not an optional sidebar).
-            NavigationSplitView(columnVisibility: .constant(.all)) {
-                sidebar
-                    // The outer window's sidebar can take up to 240 of an
-                    // 820-wide window, so this list must fit the remainder
-                    // with room for the detail pane beside it.
-                    .navigationSplitViewColumnWidth(min: 260, ideal: 360, max: 520)
-            } detail: {
-                detail
+        Group {
+            if let empty = viewModel.emptyState {
+                HistoryEmptyCard(
+                    state: empty,
+                    onTestDictation: viewModel.startTestDictation,
+                    onOpenDataPrivacy: viewModel.openDataPrivacy
+                )
+            } else {
+                VStack(alignment: .leading, spacing: KVCardLayout.blockSpacing) {
+                    HistoryDashboardView(dashboard: viewModel.dashboard, isFiltered: viewModel.isFiltered)
+                    container
+                }
             }
         }
+        // Window.dc `main`: 36 pt sides, 24 pt bottom; 12 + the header's
+        // 6 pt above.
+        .padding(.horizontal, KVCardLayout.sidePadding)
+        .padding(.top, KVSpacing.s)
+        .padding(.bottom, 24)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         // No fixed frame here. This view is hosted both by its own window and by
         // a Settings tab; the host decides the size.
         .task {
@@ -87,6 +94,14 @@ public struct HistoryView: View {
         .sheet(item: retranscribeBinding) { proposal in
             RetranscribeProposalSheet(proposal: proposal, viewModel: viewModel)
         }
+        // UI v2 fidelity F3b: Window.dc's "Transcribe File…" header button.
+        .mainWindowHeaderAction(.transcribeFile(
+            canTranscribeFiles: viewModel.canTranscribeFiles,
+            historyEnabled: viewModel.historyEnabled,
+            isTranscribing: viewModel.isTranscribingFile
+        ) { [viewModel] in
+            Self.chooseFileToTranscribe(viewModel)
+        })
     }
 
     private var bulkDeleteTitle: String {
@@ -101,15 +116,48 @@ public struct HistoryView: View {
         )
     }
 
-    private var sidebar: some View {
+    /// Window.dc: radius 12, a `line` ring, the list column and the detail
+    /// split by a `line` rule.
+    private var container: some View {
+        GeometryReader { proxy in
+            HStack(spacing: 0) {
+                listColumn
+                    .frame(width: Self.listColumnWidth(containerWidth: proxy.size.width))
+                Rectangle()
+                    .fill(Color.kv.line)
+                    .frame(width: 1)
+                    .accessibilityHidden(true)
+                detail
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color.kv.surface)
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .strokeBorder(contrast == .increased ? Color.kv.text2 : Color.kv.line, lineWidth: 1)
+        }
+    }
+
+    /// Window.dc's 300 pt column, narrowed (never under 220) so the detail
+    /// keeps at least 280 pt in the smallest window.
+    static func listColumnWidth(containerWidth: CGFloat) -> CGFloat {
+        guard containerWidth > 0 else { return listWidth }
+        return min(listWidth, max(220, containerWidth - 1 - 280))
+    }
+
+    private var listColumn: some View {
         VStack(spacing: 0) {
-            header
+            listHeader
+            Rectangle().fill(Color.kv.line2).frame(height: 1).accessibilityHidden(true)
 
             if let errorMessage = viewModel.errorMessage {
                 errorBanner(errorMessage)
             }
 
             contentList
+                .frame(maxHeight: .infinity)
 
             if viewModel.isSelecting {
                 selectionBar
@@ -117,7 +165,7 @@ public struct HistoryView: View {
 
             if let pending = viewModel.pendingUndo {
                 undoBar(pending)
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                    .transition(reduceMotion ? .opacity : .move(edge: .bottom).combined(with: .opacity))
             }
 
             footer
@@ -125,56 +173,53 @@ public struct HistoryView: View {
         .animation(reduceMotion ? nil : .easeInOut(duration: 0.2), value: viewModel.pendingUndo)
     }
 
-    private var header: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            // M8a: no inner "History" title — the section header above this
-            // view already says History, and a page is titled once.
-            HStack(alignment: .firstTextBaseline) {
-                Spacer()
-                // Inline rather than in a `.toolbar`. This view is also hosted in
-                // a Settings tab, which has no window toolbar for items to land
-                // in, so toolbar-only actions would be unreachable there.
+    /// Window.dc: padding 10, 8 pt between the search row and the chips.
+    private var listHeader: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 6) {
+                searchField
                 actions
             }
 
             if !viewModel.historyEnabled {
                 // P-M8 (2026-09-16): the "Save History" toggle itself moved
                 // to Data & Privacy — this is now the one setting's one
-                // home (M8/settings.md › "Minimize the number of
-                // settings"). J.5 still applies: disabling stops future
-                // writes and does not delete existing rows, and the state
-                // stays discoverable and one tap from fixable here.
-                HStack(alignment: .firstTextBaseline, spacing: 4) {
+                // home. J.5 still applies: disabling stops future writes
+                // and does not delete existing rows, and the state stays
+                // discoverable and one tap from fixable here.
+                VStack(alignment: .leading, spacing: 2) {
                     Text("Save History is off. New dictations are not saved. Items already saved stay here until you clear them.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .font(.system(size: 11))
+                        .foregroundStyle(Color.kv.text2)
                         .fixedSize(horizontal: false, vertical: true)
                     if let openDataPrivacy = viewModel.openDataPrivacy {
                         Button("Data & Privacy") {
                             openDataPrivacy()
                         }
-                        .buttonStyle(.link)
-                        .font(.caption)
+                        .buttonStyle(.plain)
+                        .font(.system(size: 11))
+                        .foregroundStyle(Color.kv.cursorInk)
                         .accessibilityHint("Opens Data & Privacy, where Save dictation history is turned on.")
                     }
                 }
             }
 
-            searchField
             filters
         }
-        .padding(.horizontal)
-        .padding(.vertical, 10)
+        .padding(10)
         .animation(reduceMotion ? nil : .default, value: viewModel.historyEnabled)
     }
 
+    /// Window.dc: 28 pt, radius 7, `fill`, 12 pt.
     private var searchField: some View {
         HStack(spacing: 6) {
             Image(systemName: "magnifyingglass")
-                .foregroundStyle(.secondary)
+                .font(.system(size: 11))
+                .foregroundStyle(Color.kv.text2)
                 .accessibilityHidden(true)
             TextField("Search transcripts", text: $viewModel.searchText)
                 .textFieldStyle(.plain)
+                .font(.system(size: 12))
                 .accessibilityLabel("Search history")
                 .accessibilityHint("Filters saved transcripts by raw or final text. Searching stays on this Mac.")
             if !viewModel.searchText.isEmpty {
@@ -182,83 +227,111 @@ public struct HistoryView: View {
                     Task { await viewModel.clearSearch() }
                 } label: {
                     Image(systemName: "xmark.circle.fill")
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.kv.text2)
                 }
-                .buttonStyle(.borderless)
+                .buttonStyle(.plain)
                 .accessibilityLabel("Clear search")
             }
         }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 5)
-        .background(.quinary, in: RoundedRectangle(cornerRadius: 6))
+        .padding(.horizontal, 10)
+        .frame(height: 28)
+        .background(Color.kv.fill, in: RoundedRectangle(cornerRadius: 7, style: .continuous))
     }
 
-    /// Time range and duration pickers. Pickers commit at once (no debounce).
+    /// UI v2 wave 5a: the filters as chips — a time-range menu, a
+    /// recording-length menu and a "With AI" toggle. Each menu holds every
+    /// option the old pickers did; a chip turns cursor-blue while it narrows
+    /// the list. Choices commit at once (no debounce).
     private var filters: some View {
-        HStack(spacing: 8) {
-            Picker("Time range", selection: $viewModel.timeRange) {
-                ForEach(HistoryTimeRange.allCases, id: \.self) { range in
-                    Text(domain: range.displayName).tag(range)
+        HStack(spacing: 6) {
+            Menu {
+                Picker("Time range", selection: $viewModel.timeRange) {
+                    ForEach(HistoryTimeRange.allCases, id: \.self) { range in
+                        Text(domain: range.displayName).tag(range)
+                    }
+                }
+                .pickerStyle(.inline)
+                .labelsHidden()
+            } label: {
+                HistoryFilterChip(isActive: viewModel.timeRange != .all, showsMenuIndicator: false) {
+                    Text(domain: viewModel.timeRange.displayName)
                 }
             }
-            .labelsHidden()
+            .menuStyle(.button)
+            .buttonStyle(.plain)
+            .menuIndicator(.hidden)
+            .fixedSize()
             .accessibilityLabel("Time range")
-            .onChange(of: viewModel.timeRange) { _, _ in
-                Task { await viewModel.applyFilters() }
-            }
+            .accessibilityValue(Text(domain: viewModel.timeRange.displayName))
 
-            Picker("Duration", selection: $viewModel.durationBucket) {
-                Text("Any length").tag(HistoryDurationBucket?.none)
-                ForEach(HistoryDurationBucket.allCases, id: \.self) { bucket in
-                    Text(domain: bucket.displayName).tag(HistoryDurationBucket?.some(bucket))
+            Menu {
+                Picker("Duration", selection: $viewModel.durationBucket) {
+                    Text("Any length").tag(HistoryDurationBucket?.none)
+                    ForEach(HistoryDurationBucket.allCases, id: \.self) { bucket in
+                        Text(domain: bucket.displayName).tag(HistoryDurationBucket?.some(bucket))
+                    }
+                }
+                .pickerStyle(.inline)
+                .labelsHidden()
+            } label: {
+                HistoryFilterChip(isActive: viewModel.durationBucket != nil, showsMenuIndicator: false) {
+                    if let bucket = viewModel.durationBucket {
+                        Text(domain: bucket.displayName)
+                    } else {
+                        Text("Any length")
+                    }
                 }
             }
-            .labelsHidden()
+            .menuStyle(.button)
+            .buttonStyle(.plain)
+            .menuIndicator(.hidden)
+            .fixedSize()
             .accessibilityLabel("Recording length")
-            .onChange(of: viewModel.durationBucket) { _, _ in
-                Task { await viewModel.applyFilters() }
+
+            Button {
+                viewModel.onlyWithAI.toggle()
+            } label: {
+                HistoryFilterChip(isActive: viewModel.onlyWithAI, showsMenuIndicator: false) {
+                    Text("With AI")
+                }
             }
+            .buttonStyle(.plain)
+            .fixedSize()
+            .accessibilityLabel("With AI")
+            .accessibilityHint("Shows only dictations an AI action changed.")
+            .accessibilityAddTraits(viewModel.onlyWithAI ? .isSelected : [])
+            .accessibilityValue(Text(verbatim: KVAccessibility.selectionValue(viewModel.onlyWithAI)))
+            Spacer(minLength: 0)
         }
-        .controlSize(.small)
+        .onChange(of: viewModel.timeRange) { _, _ in
+            Task { await viewModel.applyFilters() }
+        }
+        .onChange(of: viewModel.durationBucket) { _, _ in
+            Task { await viewModel.applyFilters() }
+        }
+        .onChange(of: viewModel.onlyWithAI) { _, _ in
+            Task { await viewModel.applyFilters() }
+        }
     }
 
+    /// Window.dc: ＋ (Transcribe file) and ⤴︎ (Export) as 28 pt icon
+    /// buttons. Refresh, Select and Clear All — not drawn — sit in a third
+    /// "More" menu; ⌘R still refreshes.
     private var actions: some View {
-        HStack(spacing: 6) {
-            // The spinner stands in for the Refresh glyph while a read is in
-            // flight, so the button both shows its state and cannot be
-            // pressed twice.
-            if viewModel.isLoading {
-                ProgressView()
-                    .controlSize(.small)
-                    .frame(width: 20, height: 20)
-                    .accessibilityLabel("Refreshing history")
-            } else {
-                Button {
-                    Task { await viewModel.refresh() }
-                } label: {
-                    Label("Refresh", systemImage: "arrow.clockwise")
-                        .labelStyle(.iconOnly)
-                        .frame(width: 20, height: 20)
-                }
-                .keyboardShortcut("r", modifiers: [.command])
-                .help("Refresh history (⌘R)")
-                .accessibilityLabel("Refresh history")
-            }
-
+        HStack(spacing: 0) {
             if viewModel.canTranscribeFiles {
                 if viewModel.isTranscribingFile {
                     ProgressView()
                         .controlSize(.small)
-                        .frame(width: 20, height: 20)
+                        .frame(width: 28, height: 28)
                         .accessibilityLabel("Transcribing file")
                 } else {
                     Button {
-                        chooseFileToTranscribe()
+                        Self.chooseFileToTranscribe(viewModel)
                     } label: {
-                        Label("Transcribe File…", systemImage: "doc.badge.plus")
-                            .labelStyle(.iconOnly)
-                            .frame(width: 20, height: 20)
+                        HistoryIconLabel(systemImage: "plus", size: 14)
                     }
+                    .buttonStyle(.plain)
                     // FR-HIST-001: the result is a history row, so the
                     // switch gates it.
                     .disabled(!viewModel.historyEnabled)
@@ -271,29 +344,47 @@ public struct HistoryView: View {
 
             exportMenu
 
-            Button {
-                viewModel.setSelecting(!viewModel.isSelecting)
+            Menu {
+                Button("Refresh") {
+                    Task { await viewModel.refresh() }
+                }
+                .disabled(viewModel.isLoading)
+                Button(viewModel.isSelecting ? "Leave selection mode" : "Select several items") {
+                    viewModel.setSelecting(!viewModel.isSelecting)
+                }
+                .disabled(viewModel.entries.isEmpty && !viewModel.isSelecting)
+                Divider()
+                Button("Clear All…", role: .destructive) {
+                    isClearConfirmationPresented = true
+                }
+                .disabled(viewModel.isLoading || (viewModel.entryCount ?? viewModel.entries.count) == 0)
             } label: {
-                Label(viewModel.isSelecting ? "Done" : "Select", systemImage: viewModel.isSelecting ? "checkmark.circle.fill" : "checkmark.circle")
-                    .labelStyle(.iconOnly)
-                    .frame(width: 20, height: 20)
+                if viewModel.isLoading {
+                    ProgressView()
+                        .controlSize(.small)
+                        .frame(width: 28, height: 28)
+                        .accessibilityLabel("Refreshing history")
+                } else {
+                    HistoryIconLabel(systemImage: "ellipsis", size: 13)
+                }
             }
-            .disabled(viewModel.entries.isEmpty && !viewModel.isSelecting)
-            .help(viewModel.isSelecting ? "Leave selection mode" : "Select several items")
-            .accessibilityLabel(viewModel.isSelecting ? "Leave selection mode" : "Select several items")
+            .menuStyle(.button)
+            .buttonStyle(.plain)
+            .menuIndicator(.hidden)
+            .fixedSize()
+            .help("More")
+            .accessibilityLabel("More history actions")
 
-            Button {
-                isClearConfirmationPresented = true
-            } label: {
-                Label("Clear All", systemImage: "trash")
-                    .labelStyle(.iconOnly)
-                    .frame(width: 20, height: 20)
+            // ⌘R, kept from the toolbar the design dropped.
+            Button("Refresh history") {
+                Task { await viewModel.refresh() }
             }
-            .disabled(viewModel.isLoading || (viewModel.entryCount ?? viewModel.entries.count) == 0)
-            .help("Clear all history…")
-            .accessibilityLabel("Clear all history")
+            .keyboardShortcut("r", modifiers: [.command])
+            .disabled(viewModel.isLoading)
+            .frame(width: 0, height: 0)
+            .opacity(0)
+            .accessibilityHidden(true)
         }
-        .buttonStyle(.borderless)
     }
 
     private var exportMenu: some View {
@@ -308,10 +399,10 @@ public struct HistoryView: View {
             Button("Save Selected as Text…") { saveSelected(.text) }
                 .disabled(viewModel.rowsForSelectionExport.isEmpty)
         } label: {
-            Label("Export", systemImage: "square.and.arrow.up")
-                .labelStyle(.iconOnly)
-                .frame(width: 20, height: 20)
+            HistoryIconLabel(systemImage: "square.and.arrow.up", size: 13)
         }
+        .menuStyle(.button)
+        .buttonStyle(.plain)
         .menuIndicator(.hidden)
         .fixedSize()
         .help("Export…")
@@ -325,7 +416,7 @@ public struct HistoryView: View {
             loadingView
         case .loading where viewModel.entries.isEmpty:
             loadingView
-        case .empty where viewModel.isShowingSearchResults:
+        case .empty where viewModel.isShowingSearchResults || viewModel.isFiltered:
             ContentUnavailableView {
                 Label("No Matching Items", systemImage: "line.3.horizontal.decrease.circle")
             } description: {
@@ -355,66 +446,97 @@ public struct HistoryView: View {
                 .keyboardShortcut(.defaultAction)
             }
         default:
-            List(selection: $viewModel.selectedEntryID) {
-                ForEach(viewModel.entries) { entry in
-                    HistoryRow(
-                        entry: entry,
-                        hasAudio: viewModel.hasStoredAudio(entry),
-                        isSelecting: viewModel.isSelecting,
-                        isChecked: viewModel.selectedEntryIDs.contains(entry.id),
-                        onToggleCheck: { viewModel.toggleSelection(entry.id) }
-                    )
-                    .tag(entry.id)
-                    .contextMenu {
-                        rowActions(for: entry)
-                    }
-                }
-                .onDelete { offsets in
-                    let toDelete = offsets.compactMap { index in
-                        viewModel.entries.indices.contains(index) ? viewModel.entries[index] : nil
-                    }
-                    for entry in toDelete {
-                        Task { await viewModel.delete(entry) }
-                    }
-                }
-
-                if viewModel.canLoadMore {
-                    Button("Load More History") {
-                        Task { await viewModel.loadNextPage() }
-                    }
-                    .frame(maxWidth: .infinity)
-                    .accessibilityHint("Loads older history items")
-                }
-            }
-            .listStyle(.inset)
-            // The Delete key removes the selected row when the list has focus
-            // (with Undo, per D.7). This is the macOS list idiom; binding a
-            // button to a bare Delete key equivalent would also swallow
-            // Backspace in the search field.
-            .onDeleteCommand {
-                Task { await viewModel.deleteSelected() }
-            }
-            .overlay(alignment: .bottom) {
-                if let statusMessage = viewModel.statusMessage {
-                    Text(statusMessage)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 6)
-                        .background(.regularMaterial, in: Capsule())
-                        .padding(.bottom, 8)
-                        .transition(.opacity)
-                        .accessibilityAddTraits(.updatesFrequently)
-                }
-            }
-            .animation(reduceMotion ? nil : .easeInOut(duration: 0.2), value: viewModel.statusMessage)
+            rows
         }
+    }
+
+    /// The drawn list (Window.dc `hist`). A focusable column like the
+    /// drawn sidebar: click or Tab focuses it, ↑ / ↓ move the selection,
+    /// Delete removes the selected row (with Undo, D.7); each row has the
+    /// context menu, and VoiceOver reads a "History items" group of buttons
+    /// with the selected one marked.
+    private var rows: some View {
+        ScrollViewReader { proxy in
+            ScrollView(.vertical) {
+                LazyVStack(spacing: 0) {
+                    ForEach(viewModel.entries) { entry in
+                        HistoryRow(
+                            entry: entry,
+                            hasAudio: viewModel.hasStoredAudio(entry),
+                            isSelected: viewModel.selectedEntryID == entry.id,
+                            isFocused: listFocused && viewModel.selectedEntryID == entry.id,
+                            isSelecting: viewModel.isSelecting,
+                            isChecked: viewModel.selectedEntryIDs.contains(entry.id),
+                            onToggleCheck: { viewModel.toggleSelection(entry.id) }
+                        )
+                        .id(entry.id)
+                        .onTapGesture {
+                            listFocused = true
+                            viewModel.selectedEntryID = entry.id
+                        }
+                        .accessibilityAction { viewModel.selectedEntryID = entry.id }
+                        .contextMenu {
+                            rowActions(for: entry)
+                        }
+                    }
+
+                    if viewModel.canLoadMore {
+                        Button("Load More History") {
+                            Task { await viewModel.loadNextPage() }
+                        }
+                        .buttonStyle(.kv)
+                        .padding(10)
+                        .frame(maxWidth: .infinity)
+                        .accessibilityHint("Loads older history items")
+                    }
+                }
+            }
+            .scrollIndicators(.automatic)
+            .onChange(of: viewModel.selectedEntryID) { _, id in
+                guard let id else { return }
+                withAnimation(reduceMotion ? nil : .easeOut(duration: 0.2)) { proxy.scrollTo(id) }
+            }
+        }
+        .focusable()
+        .focused($listFocused)
+        .focusEffectDisabled()
+        .onKeyPress(.upArrow) {
+            viewModel.selectNeighbour(step: -1)
+            return .handled
+        }
+        .onKeyPress(.downArrow) {
+            viewModel.selectNeighbour(step: 1)
+            return .handled
+        }
+        // The Delete key removes the selected row when the list has focus
+        // (with Undo, per D.7). This is the macOS list idiom; binding a
+        // button to a bare Delete key equivalent would also swallow
+        // Backspace in the search field.
+        .onDeleteCommand {
+            Task { await viewModel.deleteSelected() }
+        }
+        .overlay(alignment: .bottom) {
+            if let statusMessage = viewModel.statusMessage {
+                Text(statusMessage)
+                    .font(.system(size: 11))
+                    .foregroundStyle(Color.kv.text2)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(.regularMaterial, in: Capsule())
+                    .padding(.bottom, 8)
+                    .transition(.opacity)
+                    .accessibilityAddTraits(.updatesFrequently)
+            }
+        }
+        .animation(reduceMotion ? nil : .easeInOut(duration: 0.2), value: viewModel.statusMessage)
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel(Text("History items", bundle: .module))
     }
 
     private var selectionBar: some View {
         HStack(spacing: 10) {
             Text(viewModel.selectedEntryIDs.count == 1 ? "1 selected" : "\(viewModel.selectedEntryIDs.count) selected")
-                .font(.callout.monospacedDigit())
+                .font(.system(size: 12).monospacedDigit())
             Button("Select All") { viewModel.selectAllLoaded() }
                 .disabled(viewModel.selectedEntryIDs.count == viewModel.entries.count)
             Spacer()
@@ -424,17 +546,17 @@ public struct HistoryView: View {
             .disabled(viewModel.selectedEntryIDs.isEmpty)
             .help("Delete the checked items…")
         }
-        .controlSize(.small)
+        .buttonStyle(.kv)
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
-        .background(.regularMaterial)
+        .background(Color.kv.wash)
         .accessibilityElement(children: .contain)
         .accessibilityLabel("Selection")
     }
 
     /// Row count, database size, and stored audio size.  These come from the
     /// repository, not from the loaded page, so they stay right while paging
-    /// or filtering.
+    /// or filtering. Not drawn in Window.dc; kept as the column's foot.
     private var footer: some View {
         HStack(spacing: 6) {
             if let count = viewModel.entryCount {
@@ -453,17 +575,20 @@ public struct HistoryView: View {
                 Text("\(viewModel.entries.count) matching")
             }
         }
-        .font(.caption.monospacedDigit())
-        .foregroundStyle(.secondary)
-        .padding(.horizontal)
+        .font(.system(size: 10).monospacedDigit())
+        .foregroundStyle(Color.kv.text2)
+        .padding(.horizontal, 12)
         .padding(.vertical, 6)
+        .overlay(alignment: .top) {
+            Rectangle().fill(Color.kv.line2).frame(height: 1)
+        }
         .accessibilityElement(children: .combine)
     }
 
     private func undoBar(_ pending: HistoryViewModel.PendingDeletion) -> some View {
         HStack(spacing: 10) {
             Image(systemName: "trash")
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.kv.text2)
                 .accessibilityHidden(true)
             Text("Deleted “\(pending.entry.finalText.oneLinePreview)”")
                 .lineLimit(1)
@@ -472,6 +597,7 @@ public struct HistoryView: View {
             Button("Undo") {
                 Task { await viewModel.undoDelete() }
             }
+            .buttonStyle(.kv)
             .keyboardShortcut("z", modifiers: [.command])
             .help("Restore the deleted item")
             Button {
@@ -479,13 +605,13 @@ public struct HistoryView: View {
             } label: {
                 Image(systemName: "xmark")
             }
-            .buttonStyle(.borderless)
+            .buttonStyle(.plain)
             .accessibilityLabel("Dismiss")
         }
-        .font(.callout)
+        .font(.system(size: 12))
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
-        .background(.regularMaterial)
+        .background(Color.kv.wash)
         .accessibilityElement(children: .contain)
         .accessibilityLabel("Item deleted. Undo available for ten seconds.")
     }
@@ -494,7 +620,7 @@ public struct HistoryView: View {
         VStack(spacing: 12) {
             ProgressView()
             Text("Loading History…")
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.kv.text2)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .accessibilityElement(children: .combine)
@@ -504,11 +630,11 @@ public struct HistoryView: View {
     private func errorBanner(_ message: String) -> some View {
         StatusLabel(message, symbol: "exclamationmark.triangle.fill", tone: .attention)
             .labelStyle(.titleAndIcon)
-            .font(.caption)
+            .font(.system(size: 11))
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.horizontal)
+            .padding(.horizontal, 12)
             .padding(.vertical, 6)
-            .background(Color.orange.opacity(0.1))
+            .background(Color.kv.warnSoft)
             .accessibilityElement(children: .combine)
             .accessibilityLabel("History error. \(message)")
     }
@@ -547,7 +673,7 @@ public struct HistoryView: View {
 
     // MARK: File dialogs
 
-    private func chooseFileToTranscribe() {
+    private static func chooseFileToTranscribe(_ viewModel: HistoryViewModel) {
         let panel = NSOpenPanel()
         panel.title = String(localized: "Transcribe File", bundle: .module)
         panel.message = String(localized: "Choose an audio or video file to transcribe with the local model.", bundle: .module)
@@ -592,522 +718,6 @@ public struct HistoryView: View {
     }
 }
 
-// MARK: - Dashboard
-
-/// The tiles across the top: sessions, words, words per minute, keystrokes
-/// saved, average AI time, and time saved against typing.  Every figure is
-/// a SQL aggregate over the current filters; the footer states the typing
-/// speed the last tile assumes.
-struct HistoryDashboardView: View {
-    let dashboard: HistoryViewModel.Dashboard
-    let isFiltered: Bool
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            LazyVGrid(columns: [GridItem(.adaptive(minimum: 118), spacing: 8)], spacing: 8) {
-                tile("Sessions Recorded", dashboard.sessions.formatted(), systemImage: "waveform")
-                tile("Words Dictated", dashboard.words.formatted(), systemImage: "text.word.spacing")
-                tile("Words / min", dashboard.wordsPerMinute.map { $0.formatted(.number.precision(.fractionLength(0))) } ?? "—", systemImage: "speedometer")
-                tile("Keystrokes Saved", dashboard.keystrokesSaved.formatted(), systemImage: "keyboard")
-                tile("Avg AI Time", dashboard.averageAIMilliseconds.map(Self.seconds) ?? "—", systemImage: "wand.and.stars")
-                tile("Time Saved", Self.timeSaved(dashboard.timeSavedSeconds), systemImage: "clock.arrow.circlepath")
-            }
-            Text(isFiltered
-                ? "Figures cover the current filters. Time saved assumes typing at \(HistoryViewModel.assumedTypingWordsPerMinute) words per minute."
-                : "Time saved assumes typing at \(HistoryViewModel.assumedTypingWordsPerMinute) words per minute.")
-                .font(.caption2)
-                .foregroundStyle(.tertiary)
-        }
-        .padding(.horizontal)
-        .padding(.vertical, 10)
-        .accessibilityElement(children: .contain)
-        .accessibilityLabel("Dashboard")
-    }
-
-    private func tile(_ title: String, _ value: String, systemImage: String) -> some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Label(title, systemImage: systemImage)
-                .font(.caption2)
-                .foregroundStyle(.secondary)
-                .lineLimit(1)
-            Text(value)
-                .font(.title3.weight(.semibold).monospacedDigit())
-                .lineLimit(1)
-                .minimumScaleFactor(0.7)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, 10)
-        .padding(.vertical, 8)
-        .background(.quinary, in: RoundedRectangle(cornerRadius: 8))
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel(title)
-        .accessibilityValue(value)
-    }
-
-    static func seconds(_ milliseconds: Int) -> String {
-        (Double(milliseconds) / 1_000).formatted(.number.precision(.fractionLength(1))) + " s"
-    }
-
-    static func timeSaved(_ seconds: Double) -> String {
-        let total = Int(seconds.rounded())
-        if total < 60 { return String(localized: "\(total) s", bundle: .module) }
-        let hours = total / 3_600
-        let minutes = (total % 3_600) / 60
-        return hours > 0 ? String(localized: "\(hours) h \(minutes) m", bundle: .module) : String(localized: "\(minutes) m", bundle: .module)
-    }
-}
-
-// MARK: - Rows
-
-private struct HistoryRow: View {
-    let entry: HistoryEntry
-    let hasAudio: Bool
-    let isSelecting: Bool
-    let isChecked: Bool
-    let onToggleCheck: () -> Void
-
-    var body: some View {
-        HStack(alignment: .top, spacing: 8) {
-            if isSelecting {
-                Button(action: onToggleCheck) {
-                    Image(systemName: isChecked ? "checkmark.circle.fill" : "circle")
-                        .font(.title3)
-                        .foregroundStyle(isChecked ? Color.accentColor : Color.secondary)
-                }
-                .buttonStyle(.borderless)
-                .accessibilityLabel(isChecked ? "Checked" : "Not checked")
-                .accessibilityHint("Toggles this item for bulk actions")
-            }
-            VStack(alignment: .leading, spacing: 4) {
-                HStack(alignment: .firstTextBaseline) {
-                    Text(entry.finalText.oneLinePreview)
-                        .lineLimit(2)
-                        .font(.body)
-                    Spacer(minLength: 8)
-                    Text(entry.createdAt.historyRowLabel)
-                        .font(.caption.monospacedDigit())
-                        .foregroundStyle(.secondary)
-                }
-                HStack(spacing: 6) {
-                    Text(entry.isFileTranscription ? String(localized: "File", bundle: .module) : entry.mode.displayName)
-                    Text("·")
-                    Text(entry.insertionOutcome.displayName(isFile: entry.isFileTranscription))
-                    if let milliseconds = entry.recordingDurationMilliseconds {
-                        Text("·")
-                        Text(Self.durationLabel(milliseconds))
-                    }
-                    if hasAudio {
-                        Image(systemName: "waveform.circle")
-                            .accessibilityLabel("Recording kept")
-                    }
-                    if entry.isFallback {
-                        FallbackBadge()
-                    }
-                }
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            }
-        }
-        .padding(.vertical, 4)
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel(entry.accessibilitySummary)
-    }
-
-    static func durationLabel(_ milliseconds: Int) -> String {
-        Duration.milliseconds(milliseconds).formatted(.units(allowed: [.minutes, .seconds], width: .narrow))
-    }
-}
-
-/// D.7's "fallback badge": the row did not take the happy path, either
-/// because AI failed or was cancelled, or because insertion went to the
-/// clipboard.
-private struct FallbackBadge: View {
-    var body: some View {
-        Label {
-            Text("Fallback")
-                .foregroundStyle(.primary)
-        } icon: {
-            Image(systemName: "exclamationmark.triangle.fill")
-                .foregroundStyle(.orange)
-        }
-        .font(.caption2.weight(.semibold))
-        .padding(.horizontal, 6)
-        .padding(.vertical, 1)
-        .background(Color.orange.opacity(0.15), in: Capsule())
-        .accessibilityLabel("Fallback")
-    }
-}
-
-// MARK: - Detail
-
-private struct HistoryDetailView: View {
-    enum TranscriptTab: String, CaseIterable {
-        case original = "Original"
-        case enhanced = "Enhanced"
-    }
-
-    let entry: HistoryEntry
-    let viewModel: HistoryViewModel
-    @State private var tab: TranscriptTab = .enhanced
-
-    var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 18) {
-                // Title and timestamp on one line when there is room; the
-                // timestamp drops under the title in a narrow detail pane.
-                ViewThatFits(in: .horizontal) {
-                    HStack(alignment: .firstTextBaseline) {
-                        Text("History Detail")
-                            .font(.title2.weight(.semibold))
-                        Spacer()
-                        timestamp
-                    }
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("History Detail")
-                            .font(.title2.weight(.semibold))
-                        timestamp
-                    }
-                }
-
-                HStack(spacing: 10) {
-                    Label(entry.isFileTranscription ? String(localized: "Transcribed file", bundle: .module) : entry.mode.displayName,
-                          systemImage: entry.isFileTranscription ? "doc.badge.plus" : entry.mode.symbolName)
-                    if let milliseconds = entry.recordingDurationMilliseconds {
-                        DurationBadge(milliseconds: milliseconds)
-                    }
-                    if entry.isFallback {
-                        FallbackBadge()
-                    }
-                }
-                .foregroundStyle(.secondary)
-
-                transcriptTabs
-
-                if viewModel.hasStoredAudio(entry) {
-                    audioSection
-                }
-
-                if let fallbackSummary = entry.aiFallbackSummary {
-                    // D.10: what happened and what kvoice did with the text.
-                    // The code itself lives in the details grid, not here.
-                    StatusLabel(fallbackSummary, symbol: "exclamationmark.triangle.fill", tone: .attention)
-                        .labelStyle(.titleAndIcon)
-                        .font(.caption)
-                }
-
-                metadata
-
-                HStack {
-                    Spacer()
-                    Button("Delete", role: .destructive) {
-                        Task { await viewModel.delete(entry) }
-                    }
-                    // Command-Delete, as in Finder. A bare Delete equivalent on
-                    // a button also fires while typing in the search field.
-                    .keyboardShortcut(.delete, modifiers: [.command])
-                    .help("Delete this item (⌘⌫). Undo is available for ten seconds.")
-                }
-            }
-            .frame(maxWidth: 720, alignment: .leading)
-            .padding(28)
-        }
-        .accessibilityElement(children: .contain)
-        .onChange(of: entry.id, initial: true) { _, _ in
-            tab = entry.hasDistinctEnhancedText ? .enhanced : .original
-        }
-    }
-
-    private var timestamp: some View {
-        HStack(spacing: 6) {
-            Text(entry.createdAt, style: .date)
-            Text(entry.createdAt, style: .time)
-        }
-        .foregroundStyle(.secondary)
-    }
-
-    /// Original / Enhanced.  The Enhanced tab exists only when AI succeeded
-    /// and changed the text; otherwise there is one transcript and no tabs.
-    @ViewBuilder
-    private var transcriptTabs: some View {
-        if entry.hasDistinctEnhancedText {
-            VStack(alignment: .leading, spacing: 8) {
-                HStack {
-                    Picker("Transcript", selection: $tab) {
-                        ForEach(TranscriptTab.allCases, id: \.self) { tab in
-                            Text(tab.rawValue).tag(tab)
-                        }
-                    }
-                    .pickerStyle(.segmented)
-                    .labelsHidden()
-                    .fixedSize()
-                    .accessibilityLabel("Transcript version")
-                    Spacer()
-                    // Neither shortcut is plain Command-C. The transcripts
-                    // are selectable, and claiming Command-C would hijack it.
-                    if tab == .original {
-                        Button("Copy Original") { _ = viewModel.copyRaw(entry) }
-                            .keyboardShortcut("c", modifiers: [.command, .option])
-                    } else {
-                        Button("Copy Enhanced") { _ = viewModel.copyFinal(entry) }
-                            .keyboardShortcut("c", modifiers: [.command, .shift])
-                    }
-                }
-                transcriptBox(tab == .original ? entry.rawText : entry.finalText, title: tab.rawValue)
-            }
-        } else {
-            VStack(alignment: .leading, spacing: 8) {
-                HStack {
-                    Text("Transcript")
-                        .font(.headline)
-                    Spacer()
-                    Button("Copy Transcript") { _ = viewModel.copyFinal(entry) }
-                        .keyboardShortcut("c", modifiers: [.command, .shift])
-                }
-                transcriptBox(entry.finalText, title: "Transcript")
-            }
-        }
-    }
-
-    private func transcriptBox(_ text: String, title: String) -> some View {
-        Text(text)
-            .textSelection(.enabled)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(12)
-            .background(.quinary, in: RoundedRectangle(cornerRadius: 8))
-            .accessibilityLabel("\(title): \(text)")
-    }
-
-    /// Waveform strip with play/pause and scrub, Show in Finder, and
-    /// Retranscribe.  Only shown when the row has a stored recording.
-    private var audioSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Text("Recording")
-                    .font(.headline)
-                Spacer()
-                Button("Show in Finder") { viewModel.revealAudio(for: entry) }
-                if viewModel.canRetranscribe {
-                    if viewModel.isRetranscribing {
-                        ProgressView()
-                            .controlSize(.small)
-                    } else {
-                        Button("Retranscribe") {
-                            Task { await viewModel.retranscribe(entry) }
-                        }
-                        .help("Run the recording through the current model again and choose whether to replace the transcript")
-                    }
-                }
-            }
-            AudioPlaybackStrip(player: viewModel.player, waveform: viewModel.waveform)
-        }
-        .accessibilityElement(children: .contain)
-        .accessibilityLabel("Recording")
-    }
-
-    /// Scalar facts about the job.  Nothing here names the target application
-    /// or reproduces its text; `targetClass` is a role class only.
-    private var metadata: some View {
-        Grid(alignment: .leading, horizontalSpacing: 14, verticalSpacing: 4) {
-            metadataRow("Model", entry.modelID.isEmpty ? String(localized: "Unknown", bundle: .module) : entry.modelID)
-            metadataRow("AI", entry.aiStatus.displayName)
-            if let milliseconds = entry.aiDurationMilliseconds {
-                metadataRow("AI time", Duration.milliseconds(milliseconds).formatted(.units(allowed: [.seconds, .milliseconds], width: .abbreviated)))
-            }
-            metadataRow("Insertion", entry.insertionOutcome.detailName(isFile: entry.isFileTranscription))
-            if let target = entry.translationTarget, !target.isEmpty {
-                metadataRow("Translated to", target)
-            }
-            if let milliseconds = entry.sttDurationMilliseconds {
-                metadataRow("Transcription time", Duration.milliseconds(milliseconds).formatted(.units(allowed: [.seconds, .milliseconds], width: .abbreviated)))
-            }
-            if let targetClass = entry.targetClass, !targetClass.isEmpty {
-                metadataRow("Target", targetClass)
-            }
-            if let errorCode = entry.errorCode {
-                metadataRow("Error code", errorCode.rawValue)
-            }
-            if !entry.appVersion.isEmpty {
-                metadataRow("App version", entry.appVersion)
-            }
-        }
-        .font(.caption)
-        .accessibilityElement(children: .contain)
-        .accessibilityLabel("Details")
-    }
-
-    private func metadataRow(_ label: LocalizedStringKey, _ value: String) -> some View {
-        GridRow {
-            Text(label)
-                .foregroundStyle(.secondary)
-                .gridColumnAlignment(.trailing)
-            Text(value)
-                .textSelection(.enabled)
-        }
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(label): \(value)")
-    }
-}
-
-private struct DurationBadge: View {
-    let milliseconds: Int
-
-    var body: some View {
-        Label(
-            Duration.milliseconds(milliseconds).formatted(.units(allowed: [.minutes, .seconds], width: .narrow)),
-            systemImage: "timer"
-        )
-        .font(.caption.weight(.semibold).monospacedDigit())
-        .padding(.horizontal, 6)
-        .padding(.vertical, 1)
-        .background(.quinary, in: Capsule())
-        .accessibilityLabel("Recording length")
-    }
-}
-
-/// Waveform bars with a progress overlay; click or drag to scrub.
-struct AudioPlaybackStrip: View {
-    @Bindable var player: HistoryAudioPlayer
-    let waveform: [Float]
-
-    var body: some View {
-        HStack(spacing: 10) {
-            Button {
-                player.togglePlayback()
-            } label: {
-                Image(systemName: player.isPlaying ? "pause.fill" : "play.fill")
-                    .frame(width: 18, height: 18)
-            }
-            .disabled(player.failedToLoad || player.loadedURL == nil)
-            .keyboardShortcut(.space, modifiers: [.command])
-            .help(player.isPlaying ? "Pause (⌘Space)" : "Play (⌘Space)")
-            .accessibilityLabel(player.isPlaying ? "Pause" : "Play")
-
-            GeometryReader { geometry in
-                ZStack(alignment: .leading) {
-                    WaveformShape(bins: waveform)
-                        .fill(Color.secondary.opacity(0.35))
-                    WaveformShape(bins: waveform)
-                        .fill(Color.accentColor)
-                        .mask(alignment: .leading) {
-                            Rectangle().frame(width: geometry.size.width * player.progress)
-                        }
-                    if waveform.isEmpty {
-                        Rectangle()
-                            .fill(Color.secondary.opacity(0.15))
-                            .frame(height: 2)
-                    }
-                }
-                .contentShape(Rectangle())
-                .gesture(
-                    DragGesture(minimumDistance: 0)
-                        .onChanged { value in
-                            player.seek(toProgress: value.location.x / max(1, geometry.size.width))
-                        }
-                )
-            }
-            .frame(height: 40)
-            .accessibilityElement()
-            .accessibilityLabel("Waveform")
-            .accessibilityValue("\(Int(player.progress * 100)) percent")
-            .accessibilityAdjustableAction { direction in
-                switch direction {
-                case .increment: player.seek(toProgress: player.progress + 0.05)
-                case .decrement: player.seek(toProgress: player.progress - 0.05)
-                @unknown default: break
-                }
-            }
-
-            Text(Self.clock(player.currentTime) + " / " + Self.clock(player.duration))
-                .font(.caption.monospacedDigit())
-                .foregroundStyle(.secondary)
-        }
-        .overlay(alignment: .bottomLeading) {
-            if player.failedToLoad {
-                StatusLabel(String(localized: "The recording could not be opened.", bundle: .module), symbol: "exclamationmark.triangle.fill", tone: .attention)
-                    .labelStyle(.titleAndIcon)
-                    .font(.caption2)
-                    .offset(y: 14)
-            }
-        }
-    }
-
-    static func clock(_ seconds: TimeInterval) -> String {
-        let total = Int(seconds.rounded(.down))
-        return String(format: "%d:%02d", total / 60, total % 60)
-    }
-}
-
-/// Mirrored bars, one per bin.
-struct WaveformShape: Shape {
-    let bins: [Float]
-
-    func path(in rect: CGRect) -> Path {
-        var path = Path()
-        guard !bins.isEmpty else { return path }
-        let barWidth = rect.width / CGFloat(bins.count)
-        let gap = barWidth * 0.3
-        let midY = rect.midY
-        for (index, bin) in bins.enumerated() {
-            let height = max(2, CGFloat(bin) * rect.height)
-            let x = rect.minX + CGFloat(index) * barWidth
-            path.addRoundedRect(
-                in: CGRect(x: x + gap / 2, y: midY - height / 2, width: max(1, barWidth - gap), height: height),
-                cornerSize: CGSize(width: 1, height: 1)
-            )
-        }
-        return path
-    }
-}
-
-/// "Replace the transcript?" after Retranscribe: shows both versions so the
-/// user decides; nothing is written until Replace.
-private struct RetranscribeProposalSheet: View {
-    let proposal: HistoryViewModel.RetranscribeProposal
-    let viewModel: HistoryViewModel
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            Text("Replace the transcript?")
-                .font(.title3.weight(.semibold))
-            Text("The recording was transcribed again with the current model. Replacing keeps the recording, timing, and AI result; only the original transcript changes.")
-                .font(.callout)
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
-            HStack(alignment: .top, spacing: 12) {
-                column("Current", proposal.previousRawText)
-                column("New", proposal.newRawText)
-            }
-            SheetButtonBar(
-                confirmTitle: "Replace",
-                isConfirmEnabled: true,
-                onCancel: { viewModel.dismissRetranscription() },
-                onConfirm: { Task { await viewModel.acceptRetranscription() } }
-            )
-            .padding(.horizontal, -20)
-            .padding(.bottom, -20)
-        }
-        .padding(20)
-        .frame(minWidth: 520, idealWidth: 620)
-    }
-
-    private func column(_ title: LocalizedStringKey, _ text: String) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(title)
-                .font(.headline)
-            ScrollView {
-                Text(text)
-                    .textSelection(.enabled)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-            }
-            .frame(minHeight: 120, maxHeight: 260)
-            .padding(10)
-            .background(.quinary, in: RoundedRectangle(cornerRadius: 8))
-        }
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(title): \(text)")
-    }
-}
-
 /// Optional standard window host for menu-bar applications.
 @MainActor
 public final class HistoryWindowController: NSWindowController {
@@ -1135,122 +745,5 @@ public final class HistoryWindowController: NSWindowController {
     @available(*, unavailable)
     required init?(coder: NSCoder) {
         fatalError("HistoryWindowController does not support NSCoder construction")
-    }
-}
-
-private extension DictationMode {
-    var displayName: String {
-        switch self {
-        case .off: return String(localized: "Off", bundle: .module)
-        case .polish: return String(localized: "Polish", bundle: .module)
-        case .translate: return String(localized: "Translate", bundle: .module)
-        }
-    }
-
-    var symbolName: String {
-        switch self {
-        case .off: return "waveform"
-        case .polish: return "wand.and.stars"
-        case .translate: return "globe"
-        }
-    }
-}
-
-private extension HistoryAIStatus {
-    var displayName: String {
-        switch self {
-        case .off: return String(localized: "Off", bundle: .module)
-        case .succeeded: return String(localized: "Succeeded", bundle: .module)
-        case .failed: return String(localized: "Failed, raw transcript used", bundle: .module)
-        case .cancelledFallback: return String(localized: "Cancelled, raw transcript used", bundle: .module)
-        }
-    }
-}
-
-private extension InsertionOutcome {
-    func displayName(isFile: Bool) -> String {
-        switch self {
-        case .inserted: return String(localized: "Inserted", bundle: .module)
-        case .copiedToClipboard: return String(localized: "Copied to Clipboard", bundle: .module)
-        case .deliveredInApp: return isFile ? String(localized: "Not inserted", bundle: .module) : String(localized: "Shown in Setup", bundle: .module)
-        case .abortedAtTermination: return String(localized: "Aborted at Quit", bundle: .module)
-        }
-    }
-
-    func detailName(isFile: Bool) -> String {
-        switch self {
-        case .inserted(let method):
-            switch method {
-            case .selectedTextAttribute: return String(localized: "Inserted via Accessibility", bundle: .module)
-            case .textEditValueSplice: return String(localized: "Inserted via Accessibility (value splice)", bundle: .module)
-            case .typedKeyboardEvents: return String(localized: "Typed into the application", bundle: .module)
-            }
-        case .copiedToClipboard(let reason):
-            return String(localized: "Copied to Clipboard (\(reason.displayName))", bundle: .module)
-        case .deliveredInApp:
-            return isFile ? String(localized: "Transcribed from a file; nothing was inserted", bundle: .module) : String(localized: "Shown in the Setup window", bundle: .module)
-        case .abortedAtTermination:
-            return String(localized: "KVoice quit before the text was inserted", bundle: .module)
-        }
-    }
-}
-
-private extension ClipboardFallbackReason {
-    var displayName: String {
-        switch self {
-        case .noFrontmostApplication: return String(localized: "no frontmost app", bundle: .module)
-        case .targetApplicationChanged: return String(localized: "app changed", bundle: .module)
-        case .noFocusedElement: return String(localized: "no focused field", bundle: .module)
-        case .notEditable: return String(localized: "field not editable", bundle: .module)
-        case .secureTarget: return String(localized: "secure field", bundle: .module)
-        case .unsupportedValueType: return String(localized: "unsupported field", bundle: .module)
-        case .setFailed: return String(localized: "insertion refused", bundle: .module)
-        case .verifyFailed: return String(localized: "insertion not verified", bundle: .module)
-        case .timeout: return String(localized: "timed out", bundle: .module)
-        case .permissionNotGranted: return String(localized: "permission missing", bundle: .module)
-        case .textTooLarge: return String(localized: "too long to type", bundle: .module)
-        }
-    }
-}
-
-private extension String {
-    var oneLinePreview: String {
-        replacingOccurrences(of: "\n", with: " ")
-    }
-}
-
-private extension Date {
-    /// Clock time for today, a short date for anything older.
-    ///
-    /// Rows used to show the time alone, which made a list spanning several days
-    /// a column of ambiguous times with no way to tell yesterday from last week.
-    var historyRowLabel: String {
-        Calendar.current.isDateInToday(self)
-            ? formatted(date: .omitted, time: .shortened)
-            : formatted(date: .abbreviated, time: .shortened)
-    }
-}
-
-private extension HistoryEntry {
-    /// The D.10 sentence for a row whose AI stage did not complete: what
-    /// happened and what kvoice did with the text. Nil on the happy path.
-    var aiFallbackSummary: String? {
-        switch aiStatus {
-        case .failed:
-            return String(localized: "AI did not respond. The raw transcript was used instead.", bundle: .module)
-        case .cancelledFallback:
-            return String(localized: "AI processing was cancelled. The raw transcript was used instead.", bundle: .module)
-        case .off, .succeeded:
-            return errorCode == nil ? nil : String(localized: "AI reported a problem. The raw transcript was used instead.", bundle: .module)
-        }
-    }
-
-    var accessibilitySummary: String {
-        var parts = [finalText.oneLinePreview, isFileTranscription ? String(localized: "File", bundle: .module) : mode.displayName, insertionOutcome.displayName(isFile: isFileTranscription)]
-        if isFallback {
-            parts.append("Fallback")
-        }
-        parts.append(createdAt.formatted(date: .abbreviated, time: .shortened))
-        return parts.joined(separator: ". ")
     }
 }

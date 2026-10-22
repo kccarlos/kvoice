@@ -52,6 +52,7 @@ final class DictationControllerRecoveryTests: XCTestCase {
         let snapshot = await controller.snapshot
         XCTAssertTrue(snapshot.canRecoverFailedInsertion, "the one scalar the HUD buttons and the menu items read")
         XCTAssertEqual(snapshot.recoverableTranscript, "hello again")
+        XCTAssertEqual(snapshot.targetApplicationName, "TextEdit", "the panel's \"Not inserted\" card can name the app")
         var rows = await history.entries
         XCTAssertTrue(rows.isEmpty, "the failed attempt wrote no row")
 
@@ -76,6 +77,9 @@ final class DictationControllerRecoveryTests: XCTestCase {
         XCTAssertEqual(targets.map(\.processIdentifier), [9], "re-captured now, not the recording-start target")
         let job = await controller.activeJob
         XCTAssertEqual(job?.target?.processIdentifier, 9)
+        let completedSnapshot = await controller.snapshot
+        XCTAssertEqual(completedSnapshot.targetApplicationName, "Notes", "the re-captured target names the panel's \"→ Notes\"")
+        XCTAssertEqual(completedSnapshot.recoverableTranscript, "hello again", "the inserted text the panel's Inserted card shows")
         XCTAssertEqual(job?.historyRowWritten, true)
         rows = await history.entries
         XCTAssertEqual(rows.count, 1, "the row the original attempt never wrote")

@@ -11,7 +11,6 @@
 		A10000010000000000000002 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000002 /* AppDelegate.swift */; };
 		A10000010000000000000024 /* StatusItemIconController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000024 /* StatusItemIconController.swift */; };
 		A10000010000000000000025 /* MenuBarLogo.svg in Resources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000025 /* MenuBarLogo.svg */; };
-		A10000010000000000000026 /* MenuBarLogoGlow.svg in Resources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000026 /* MenuBarLogoGlow.svg */; };
 		A10000010000000000000020 /* AppDelegate+Menu.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000020 /* AppDelegate+Menu.swift */; };
 		A10000010000000000000021 /* AppDelegate+Settings.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000021 /* AppDelegate+Settings.swift */; };
 		A10000010000000000000022 /* AppDelegate+Model.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000022 /* AppDelegate+Model.swift */; };
@@ -46,6 +45,7 @@
 		A10000010000000000000043 /* AppDelegate+Intents.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000043 /* AppDelegate+Intents.swift */; };
 		A10000010000000000000044 /* AppShortcuts.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000044 /* AppShortcuts.xcstrings */; };
 		A10000010000000000000050 /* kvoice.defaults.json in Resources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000050 /* kvoice.defaults.json */; };
+		A10000010000000000000070 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000070 /* Assets.xcassets */; };
 		A10000010000000000000045 /* AppIntents.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A20000010000000000000045 /* AppIntents.framework */; };
 		A1000001000000000000003B /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = A2000001000000000000003B /* Localizable.xcstrings */; };
 		A1000001000000000000000B /* MainWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000013 /* MainWindowController.swift */; };
@@ -57,7 +57,6 @@
 		A20000010000000000000002 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		A20000010000000000000024 /* StatusItemIconController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusItemIconController.swift; sourceTree = "<group>"; };
 		A20000010000000000000025 /* MenuBarLogo.svg */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = Resources/MenuBarLogo.svg; sourceTree = "<group>"; };
-		A20000010000000000000026 /* MenuBarLogoGlow.svg */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = Resources/MenuBarLogoGlow.svg; sourceTree = "<group>"; };
 		A20000010000000000000020 /* AppDelegate+Menu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AppDelegate+Menu.swift"; sourceTree = "<group>"; };
 		A20000010000000000000021 /* AppDelegate+Settings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AppDelegate+Settings.swift"; sourceTree = "<group>"; };
 		A20000010000000000000022 /* AppDelegate+Model.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AppDelegate+Model.swift"; sourceTree = "<group>"; };
@@ -100,6 +99,7 @@
 		A20000010000000000000043 /* AppDelegate+Intents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AppDelegate+Intents.swift"; sourceTree = "<group>"; };
 		A20000010000000000000044 /* AppShortcuts.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Resources/AppShortcuts.xcstrings; sourceTree = "<group>"; };
 		A20000010000000000000050 /* kvoice.defaults.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = Resources/kvoice.defaults.json; sourceTree = "<group>"; };
+		A20000010000000000000070 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Resources/Assets.xcassets; sourceTree = "<group>"; };
 		A20000010000000000000045 /* AppIntents.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppIntents.framework; path = System/Library/Frameworks/AppIntents.framework; sourceTree = SDKROOT; };
 		A2000001000000000000003B /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; name = "Localizable.xcstrings (KvoiceUI)"; path = Packages/KvoiceUI/Sources/KvoiceUI/Resources/Localizable.xcstrings; sourceTree = SOURCE_ROOT; };
 		A20000010000000000000013 /* MainWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainWindowController.swift; sourceTree = "<group>"; };
@@ -168,7 +168,6 @@
 				A20000010000000000000002 /* AppDelegate.swift */,
 				A20000010000000000000024 /* StatusItemIconController.swift */,
 				A20000010000000000000025 /* MenuBarLogo.svg */,
-				A20000010000000000000026 /* MenuBarLogoGlow.svg */,
 				A20000010000000000000020 /* AppDelegate+Menu.swift */,
 				A20000010000000000000021 /* AppDelegate+Settings.swift */,
 				A20000010000000000000022 /* AppDelegate+Model.swift */,
@@ -203,6 +202,7 @@
 				A2000001000000000000003B /* Localizable.xcstrings */,
 				A20000010000000000000044 /* AppShortcuts.xcstrings */,
 				A20000010000000000000050 /* kvoice.defaults.json */,
+				A20000010000000000000070 /* Assets.xcassets */,
 				A40000010000000000000006 /* Intents */,
 			);
 			path = KvoiceApp;
@@ -379,7 +379,6 @@
 				A10000010000000000000027 /* AppIcon.icns in Resources */,
 				A10000010000000000000028 /* AppIcon.svg in Resources */,
 				A10000010000000000000025 /* MenuBarLogo.svg in Resources */,
-				A10000010000000000000026 /* MenuBarLogoGlow.svg in Resources */,
 				A1000001000000000000000A /* ModelManifest.sha256 in Resources */,
 				A1000001000000000000002A /* THIRD_PARTY_NOTICES.md in Resources */,
 				A1000001000000000000003A /* Shell.xcstrings in Resources */,
@@ -387,6 +386,7 @@
 				A10000010000000000000044 /* AppShortcuts.xcstrings in Resources */,
 				A10000010000000000000050 /* kvoice.defaults.json in Resources */,
 				A10000010000000000000062 /* PrivacyInfo.xcprivacy in Resources */,
+				A10000010000000000000070 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

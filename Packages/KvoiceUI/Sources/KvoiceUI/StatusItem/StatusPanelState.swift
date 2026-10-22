@@ -22,11 +22,13 @@ public struct StatusPanelState: Equatable, Sendable {
     public struct Row: Equatable, Sendable, Identifiable {
         public enum ID: String, CaseIterable, Hashable, Sendable {
             // Under the header, in the menu's order
-            case cancel, copyTranscript, insertTranscriptAgain, fix, copyLastTranscription, unloadModel
+            case cancel, copyTranscript, insertTranscriptAgain, fix, copyLastTranscription, unloadModel, pauseDownload
             // Dictation value rows
             case model, language, microphone
             // AI
             case aiSwitch, defaultAction, configuration
+            // UI v2 fidelity F1: the idle card's "Set Shortcut…" link
+            case setShortcut
             // Foot, in the menu's App-group order
             case history, settings, setupGuide, help, about, quit
         }
@@ -49,6 +51,24 @@ public struct StatusPanelState: Equatable, Sendable {
         /// their own commands.
         public let command: StatusPanelCommand?
         public let chooser: StatusPanelChooser?
+        /// UI v2: the word on the row's button in the top card ("Cancel",
+        /// "Copy", "Insert Again"); nil uses `title`. VoiceOver keeps
+        /// reading the full `title`.
+        public let shortTitle: String?
+        /// UI v2: how the row's button in the top card is drawn.
+        public let emphasis: Emphasis
+
+        public enum Emphasis: Equatable, Sendable {
+            /// Outlined, on the surface.
+            case plain
+            /// Cursor-blue fill: the one thing to do next.
+            case primary
+            /// Warn-soft fill with warn ink: the fix for a blocked prerequisite.
+            case warn
+        }
+
+        /// The word drawn on the button.
+        public var buttonTitle: String { shortTitle ?? title }
 
         public init(
             id: ID,
@@ -60,7 +80,9 @@ public struct StatusPanelState: Equatable, Sendable {
             help: String? = nil,
             isAttention: Bool = false,
             command: StatusPanelCommand? = nil,
-            chooser: StatusPanelChooser? = nil
+            chooser: StatusPanelChooser? = nil,
+            shortTitle: String? = nil,
+            emphasis: Emphasis = .plain
         ) {
             self.id = id
             self.symbol = symbol
@@ -72,6 +94,8 @@ public struct StatusPanelState: Equatable, Sendable {
             self.isAttention = isAttention
             self.command = command
             self.chooser = chooser
+            self.shortTitle = shortTitle
+            self.emphasis = emphasis
         }
 
         /// "Model, Whisper large-v3-turbo" — the VoiceOver label plus value,
@@ -89,7 +113,8 @@ public struct StatusPanelState: Equatable, Sendable {
         case none
         /// The level bar and m:ss clock — recording with capture started only.
         case meter(level: Double, elapsed: Duration)
-        /// The progress bar and "Downloading <model>… 42%"; nil is indeterminate.
+        /// The progress bar under "Downloading <model>…", with the percent
+        /// drawn apart (`percentText`); nil is indeterminate.
         case download(label: String, fraction: Double?)
     }
 
@@ -110,11 +135,47 @@ public struct StatusPanelState: Equatable, Sendable {
         case attention
     }
 
+    /// UI v2: the top card's ground — voice while a recording is live, warn
+    /// while a prerequisite blocks the next one, an err edge when a job
+    /// ended without inserting; plain otherwise.
+    public enum CardTone: Equatable, Sendable {
+        case plain
+        case voice
+        case warn
+        case err
+    }
+
+    /// UI v2: the idle card's preview of the newest history entry.
+    public typealias LastTranscription = StatusPanelContext.LastTranscription
+
     public let header: StatusMenuHeaderState
     public let primaryGlyph: PrimaryGlyph
-    /// "Start Recording", "Stop Recording", "Finishing…", "Dismiss", … — the
-    /// header's title, i.e. the plain item's verb.
-    public var primaryTitle: String { header.title }
+    /// After a job: the recorder's own glyph for the outcome (cursor check,
+    /// amber clipboard, red mark), so the panel and the HUD say it the same
+    /// way. Nil before and during a job.
+    public let outcomeGlyph: HUDGlyph?
+    public let cardTone: CardTone
+    /// The readiness line as a `StatusPill` in this tone, or nil for plain
+    /// secondary text (recording, finishing: the card already says it).
+    public let readinessTone: KVTone?
+    /// Idle and not blocked, with a saved transcription to show.
+    public let lastTranscription: LastTranscription?
+    /// UI v2 fidelity F1: the words the card shows under the title after a
+    /// job — what went in ("Inserted"), or the kept transcript ("Not
+    /// inserted — transcript kept"). Nil otherwise.
+    public let resultText: String?
+    /// UI v2 fidelity F1: "Set Shortcut…" — the idle card's link to the
+    /// Shortcuts page while no shortcut works. Nil otherwise.
+    public let shortcutLink: Row?
+    /// The card's title: the header's verb ("Start Recording", "Stop
+    /// Recording", "Finishing…"), except after a job, where the design
+    /// names the outcome ("Inserted", "Copied to clipboard", "Not inserted
+    /// — transcript kept") and the click still dismisses
+    /// (`primaryActionTitle`).
+    public let primaryTitle: String
+    /// The verb the primary control performs — the header's title, which
+    /// the right-click menu's header row also shows ("Dismiss").
+    public var primaryActionTitle: String { header.title }
     public var primaryIsEnabled: Bool { header.isEnabled }
     /// The line under the title: "Ready · Whisper large-v3-turbo",
     /// "Recording · MacBook Pro Microphone", "Model not ready", the phase
@@ -148,6 +209,13 @@ public struct StatusPanelState: Equatable, Sendable {
     public init(
         header: StatusMenuHeaderState,
         primaryGlyph: PrimaryGlyph,
+        outcomeGlyph: HUDGlyph? = nil,
+        cardTone: CardTone = .plain,
+        readinessTone: KVTone? = nil,
+        lastTranscription: LastTranscription? = nil,
+        primaryTitle: String? = nil,
+        resultText: String? = nil,
+        shortcutLink: Row? = nil,
         readiness: String,
         readinessIsAttention: Bool = false,
         shortcutKeys: [String] = [],
@@ -165,6 +233,13 @@ public struct StatusPanelState: Equatable, Sendable {
     ) {
         self.header = header
         self.primaryGlyph = primaryGlyph
+        self.outcomeGlyph = outcomeGlyph
+        self.cardTone = cardTone
+        self.readinessTone = readinessTone
+        self.lastTranscription = lastTranscription
+        self.primaryTitle = primaryTitle ?? header.title
+        self.resultText = resultText
+        self.shortcutLink = shortcutLink
         self.readiness = readiness
         self.readinessIsAttention = readinessIsAttention
         self.shortcutKeys = shortcutKeys
@@ -183,61 +258,154 @@ public struct StatusPanelState: Equatable, Sendable {
 
     // MARK: Projection
 
-    public init(header: StatusMenuHeaderState, headerContext: StatusMenuHeaderContext, context: StatusPanelContext) {
+    /// `hud` is the recorder's rendered state, the one `header` was
+    /// projected from; it only supplies the outcome glyph after a job.
+    public init(
+        header: StatusMenuHeaderState,
+        headerContext: StatusMenuHeaderContext,
+        context: StatusPanelContext,
+        hud: HUDViewState = .idle
+    ) {
         let kind = headerContext.dictationKind
         let terminating = headerContext.isTerminating
         let idle = kind == .idle
 
         // The feed is the header's trailing slot: `.meter` only for a live
         // recording, `.download` only while idle with an install running.
+        // The card draws the percent apart from the words, so the label is
+        // the header's without the figure.
         let feed: Feed
         switch header.trailing {
         case .meter(let level, let elapsed):
             feed = .meter(level: level, elapsed: elapsed)
         case .download(let label, let fraction):
-            feed = .download(label: label, fraction: fraction)
+            let words = headerContext.modelInstall.map {
+                StatusMenuHeaderState.downloadLabel(.init(modelName: $0.modelName, fraction: nil))
+            } ?? label
+            feed = .download(label: words, fraction: fraction)
         case .none, .shortcut, .note:
             feed = .none
         }
 
         let glyph: PrimaryGlyph
-        let readiness: String
+        let headerReadiness: String
         var readinessIsAttention = false
         switch header.indicator {
         case .idle:
             glyph = .start
             if kind == .terminating {
-                readiness = ""
+                headerReadiness = ""
             } else if context.isBlocked {
-                readiness = context.readinessTitle
+                headerReadiness = context.readinessTitle
                 readinessIsAttention = true
             } else {
-                readiness = Self.joined(context.readinessTitle, context.modelName)
+                headerReadiness = Self.joined(context.readinessTitle, context.modelName)
             }
         case .attention where idle:
             glyph = .attention
-            readiness = context.readinessTitle
+            headerReadiness = context.readinessTitle
             readinessIsAttention = true
         case .starting:
             glyph = .starting
-            readiness = context.microphoneName
+            headerReadiness = context.microphoneName
         case .live:
             glyph = .stop
-            readiness = Self.joined(String(localized: "Recording", bundle: .module), context.microphoneName)
+            headerReadiness = Self.joined(String(localized: "Recording", bundle: .module), context.microphoneName)
         case .working:
             glyph = .working
-            if case .note(let word) = header.trailing {
-                readiness = String(localized: "\(word)…", bundle: .module)
+            if case .processingAI(let ai) = hud.phase {
+                // The design names the step and the action: "Polishing
+                // with Clean Up…", "Translating to French…". The action is
+                // the running job's (the recorder's ⌘digit switches it for
+                // this job only, Q2b), the same name the recorder's badge
+                // shows; the saved default only when the HUD names none.
+                if ai.mode != .translate, let action = hud.processingBadge ?? context.ai.defaultActionName {
+                    headerReadiness = String(localized: "Polishing with \(action)…", bundle: .module)
+                } else {
+                    headerReadiness = String(localized: "\(hud.title)…", bundle: .module)
+                }
+            } else if case .note(let word) = header.trailing {
+                headerReadiness = String(localized: "\(word)…", bundle: .module)
             } else {
-                readiness = ""
+                headerReadiness = ""
             }
         case .done, .attention:
             glyph = header.indicator == .done ? .done : .attention
             if case .note(let note) = header.trailing {
-                readiness = note
+                headerReadiness = note
             } else {
-                readiness = ""
+                headerReadiness = ""
             }
+        }
+
+        // UI v2: the card's ground and the readiness line's tone.
+        var outcomeGlyph: HUDGlyph?
+        var cardTone = CardTone.plain
+        var readinessTone: KVTone?
+        var readiness = headerReadiness
+        var title = header.title
+        var resultText: String?
+        switch kind {
+        case .idle:
+            if readinessIsAttention {
+                // A download is the fix happening: amber words, plain card.
+                if case .download = feed {} else { cardTone = .warn }
+                readinessTone = .warn
+            } else if context.memoryPressure != nil, !context.isBlocked {
+                // Advisory, not blocking: the design's amber subtitle.
+                readiness = String(localized: "Memory pressure — dictation may be slower", bundle: .module)
+                readinessTone = .warn
+            } else if !readiness.isEmpty {
+                readinessTone = .ok
+            }
+        case .recording:
+            cardTone = glyph == .stop ? .voice : .plain
+        case .completed, .failed, .blocked:
+            switch hud.phase {
+            case .completed, .failed, .blocked:
+                outcomeGlyph = hud.glyph
+            default:
+                outcomeGlyph = nil
+            }
+            let tone = outcomeGlyph?.tone ?? (glyph == .done ? .cursor : .warn)
+            if tone == .err { cardTone = .err }
+            readinessTone = tone == .warn || tone == .err ? tone : .neutral
+            // UI v2 fidelity F1: the outcome is the title; the subtitle
+            // says what went where (or why not), the card shows the words.
+            if !hud.title.isEmpty, outcomeGlyph != nil {
+                title = hud.title
+                let result = context.jobResult
+                switch hud.phase {
+                case .completed(let completion):
+                    switch completion.kind {
+                    case .success, .aiFallback:
+                        if completion.kind == .aiFallback || completion.durationCapReached,
+                           let warning = hud.detail, !warning.isEmpty {
+                            readiness = warning
+                        } else {
+                            readiness = Self.insertedLine(words: result?.wordCount, app: result?.appName) ?? ""
+                        }
+                        resultText = result?.text
+                    case .clipboardFallback:
+                        // F5: the recorder's line — why, and the one key
+                        // that finishes the job — so the two never differ.
+                        readiness = HUDViewState.clipboardLine(completion.clipboardReason)
+                    }
+                case .blocked:
+                    // "KVoice needs attention" is the title; the reason
+                    // ("Microphone access is off") is the subtitle.
+                    readiness = hud.detail ?? ""
+                case .failed:
+                    readiness = hud.detail ?? ""
+                    resultText = hud.recoverableTranscript.map {
+                        StatusPanelContext.LastTranscription(text: $0, createdAt: .distantPast).text
+                    }
+                default:
+                    break
+                }
+            }
+        case .finalizing, .transcribing, .processingAI, .inserting, .terminating:
+            break
         }
 
         // The rows under the feed, in the menu's order and with the menu's
@@ -252,7 +420,15 @@ public struct StatusPanelState: Equatable, Sendable {
                     ? String(localized: "Use Raw Transcript Now", bundle: .module)
                     : String(localized: "Cancel Current Dictation", bundle: .module),
                 isEnabled: kind != .inserting && !terminating,
-                command: .cancelCurrentDictation
+                command: .cancelCurrentDictation,
+                // The design's "Cancel  ⎋" while recording (plain "Cancel"
+                // while the mic comes up): Escape cancels a recording once
+                // the panel is closed.
+                shortTitle: kind == .processingAI
+                    ? nil
+                    : kind == .recording && header.indicator == .live
+                        ? String(localized: "Cancel", bundle: .module) + "  ⎋"
+                        : String(localized: "Cancel", bundle: .module)
             ))
         case .idle, .completed, .failed, .blocked, .terminating:
             break
@@ -264,7 +440,8 @@ public struct StatusPanelState: Equatable, Sendable {
                 title: String(localized: "Copy Transcript", bundle: .module),
                 isEnabled: !terminating,
                 help: String(localized: "Copies the transcript the last dictation kept after it could not be inserted.", bundle: .module),
-                command: .copyTranscript
+                command: .copyTranscript,
+                shortTitle: String(localized: "Copy", bundle: .module)
             ))
             rows.append(Row(
                 id: .insertTranscriptAgain,
@@ -272,7 +449,9 @@ public struct StatusPanelState: Equatable, Sendable {
                 title: String(localized: "Insert Transcript Again", bundle: .module),
                 isEnabled: !terminating,
                 help: String(localized: "Inserts the kept transcript into the app that is in front now.", bundle: .module),
-                command: .insertTranscriptAgain
+                command: .insertTranscriptAgain,
+                shortTitle: String(localized: "Insert Again", bundle: .module),
+                emphasis: .primary
             ))
         }
         if context.isBlocked {
@@ -282,7 +461,8 @@ public struct StatusPanelState: Equatable, Sendable {
                 title: context.fixTitle,
                 isEnabled: !terminating,
                 isAttention: true,
-                command: .openStatusTarget
+                command: .openStatusTarget,
+                emphasis: .warn
             ))
         } else if idle {
             // Request: Copy Last Transcription stays reachable here.
@@ -292,7 +472,23 @@ public struct StatusPanelState: Equatable, Sendable {
                 title: String(localized: "Copy Last Transcription", bundle: .module),
                 isEnabled: context.canCopyLastTranscription && !terminating,
                 help: context.copyLastTranscriptionHelp,
-                command: .copyLastTranscription
+                command: .copyLastTranscription,
+                shortTitle: String(localized: "Copy", bundle: .module)
+            ))
+        }
+        // UI v2: Pause, only while bytes are flowing — the shell sets
+        // `pausableDownload` for that and nothing else (cancelling a
+        // verification or a first load throws the work away; cancelling a
+        // download pauses it, and Speech Models offers Resume).
+        if idle, case .download = feed, let id = context.pausableDownload {
+            rows.append(Row(
+                id: .pauseDownload,
+                symbol: "pause.circle",
+                title: String(localized: "Pause Download", bundle: .module),
+                isEnabled: !terminating,
+                help: String(localized: "Pauses the download; resume it in Speech Models.", bundle: .module),
+                command: .pauseModelDownload(id),
+                shortTitle: String(localized: "Pause", bundle: .module)
             ))
         }
         if let pressure = context.memoryPressure {
@@ -307,14 +503,36 @@ public struct StatusPanelState: Equatable, Sendable {
             ))
         }
 
-        let shortcutKeys = idle ? Self.keyCaps(headerContext.shortcutGlyphs) : []
-        let shortcutNote = idle && headerContext.shortcutGlyphs == nil ? headerContext.shortcutNote : nil
+        // UI v2 fidelity F1: the caps only on a card that can start now —
+        // not while blocked (the fix is the one thing to do).
+        let shortcutKeys = idle && !context.isBlocked ? Self.keyCaps(headerContext.shortcutGlyphs) : []
+        let shortcutNote = idle && !context.isBlocked && headerContext.shortcutGlyphs == nil ? headerContext.shortcutNote : nil
+        let shortcutLink = shortcutNote.map { note in
+            Row(
+                id: .setShortcut,
+                title: String(localized: "Set Shortcut…", bundle: .module),
+                isEnabled: !terminating,
+                help: note,
+                command: .openShortcuts
+            )
+        }
 
         let ai = context.ai
         let none = String(localized: "None", bundle: .module)
+        let lastTranscription = idle && !context.isBlocked
+            ? context.lastTranscription
+            : nil
+
         self.init(
             header: header,
             primaryGlyph: glyph,
+            outcomeGlyph: outcomeGlyph,
+            cardTone: cardTone,
+            readinessTone: readinessTone,
+            lastTranscription: lastTranscription,
+            primaryTitle: title,
+            resultText: resultText,
+            shortcutLink: shortcutLink,
             readiness: readiness,
             readinessIsAttention: readinessIsAttention,
             shortcutKeys: shortcutKeys,
@@ -347,7 +565,11 @@ public struct StatusPanelState: Equatable, Sendable {
                 title: String(localized: "Use AI Actions", bundle: .module),
                 isEnabled: ai.canToggle,
                 help: ai.help,
-                command: .toggleAI
+                // UI v2 fidelity F1: the switch is drawn as the "Off" chip,
+                // so it acts only while AI is on (an Off that is already
+                // lit has nothing to do).
+                command: ai.isOn ? .toggleAI : nil,
+                shortTitle: String(localized: "Off", bundle: .module)
             ),
             aiIsOn: ai.isOn,
             defaultActionRow: Row(
@@ -384,6 +606,11 @@ public struct StatusPanelState: Equatable, Sendable {
         case (true, false): return trail
         case (false, false): return "\(lead) · \(trail)"
         }
+    }
+
+    /// "38 words → Notes" — the recorder's line (`HUDViewState.insertedLine`).
+    static func insertedLine(words: Int?, app: String?) -> String? {
+        HUDViewState.insertedLine(words: words, app: app)
     }
 
     /// "⌃⇧Space" → ["⌃", "⇧", "Space"]: each modifier glyph its own cap, the
@@ -423,10 +650,41 @@ public struct StatusPanelState: Equatable, Sendable {
         if let shortcutNote { parts.append(shortcutNote) }
         switch feed {
         case .meter(_, let elapsed): parts.append(HUDViewState.formatElapsed(elapsed))
-        case .download(let label, _): parts.append(label)
+        case .download(let label, let fraction):
+            parts.append(label)
+            if let percent = Self.percentText(fraction) { parts.append(percent) }
         case .none: break
         }
+        // After a job the title names the outcome; the control's verb
+        // ("Dismiss") is still what a click does, so VoiceOver says it.
+        if primaryActionTitle != primaryTitle, primaryIsEnabled {
+            parts.append(primaryActionTitle)
+        }
         return parts.joined(separator: ", ")
+    }
+
+    /// "42%", floored like the header's label; nil while indeterminate.
+    public static func percentText(_ fraction: Double?) -> String? {
+        guard let fraction else { return nil }
+        let percent = Int((min(max(fraction, 0), 1) * 100).rounded(.down))
+        return "\(percent)%"
+    }
+
+    /// "2 min ago", "now" — in the interface language, short units, from an
+    /// injected `now` so a render is deterministic.
+    public static func relativeTime(_ date: Date, now: Date, locale: Locale = LanguageNames.interfaceLocale) -> String {
+        let formatter = RelativeDateTimeFormatter()
+        formatter.locale = locale
+        formatter.unitsStyle = .short
+        formatter.dateTimeStyle = .named
+        // Under a minute reads "now", not a ticking seconds count.
+        let interval = min(date.timeIntervalSince(now), 0)
+        return formatter.localizedString(fromTimeInterval: interval > -60 ? 0 : interval)
+    }
+
+    /// The Default Action chips: the saved actions, in their order.
+    public var aiChips: [StatusPanelChoice] {
+        defaultActionRow.chooser?.choices ?? []
     }
 
     /// Every row in the panel's reading and focus order: the primary
@@ -434,7 +692,7 @@ public struct StatusPanelState: Equatable, Sendable {
     /// block, and the foot. `StatusPanelModel.moveFocus` walks the enabled
     /// ones.
     public var rowsInOrder: [Row] {
-        dictationRows + [modelRow, languageRow, microphoneRow, aiSwitch, defaultActionRow, configurationRow] + footRows
+        (shortcutLink.map { [$0] } ?? []) + dictationRows + [modelRow, languageRow, microphoneRow, aiSwitch, defaultActionRow, configurationRow] + footRows
     }
 
     /// Everything that changes the panel's *layout* — which rows exist,
@@ -447,6 +705,9 @@ public struct StatusPanelState: Equatable, Sendable {
         public let hasReadiness: Bool
         public let feedKind: Int
         public let rows: [Row.ID]
+        public let cardTone: CardTone
+        public let hasLastTranscription: Bool
+        public let hasResultText: Bool
     }
 
     public var layoutSignature: LayoutSignature {
@@ -461,7 +722,10 @@ public struct StatusPanelState: Equatable, Sendable {
             primaryTitle: primaryTitle,
             hasReadiness: !readiness.isEmpty,
             feedKind: feedKind,
-            rows: rowsInOrder.map(\.id)
+            rows: rowsInOrder.map(\.id),
+            cardTone: cardTone,
+            hasLastTranscription: lastTranscription != nil,
+            hasResultText: resultText != nil
         )
     }
 

@@ -17,9 +17,14 @@ extension AppDelegate {
     func showSetup() {
         if onboardingWindow == nil {
             onboardingWindow = OnboardingWindowController(
-                viewModel: composition.onboardingViewModel
+                viewModel: composition.onboardingViewModel,
+                appDelegate: self
             )
         }
+        // Setup Guide… after Finish starts the guide over instead of showing
+        // the finished Ready page, where every control is inert (owner
+        // report 2026-10-21). A guide left mid-way keeps its place.
+        composition.onboardingViewModel.prepareForPresentation()
         onboardingWindow?.show()
     }
 
@@ -58,6 +63,8 @@ extension AppDelegate {
             // shortcut on first click and otherwise open Settings, because
             // presentRecorder() was a no-op and no alternate could be chosen.
             composition.shortcutAdapter.presentRecorder()
+        case .cancelShortcutRecording:
+            composition.shortcutAdapter.dismissRecorder()
         case .setRecordingInteraction, .shortcutRecorded:
             // Already written by the wizard through its projection host
             // (origin `.wizard`); nothing to route.
@@ -84,7 +91,9 @@ extension AppDelegate {
         case .runDictationTest:
             guard composition.onboardingViewModel.canRunDictationTest,
                   latestState.kind == .idle,
+                  inAppTestJobID == nil,
                   modelReady else { return }
+            inAppTestRequester = .onboarding
             // C.2 step 9: the production recorder/STT path, but the result is
             // shown in the setup window rather than inserted anywhere.
             Task { [weak self] in
@@ -147,6 +156,72 @@ extension AppDelegate {
     }
 
     private func onboardingDictationTestFinished(_ outcome: DictationTestResult?) {
-        composition.onboardingViewModel.setDictationTestResult(outcome)
+        switch inAppTestRequester {
+        case .onboarding:
+            composition.onboardingViewModel.setDictationTestResult(outcome)
+        case .home:
+            homeTestDictation.finish(outcome)
+            inAppTestRequester = .onboarding
+        }
+    }
+}
+
+/// The surface that started the in-app dictation test.
+enum InAppTestRequester {
+    case onboarding
+    case home
+}
+
+/// UI v2 fidelity F2: Home's Try a Test Dictation. The same in-app path as
+/// the setup wizard's first dictation test (C.2 step 9): the production
+/// recorder and model with `delivery: .inApp`, so the text is shown in the
+/// Home sheet and never inserted into another app or put on the pasteboard
+/// (FR-AX-001 / FR-AX-009 untouched). Like the wizard's test, the dictation
+/// is saved to history when history is on.
+extension AppDelegate {
+    /// Hooks the sheet's buttons to the dictation controller; idempotent.
+    func configureHomeTestDictation() {
+        homeTestDictation.onStart = { [weak self] in
+            self?.startHomeTestDictation() ?? false
+        }
+        homeTestDictation.onStop = { [weak self] in
+            guard let self, self.inAppTestRequester == .home else { return }
+            let jobID = self.inAppTestJobID
+            Task { _ = await self.composition.dictationController.stopRecording(for: jobID) }
+        }
+        homeTestDictation.onCancel = { [weak self] in
+            guard let self, self.inAppTestRequester == .home else { return }
+            let jobID = self.inAppTestJobID
+            Task { _ = await self.composition.dictationController.cancel(for: jobID) }
+        }
+    }
+
+    private func startHomeTestDictation() -> Bool {
+        guard latestState.kind == .idle, inAppTestJobID == nil, modelReady else { return false }
+        inAppTestRequester = .home
+        Task { [weak self] in
+            guard let self else { return }
+            let state = await self.composition.dictationController.startRecording(delivery: .inApp)
+            if case .recording(let recording) = state {
+                self.inAppTestJobID = recording.jobID
+                self.homeTestDictation.setRecording(true)
+            } else {
+                self.inAppTestRequester = .onboarding
+                self.homeTestDictation.startDidFail()
+            }
+        }
+        return true
+    }
+
+    /// Home's figures and newest rows follow a finished dictation while the
+    /// page has been shown (its summary is loaded), so the numbers roll.
+    func refreshHomeFiguresIfShown(after state: DictationState) {
+        switch state.kind {
+        case .completed, .idle:
+            guard historyViewModel.home != nil else { return }
+            Task { [weak self] in await self?.historyViewModel.refreshHome() }
+        default:
+            break
+        }
     }
 }

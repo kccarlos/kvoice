@@ -61,6 +61,60 @@ public struct StatusPanelContext: Equatable, Sendable {
         }
     }
 
+    /// UI v2: the newest history entry's final text, cut to a preview, and
+    /// when it was made — for the idle card. Transcript text: shown in the
+    /// panel, never logged (this type is not a diagnostic).
+    public struct LastTranscription: Equatable, Sendable {
+        /// The card shows two lines; the context keeps at most this many
+        /// characters so the whole entry never sits in the panel's state.
+        public static let previewLimit = 240
+
+        public let text: String
+        public let createdAt: Date
+
+        public init(text: String, createdAt: Date) {
+            let collapsed = text
+                .split(whereSeparator: \.isNewline)
+                .joined(separator: " ")
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            self.text = collapsed.count > Self.previewLimit
+                ? String(collapsed.prefix(Self.previewLimit)) + "…"
+                : collapsed
+            self.createdAt = createdAt
+        }
+    }
+
+    /// UI v2 fidelity F1: what the job that just ended put where — the
+    /// Inserted card's "38 words → Notes" and its text, the clipboard
+    /// card's "This field doesn't accept typing — press ⌘V". The shell fills it from the
+    /// controller's snapshot (`recoverableTranscript`, the job's target
+    /// name) while a job is completed or failed, and clears it otherwise.
+    /// Shown in the panel only; never logged, never written to history.
+    public struct JobResult: Equatable, Sendable {
+        /// The text, cut to the card's preview like `LastTranscription`.
+        public let text: String?
+        /// Counted on the whole text, before the preview cut.
+        public let wordCount: Int?
+        /// The target app as the system names it ("Notes").
+        public let appName: String?
+
+        public init(text: String?, appName: String?) {
+            self.text = text.map { LastTranscription(text: $0, createdAt: .distantPast).text }
+            self.wordCount = text.map(Self.wordCount)
+            self.appName = appName.flatMap { $0.isEmpty ? nil : $0 }
+        }
+
+        /// Words as the language counts them (`.byWords`), so a Chinese
+        /// sentence is not one word because it has no spaces.
+        public static func wordCount(_ text: String) -> Int {
+            var count = 0
+            text.enumerateSubstrings(in: text.startIndex..., options: [.byWords, .substringNotRequired]) { _, _, _, _ in
+                count += 1
+            }
+            return count
+        }
+    }
+
     /// `statusSummary.title` — "Ready", "Model not ready", "Microphone
     /// denied", … — and whether it blocks or degrades the next dictation.
     public var readinessTitle: String
@@ -92,6 +146,13 @@ public struct StatusPanelContext: Equatable, Sendable {
     /// while a failed job keeps its transcript.
     public var canRecoverFailedInsertion: Bool
     public var memoryPressure: MemoryPressure?
+    /// UI v2: the model whose download is moving bytes right now — the
+    /// one case where cancelling pauses it (resumable). Nil while verifying,
+    /// installing or optimizing, where a cancel would throw work away.
+    public var pausableDownload: ModelID?
+    public var lastTranscription: LastTranscription?
+    /// The job that just ended; nil before and during a job.
+    public var jobResult: JobResult?
 
     /// "History" or "History (unavailable)", with the degraded tooltip.
     public var historyTitle: String
@@ -113,6 +174,8 @@ public struct StatusPanelContext: Equatable, Sendable {
         copyLastTranscriptionHelp: String? = nil,
         canRecoverFailedInsertion: Bool = false,
         memoryPressure: MemoryPressure? = nil,
+        pausableDownload: ModelID? = nil,
+        lastTranscription: LastTranscription? = nil,
         historyTitle: String = "History",
         historyHelp: String? = nil
     ) {
@@ -131,6 +194,8 @@ public struct StatusPanelContext: Equatable, Sendable {
         self.copyLastTranscriptionHelp = copyLastTranscriptionHelp
         self.canRecoverFailedInsertion = canRecoverFailedInsertion
         self.memoryPressure = memoryPressure
+        self.pausableDownload = pausableDownload
+        self.lastTranscription = lastTranscription
         self.historyTitle = historyTitle
         self.historyHelp = historyHelp
     }

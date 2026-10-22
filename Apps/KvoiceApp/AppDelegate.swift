@@ -100,6 +100,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         model.openDataPrivacy = { [weak self] in
             self?.openMainWindow(section: .dataPrivacy)
         }
+        // UI v2 fidelity F3b: the empty page's "Try a Test Dictation"
+        // opens Home's test sheet.
+        model.startTestDictation = { [weak self] in
+            self?.openMainWindow(section: .home)
+            self?.homeTestDictation.present()
+        }
         return model
     }()
 
@@ -171,6 +177,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private(set) lazy var statusPanelModel = StatusPanelModel(header: statusMenuHeaderModel)
     /// P-D4: the popover presenter; nil until `installStatusItem`.
     var statusPanelController: StatusPanelController?
+    /// UI v2: the idle card's preview of the newest history entry, fetched
+    /// when the panel opens and when a job ends (never on the poll). Shown
+    /// in the panel only; never logged.
+    var statusPanelLastTranscription: StatusPanelContext.LastTranscription?
+    var statusPanelLastTranscriptionTask: Task<Void, Never>?
+    /// The dictation kind the last `updateMenu(for:)` saw, so a job's end
+    /// refreshes the preview once.
+    var statusPanelLastKind: DictationStateKind = .idle
     var readinessItem: NSMenuItem?
     /// D4/N7: shown only while `statusSummary.blocked`, right under Status —
     /// "Status: Model not ready" does not itself say it is the fix; this row
@@ -275,6 +289,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// The onboarding dictation test's job, so its result is routed to the
     /// in-app field rather than treated as a normal completion.
     var inAppTestJobID: JobID?
+    /// Which surface asked for the in-app test, so its result reaches that
+    /// surface only (UI v2 fidelity F2: Home's Try a Test Dictation).
+    var inAppTestRequester: InAppTestRequester = .onboarding
+    /// Home's Try a Test Dictation sheet (`AppDelegate+Onboarding.swift`).
+    let homeTestDictation = HomeTestDictationModel()
 
     // MARK: Runtime (Speech Models › Runtime card, `AppDelegate+Runtime.swift`)
 
@@ -349,6 +368,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // own view of the shortcut follows through
         // `setShortcutRegistrationState`, which `registerShortcut(from:)`
         // reports after every registration.
+        // UI v2 fidelity F4: the wizard's "Recording keys" box follows the
+        // recorder window (it cannot host the recorder itself).
+        composition.shortcutAdapter.onPrimaryRecorderVisibilityChanged = { [weak self] open in
+            self?.composition.onboardingViewModel.setShortcutRecorderOpen(open)
+        }
         composition.shortcutAdapter.onShortcutRecorded = { [weak self] shortcut in
             guard let self, !self.terminationInProgress else { return }
             if self.onboardingWindow?.isVisible == true {
@@ -621,11 +645,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // Drives the Ready screen's Stop Recording control, so it tracks the
         // real recorder whether the test or the global shortcut started it.
         composition.onboardingViewModel.setDictationTestRecording(state.kind == .recording)
+        homeTestDictation.setRecording(state.kind == .recording && inAppTestRequester == .home)
         deliverInAppTestResultIfNeeded(state: state, delivered: snapshot.inAppDeliveredText)
         // Only a lifecycle change needs the submenus rebuilt. The level and
         // elapsed time the P-D3 header row shows reach it through the HUD's
         // rendered state (`installStatusMenuHeaderFeed`), not through here.
         if state.kind != previousKind {
+            refreshHomeFiguresIfShown(after: state)
             updateMenu(for: state)
             syncSelectionActionShortcuts(for: state)
             refreshSettingsAvailability()
@@ -682,11 +708,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             canRecoverFailedInsertion: snapshot.canRecoverFailedInsertion,
             captureStarted: snapshot.captureStarted,
             finishingCount: snapshot.finishingCount,
-            overlapPausedReason: snapshot.overlapPausedReason
+            overlapPausedReason: snapshot.overlapPausedReason,
+            facts: hudJobFacts(for: snapshot, settings: settings)
         )
-        // The onboarding test shows its result in-app; the floating HUD
-        // would otherwise announce "Inserted" over the setup window.
-        if case .completed(let jobID, _) = state, jobID == inAppTestJobID {
+        // The in-app tests (wizard, Home) show their result in-app; the
+        // floating HUD would otherwise announce "Inserted" for text that was
+        // never inserted. `inAppTestJobID` is already cleared by the time
+        // this runs (the result is routed first), so the controller's
+        // in-app text — kept only for `.inApp` jobs — identifies the job.
+        if case .completed(let jobID, _) = state,
+           jobID == inAppTestJobID || snapshot.inAppDeliveredText?.jobID == jobID {
             composition.hudController.dismiss()
         } else if hudState != lastRenderedHUDState {
             // ADR-021: the style comes from the job's snapshot, so a Settings
@@ -695,6 +726,29 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         lastRenderedHUDState = hudState
         scheduleTerminalDismissal(for: state, hudState: hudState)
+    }
+
+    /// UI v2 fidelity F5: what the recorder's subtitle names — the job's
+    /// model, its AI action and configuration, the target app and, once the
+    /// job is done, how many words it inserted. Display only, in memory: the
+    /// word count is counted here and only the number crosses into the HUD.
+    func hudJobFacts(for snapshot: DictationController.Snapshot, settings: AppSettings) -> HUDJobFacts {
+        let modelName = settings.defaultSpeechModelID
+            .flatMap { composition.modelManager?.catalog.entry(id: $0)?.fullDisplayName }
+            ?? statusPanelModelName
+        let ai = settings.ai
+        let aiOn = ai.isEnabled && ai.mode != .off
+        var wordCount: Int?
+        if case .completed = snapshot.state, let text = snapshot.recoverableTranscript {
+            wordCount = StatusPanelContext.JobResult.wordCount(text)
+        }
+        return HUDJobFacts(
+            modelName: modelName,
+            aiActionName: aiOn ? ai.activePromptMode?.name : nil,
+            aiProviderName: aiOn ? ai.activeConfiguration?.menuTitle : nil,
+            targetAppName: snapshot.targetApplicationName,
+            wordCount: wordCount
+        )
     }
 
     /// The 5:00 warning names the job's limit; "No limit" drops the clock

@@ -9,6 +9,36 @@ without one is refused.
 
 ## Unreleased
 
+## 0.1.7 — 2026-10-22
+
+A new look for the whole app, in light and dark.
+
+- The recorder is redrawn: an orange mic while you speak, the AI action
+  that will run (switch it with ⌘1–⌘0 while recording), live level bars,
+  a timer and the words as they are heard.
+- The menu bar icon opens a new status panel: what KVoice is doing, the
+  last dictation, and the AI action to use, all in one place. Picking an
+  action there also turns AI Actions on. Right-click the icon for the full
+  menu.
+- The settings window has a new sidebar and a Home page with your
+  readiness, recent dictations and a short test.
+- Every settings page moved onto clear cards. Status always reads as a
+  coloured dot with words, never colour alone.
+- AI Actions is reorganised: an on/off switch with one line of status
+  (which action, where it runs), then where AI runs, then your actions.
+  Click an action to make it the default; double-click it (or Edit…) to
+  change its name, prompt, trigger words and shortcut in one sheet.
+- History has a stats strip, a "With AI" filter, and shows which model
+  transcribed each entry.
+- Dictionary terms are chips you can edit in place; select several to
+  remove them together.
+- Speech Models can be filtered by language and by live text.
+- The setup wizard is redrawn, with the same steps.
+- Fixed: VoiceOver now reads the menu bar icon, the selected choice on
+  every card, chip and row, and the History page without hanging.
+- Fixed: while a model downloads, the menu bar icon still shows a warning
+  when a dictation is blocked.
+
 ## 0.1.6
 
 - The built-in AI Actions now follow you when you correct yourself: say

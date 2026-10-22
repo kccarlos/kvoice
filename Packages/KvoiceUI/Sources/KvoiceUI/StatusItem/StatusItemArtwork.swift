@@ -1,7 +1,8 @@
 import AppKit
 
-/// Loads the menu-bar artwork (`Apps/KvoiceApp/Resources/MenuBarLogo.svg`
-/// and its halo, `MenuBarLogoGlow.svg`) as template images at menu-bar size.
+/// Loads the menu-bar glyph (`Apps/KvoiceApp/Resources/MenuBarLogo.svg`) as
+/// a template image at menu-bar size. The halo is drawn in code since UI v2
+/// fidelity F1 (`StatusItemIconController`).
 ///
 /// Lives here rather than in the app shell so the one property the menu bar
 /// depends on, that both images are templates AppKit can tint and invert, is
@@ -10,13 +11,9 @@ import AppKit
 public enum StatusItemArtwork {
     /// The glyph's resource name (an SVG in the app bundle).
     public static let glyphResourceName = "MenuBarLogo"
-    /// The halo's resource name; the same viewBox as the glyph.
-    public static let haloResourceName = "MenuBarLogoGlow"
 
-    /// Height of the image in points. The SVGs' viewBox is 20 units tall and
-    /// the artwork is drawn on an 18-point grid inside it, so one unit is one
-    /// point: a ~14 pt glyph, the weight of Apple's own menu-bar glyphs in a
-    /// 22 pt menu bar, with room around it for the halo.
+    /// Height of the image in points. The SVG's viewBox is 20 units tall
+    /// around the design's 20 × 16 drawing, so one unit is one point.
     public static let imageHeight: CGFloat = 20
 
     /// The image at `url` as a template, scaled to `imageHeight` with its

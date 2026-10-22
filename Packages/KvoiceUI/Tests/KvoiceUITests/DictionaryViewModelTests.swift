@@ -326,3 +326,65 @@ private final class WordCounter: PromptTokenCounting {
         return text.split(whereSeparator: \.isWhitespace).count
     }
 }
+
+// MARK: - UI v2 fidelity F3b: chip editing and removal
+
+extension DictionaryViewModelTests {
+    func testAChipEditsInPlaceAndCommitsThroughUpdate() async {
+        let model = makeModel(terms: ["kvoice", "Ada"])
+        let ada = model.entries[1]
+        model.beginEditing(ada.id)
+        XCTAssertEqual(model.editingID, ada.id)
+        XCTAssertEqual(model.editingText, "Ada")
+
+        model.editingText = "Ada Lovelace"
+        let ended = await model.commitEditing()
+        XCTAssertTrue(ended)
+        XCTAssertNil(model.editingID)
+        XCTAssertEqual(model.terms, ["kvoice", "Ada Lovelace"])
+        XCTAssertEqual(emitted.last?.terms, ["kvoice", "Ada Lovelace"])
+    }
+
+    func testARefusedChipEditStaysOpenWithTheReason() async {
+        let model = makeModel(terms: ["kvoice", "Ada"])
+        model.beginEditing(model.entries[1].id)
+        model.editingText = "KVOICE"
+        let ended = await model.commitEditing()
+        XCTAssertFalse(ended, "a duplicate keeps the field open")
+        XCTAssertNotNil(model.editingID)
+        XCTAssertNotNil(model.message)
+        XCTAssertEqual(model.terms, ["kvoice", "Ada"])
+    }
+
+    func testEscapeAbandonsTheEditAndAnUnchangedCommitSendsNothing() async {
+        let model = makeModel(terms: ["kvoice"])
+        let sentBefore = harness.sent.count
+        model.beginEditing(model.entries[0].id)
+        model.editingText = "changed"
+        model.cancelEditing()
+        XCTAssertNil(model.editingID)
+        XCTAssertEqual(model.terms, ["kvoice"])
+
+        model.beginEditing(model.entries[0].id)
+        let ended = await model.commitEditing()
+        XCTAssertTrue(ended)
+        XCTAssertEqual(harness.sent.count, sentBefore, "no intent for an unchanged chip")
+    }
+
+    func testEmptyingAChipRemovesItAndTheCrossRemovesOne() async {
+        let model = makeModel(terms: ["a", "b", "c"])
+        model.beginEditing(model.entries[0].id)
+        model.editingText = "  "
+        _ = await model.commitEditing()
+        XCTAssertEqual(model.terms, ["b", "c"])
+
+        await model.remove(ids: [model.entries[1].id])
+        XCTAssertEqual(model.terms, ["b"])
+    }
+
+    func testTheModelSeesFigureMatchesTheDesign() {
+        let budget = DictionaryTokenBudget(promptTokenLimit: 224, isFromResidentModel: false)
+        XCTAssertEqual(DictionaryTokenUsage(count: 38, isExact: false, budget: budget).figure, "≈ 38 of \(budget.budget)")
+        XCTAssertEqual(DictionaryTokenUsage(count: 38, isExact: true, budget: budget).figure, "38 of \(budget.budget)")
+    }
+}

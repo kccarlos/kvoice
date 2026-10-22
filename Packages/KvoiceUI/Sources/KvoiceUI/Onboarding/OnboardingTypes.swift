@@ -1,5 +1,6 @@
 import Foundation
 import KvoiceDomain
+import Observation
 
 /// The screens in the first-run setup, in order (spec C.2 as amended
 /// 2026-09-16, design review P-W1). Six steps: the four prerequisites
@@ -96,6 +97,9 @@ public struct OnboardingActionBar: Equatable, Sendable {
     /// The secondary "continue without this" action, or nil when the screen
     /// has nothing to skip.
     public let skipTitle: String?
+    /// What VoiceOver reads for Skip: "Skip this step", or the step's own
+    /// phrase where Skip is narrower ("Skip the shortcut check", Q2b).
+    public let skipAccessibilityLabel: String?
     public let skipIsEnabled: Bool
     public let canGoBack: Bool
 
@@ -105,6 +109,7 @@ public struct OnboardingActionBar: Equatable, Sendable {
         primaryIsBusy: Bool = false,
         primaryDisabledReason: String? = nil,
         skipTitle: String? = nil,
+        skipAccessibilityLabel: String? = nil,
         skipIsEnabled: Bool = true,
         canGoBack: Bool = true
     ) {
@@ -113,6 +118,9 @@ public struct OnboardingActionBar: Equatable, Sendable {
         self.primaryIsBusy = primaryIsBusy
         self.primaryDisabledReason = primaryDisabledReason
         self.skipTitle = skipTitle
+        self.skipAccessibilityLabel = skipTitle.map { title in
+            skipAccessibilityLabel ?? String(localized: "\(title) this step", bundle: .module)
+        }
         self.skipIsEnabled = skipIsEnabled
         self.canGoBack = canGoBack
     }
@@ -161,7 +169,74 @@ public enum OnboardingIntent: Sendable, Equatable {
     case endHotkeyTest
     case runDictationTest
     case stopDictationTest
+    /// The "Recording keys" box's Cancel (UI v2 fidelity F4): the shell
+    /// closes the recorder window without changing the shortcut.
+    case cancelShortcutRecording
     case finish
+}
+
+/// Why a shortcut could not be registered, as far as the shell can tell
+/// (UI v2 fidelity F4). The hotkey adapter's reasons, without its types; the
+/// wizard turns them into a localized sentence instead of an error code.
+public enum ShortcutRegistrationProblem: Sendable, Equatable {
+    /// macOS reserves the combination (Spotlight, input sources, …).
+    case takenBySystem
+    /// One of KVoice's own menu commands uses it.
+    case takenByMenu
+    /// A lone modifier key without Accessibility.
+    case needsAccessibility
+    /// The App Store edition cannot watch a lone modifier key.
+    case unavailableInEdition
+    /// A dictation was running.
+    case busy
+    case other
+
+    /// The owner of a system shortcut whose owner is fixed in macOS; nil for
+    /// any other combination, which is then called "used by macOS".
+    public enum SystemOwner: Sendable, Equatable {
+        case spotlight
+        case finderSearch
+        case inputSources
+
+        var localizedName: String {
+            switch self {
+            case .spotlight: return String(localized: "Spotlight", bundle: .module)
+            case .finderSearch: return String(localized: "Finder search", bundle: .module)
+            case .inputSources: return String(localized: "Switching input sources", bundle: .module)
+            }
+        }
+    }
+
+    public static func knownSystemOwner(of shortcut: ShortcutDefinition) -> SystemOwner? {
+        guard shortcut.key.lowercased() == "space" || shortcut.key == " " else { return nil }
+        let modifiers = Set(shortcut.modifiers.map { $0.lowercased() })
+        if modifiers == ["command"] { return .spotlight }
+        if modifiers == ["command", "option"] { return .finderSearch }
+        if modifiers == ["control"] || modifiers == ["control", "option"] { return .inputSources }
+        return nil
+    }
+}
+
+/// The dictation test's live level for Ready's recording box (Motion
+/// § 4·6): a smoothed 0…1 level the shell feeds at the HUD's rate. Its own
+/// observable object, so a 20 Hz update re-renders the meter only.
+@Observable
+@MainActor
+public final class OnboardingLiveLevel {
+    public private(set) var level: Double = 0
+    private var follower = KVLevelFollower()
+
+    public init() {}
+
+    /// One reading (0…1) arriving `elapsed` seconds after the previous one.
+    public func apply(raw: Double, elapsed: Double = 0.05) {
+        level = follower.step(raw: raw, elapsed: elapsed)
+    }
+
+    public func reset() {
+        follower = KVLevelFollower()
+        level = 0
+    }
 }
 
 /// Compatibility spelling for clients that call an emitted intent an action.
@@ -296,6 +371,9 @@ public struct HotkeyTestSnapshot: Sendable, Equatable {
     /// Count of key-down edges seen. Toggle mode needs two to finish.
     public var pressCount = 0
     public var isDone = false
+    /// Motion § 11: the last push-to-talk release came before 0.6 s; the
+    /// orb drains and the box asks for a longer hold.
+    public var wasTooShort = false
 
     public init(
         isDown: Bool = false,

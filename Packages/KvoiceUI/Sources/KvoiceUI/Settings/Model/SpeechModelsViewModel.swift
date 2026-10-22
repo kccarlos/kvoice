@@ -206,6 +206,14 @@ public struct ModelCardState: Sendable, Equatable, Identifiable {
 public enum ModelCardFilter: String, Sendable, Equatable, CaseIterable, Identifiable {
     case recommended
     case all
+    /// UI v2 wave 4 (the design's "pick by what you dictate" filters): read
+    /// from the catalog entry alone — the language hints it accepts
+    /// (`supportsLanguage`, which falls back to Whisper's list when the
+    /// entry names none) and whether it streams.
+    case chinese
+    case english
+    case european
+    case liveText
 
     public var id: Self { self }
 
@@ -213,6 +221,30 @@ public enum ModelCardFilter: String, Sendable, Equatable, CaseIterable, Identifi
         switch self {
         case .recommended: return String(localized: "Recommended", bundle: .module)
         case .all: return String(localized: "All", bundle: .module)
+        case .chinese: return String(localized: "Chinese", bundle: .module)
+        case .english: return String(localized: "English", bundle: .module)
+        case .european: return String(localized: "European", bundle: .module)
+        case .liveText: return String(localized: "Live text", bundle: .module)
+        }
+    }
+
+    /// "European" means at least one of these, English excluded (it has its
+    /// own filter): the EU languages plus Norwegian, Ukrainian and Russian.
+    static let europeanLanguageCodes: Set<String> = [
+        "bg", "cs", "da", "de", "el", "es", "et", "fi", "fr", "hr", "hu", "it",
+        "lt", "lv", "mt", "nl", "no", "pl", "pt", "ro", "ru", "sk", "sl", "sv", "uk"
+    ]
+
+    /// Whether `entry` belongs under this filter. Recommended is decided on
+    /// the card (it also keeps the current default), so it and All accept
+    /// every entry here.
+    public func matches(_ entry: SpeechModelCatalogEntry) -> Bool {
+        switch self {
+        case .recommended, .all: return true
+        case .chinese: return entry.supportsLanguage("zh") || entry.supportsLanguage("yue")
+        case .english: return entry.supportsLanguage("en")
+        case .european: return Self.europeanLanguageCodes.contains { entry.supportsLanguage($0) }
+        case .liveText: return entry.supportsStreaming
         }
     }
 }
@@ -316,6 +348,8 @@ public final class SpeechModelsViewModel {
         case .recommended:
             let recommended = cards.filter { $0.entry.isRecommended || $0.isDefault }
             return recommended.isEmpty ? cards : recommended
+        case .chinese, .english, .european, .liveText:
+            return cards.filter { filter.matches($0.entry) }
         }
     }
 

@@ -2,7 +2,7 @@ import AppKit
 import XCTest
 @testable import KvoiceUI
 
-/// The menu-bar glyph and its halo, and the app icon's SVG sources, checked
+/// The menu-bar glyph (its halo is drawn in code since fidelity F1), and the app icon's SVG sources, checked
 /// against the real files in `Apps/KvoiceApp/Resources`. The shell has no
 /// unit tests, so this is where a broken asset is caught: NSImage rejects an
 /// SVG with a double hyphen inside a comment and returns nil without a word,
@@ -20,25 +20,29 @@ final class StatusItemArtworkTests: XCTestCase {
         Self.resources.appendingPathComponent("\(name).svg")
     }
 
-    func testGlyphAndHaloLoadAsTemplatesAtMenuBarHeight() throws {
-        for name in [StatusItemArtwork.glyphResourceName, StatusItemArtwork.haloResourceName] {
+    func testGlyphLoadsAsATemplateAtMenuBarHeight() throws {
+        for name in [StatusItemArtwork.glyphResourceName] {
             let image = try XCTUnwrap(StatusItemArtwork.templateImage(contentsOf: resource(name)), name)
             XCTAssertTrue(image.isTemplate, "\(name) must be a template so AppKit tints and inverts it")
             XCTAssertEqual(image.size.height, StatusItemArtwork.imageHeight, accuracy: 0.001, name)
         }
     }
 
-    func testGlyphAndHaloShareOneSizeSoTheGlyphDoesNotJumpWhenTheGlowAppears() throws {
-        let glyph = try XCTUnwrap(StatusItemArtwork.templateImage(contentsOf: resource(StatusItemArtwork.glyphResourceName)))
-        let halo = try XCTUnwrap(StatusItemArtwork.templateImage(contentsOf: resource(StatusItemArtwork.haloResourceName)))
-        XCTAssertEqual(glyph.size, halo.size)
-        XCTAssertEqual(try viewBox(StatusItemArtwork.glyphResourceName), try viewBox(StatusItemArtwork.haloResourceName))
+    /// Fidelity F1: the design's glyph — three bars and a microphone in a
+    /// 20 × 16 drawing — one viewBox unit per point, 2 units of margin
+    /// above and below so the image is the 20 pt the button is sized for.
+    func testGlyphIsTheDesignsDrawingAtOnePointPerUnit() throws {
+        XCTAssertEqual(try viewBox(StatusItemArtwork.glyphResourceName), "0 -2 20 20")
+        let svg = try String(contentsOf: resource(StatusItemArtwork.glyphResourceName), encoding: .utf8)
+        XCTAssertTrue(svg.contains("M2 7v2M5 5v6M8 3v10"), "the three level bars")
+        XCTAssertTrue(svg.contains(#"stroke-width="1.6""#))
+        XCTAssertFalse(FileManager.default.fileExists(atPath: Self.resources.appendingPathComponent("MenuBarLogoGlow.svg").path), "the halo is drawn in code now")
     }
 
     func testMenuBarArtworkIsMonochrome() throws {
         // A template image uses alpha only; a colour here would be a design
         // mistake that the menu bar silently discards.
-        for name in [StatusItemArtwork.glyphResourceName, StatusItemArtwork.haloResourceName] {
+        for name in [StatusItemArtwork.glyphResourceName] {
             let svg = try String(contentsOf: resource(name), encoding: .utf8)
             let colours = matches(of: #"(?:fill|stroke)="([^"]+)""#, in: svg)
             XCTAssertFalse(colours.isEmpty, name)
@@ -60,7 +64,7 @@ final class StatusItemArtworkTests: XCTestCase {
     /// Every SVG the app and the icon pipeline read: each must parse, and no
     /// comment may contain a double hyphen.
     func testEverySVGSourceLoadsAndHasNoDoubleHyphenInAComment() throws {
-        let names = ["AppIcon", "AppIcon-16", "AppIcon-32", StatusItemArtwork.glyphResourceName, StatusItemArtwork.haloResourceName]
+        let names = ["AppIcon", "AppIcon-16", "AppIcon-32", StatusItemArtwork.glyphResourceName]
         for name in names {
             let url = resource(name)
             XCTAssertNotNil(NSImage(contentsOf: url), "\(name).svg does not load")

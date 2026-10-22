@@ -36,17 +36,25 @@ public struct StatusItemAppearance: Equatable, Sendable {
         public let troughOpacity: Double
         /// Seconds for one dim → bright → dim cycle.
         public let pulsePeriod: Double
+        /// UI v2 fidelity F1 (Motion § 4·6): the halo follows the voice —
+        /// opacity 0.25 + 0.75·level, scale 0.8 + 0.45·level — instead of
+        /// pulsing on a clock. The level arrives on its own channel
+        /// (`StatusItemIconController.apply(level:)`), never in this
+        /// value, so the 60 ms poll's de-duplication still holds.
+        public let followsLevel: Bool
 
         public init(
             tint: Tint,
             peakOpacity: Double,
             troughOpacity: Double,
-            pulsePeriod: Double
+            pulsePeriod: Double,
+            followsLevel: Bool = false
         ) {
             self.tint = tint
             self.peakOpacity = peakOpacity
             self.troughOpacity = troughOpacity
             self.pulsePeriod = pulsePeriod
+            self.followsLevel = followsLevel
         }
     }
 
@@ -64,33 +72,70 @@ public struct StatusItemAppearance: Equatable, Sendable {
     /// `nil` when nothing needs the user's attention.
     public let badge: Badge?
 
-    public init(phase: Phase, glow: Glow?, badge: Badge? = nil) {
+    /// UI v2: a model download's progress, 0...1, drawn as a thin ring
+    /// around the glyph *instead of* the badge (the download is the fix
+    /// happening). Quantised to `progressStep` so the 60 ms poll applies a
+    /// change about fifty times per download, not every poll. `nil` when no
+    /// download with a known total is running, or a job is in flight (the
+    /// glow wins: it is what the user is holding a key for).
+    public let progress: Double?
+
+    /// The ring advances in 2 % steps.
+    public static let progressStep = 0.02
+
+    public init(phase: Phase, glow: Glow?, badge: Badge? = nil, progress: Double? = nil) {
         self.phase = phase
         self.glow = glow
         self.badge = badge
+        self.progress = progress
     }
 
-    /// Recording pulses faster and brighter than processing: it is the state the
-    /// user is actively holding a key for, and the one where a missed cue costs
-    /// them a lost recording.
+    /// Recording: the design's orange halo, driven by the level (0.25 at
+    /// silence, 1 at full voice). The period is the fallback pulse
+    /// `Panel.dc.html` drew before the motion spec; it is not used while
+    /// the halo follows the level.
     public static let recordingGlow = Glow(
         tint: .recording,
         peakOpacity: 1.0,
-        troughOpacity: 0.35,
-        pulsePeriod: 1.1
+        troughOpacity: 0.25,
+        pulsePeriod: 1.1,
+        followsLevel: true
     )
 
+    /// Processing: the design's blue halo breathing slowly (1.9 s,
+    /// 0.35 ↔ 1, ease in-out) — the one loop the icon keeps, because
+    /// there is no live signal to follow while text is being made.
     public static let processingGlow = Glow(
         tint: .processing,
-        peakOpacity: 0.85,
-        troughOpacity: 0.3,
+        peakOpacity: 1.0,
+        troughOpacity: 0.35,
         pulsePeriod: 1.9
     )
 
     /// `needsAttention` is the shell's standing readiness verdict (a missing
     /// model, a denied permission) and keeps the badge up while idle; a
     /// transient `blocked` or `failed` dictation state badges on its own.
-    public init(dictationState: DictationState, needsAttention: Bool = false) {
+    /// A download in flight replaces only the standing badge (the download
+    /// is the fix); a blocked or failed job keeps its badge over the ring,
+    /// as the panel keeps its warn / err card (Q2b).
+    public init(dictationState: DictationState, needsAttention: Bool = false, downloadFraction: Double? = nil) {
+        let base = Self(projecting: dictationState, needsAttention: needsAttention)
+        let jobNeedsAttention: Bool
+        switch dictationState {
+        case .blocked, .failed: jobNeedsAttention = true
+        default: jobNeedsAttention = false
+        }
+        guard base.phase == .idle, !jobNeedsAttention, let downloadFraction else {
+            self = base
+            return
+        }
+        let clamped = min(max(downloadFraction, 0), 1)
+        let steps = (clamped / Self.progressStep + 1e-9).rounded(.down)
+        let stepped = steps * Self.progressStep
+        self.init(phase: .idle, glow: nil, badge: nil, progress: stepped)
+    }
+
+    private init(projecting dictationState: DictationState, needsAttention: Bool) {
         switch dictationState {
         case .recording:
             phase = .recording
@@ -116,5 +161,6 @@ public struct StatusItemAppearance: Equatable, Sendable {
             glow = nil
             badge = needsAttention ? .warning : nil
         }
+        progress = nil
     }
 }

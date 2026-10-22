@@ -44,6 +44,43 @@ final class HistoryDataTests: XCTestCase {
         XCTAssertEqual(none, [], "LIKE wildcards typed by the user are literal")
     }
 
+    /// UI v2 wave 5a "With AI": the SQL clause and the in-memory
+    /// `HistoryFilter.matches` keep the same rows — only a succeeded AI run.
+    func testWithAIFilterKeepsOnlySucceededAIRowsInSQLAndInMemory() async throws {
+        let location = try TemporaryDirectory()
+        defer { location.remove() }
+        let store = HistorySQLiteStore(fileURL: location.url.appendingPathComponent("history.sqlite3"))
+        let now = Date(timeIntervalSince1970: 1_700_000_000)
+        var rows: [HistoryEntry] = []
+        for (offset, status) in HistoryAIStatus.allCases.enumerated() {
+            rows.append(HistoryEntry(
+                createdAt: now.addingTimeInterval(-Double(offset) * 60),
+                rawText: "row \(offset)",
+                finalText: "row \(offset) polished",
+                mode: status == .off ? .off : .polish,
+                insertionOutcome: .inserted(method: .selectedTextAttribute),
+                aiStatus: status,
+                recordingDurationMilliseconds: 10_000,
+                aiDurationMilliseconds: status == .off ? nil : 1_000
+            ))
+        }
+        for entry in rows {
+            try await store.append(entry)
+        }
+
+        let filter = HistoryFilter(timeRange: .all, durationBucket: nil, onlyWithAI: true, now: now)
+        XCTAssertFalse(filter.isEmpty)
+        let hits = try await store.entries(matching: filter, before: nil, limit: 10)
+        XCTAssertEqual(hits.map(\.aiStatus), [.succeeded])
+        XCTAssertEqual(hits.map(\.id), rows.filter(filter.matches).map(\.id), "SQL and in-memory agree")
+        let stats = try await store.statistics(matching: filter)
+        XCTAssertEqual(stats.sessionCount, 1)
+
+        let combined = HistoryFilter(timeRange: .all, durationBucket: nil, query: "nothing", onlyWithAI: true, now: now)
+        let none = try await store.entries(matching: combined, before: nil, limit: 10)
+        XCTAssertEqual(none, [])
+    }
+
     func testStatisticsAreSQLAggregatesOverTheFilteredRows() async throws {
         let location = try TemporaryDirectory()
         defer { location.remove() }

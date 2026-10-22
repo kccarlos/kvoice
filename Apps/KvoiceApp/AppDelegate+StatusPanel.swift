@@ -23,6 +23,15 @@ extension AppDelegate {
         button.target = self
         button.action = #selector(statusItemClicked(_:))
         button.sendAction(on: [.leftMouseUp, .rightMouseUp])
+        button.setAccessibilityLabel(StatusItemClick.accessibilityLabel)
+        // Async: menu tracking is modal, and the Accessibility request
+        // that asked for it must get its answer first.
+        button.setAccessibilityCustomActions([
+            NSAccessibilityCustomAction(name: StatusItemClick.showMenuActionName) { [weak self] in
+                DispatchQueue.main.async { self?.showStatusMenu() }
+                return true
+            },
+        ])
     }
 
     /// The status item's button action: the click split.
@@ -37,6 +46,7 @@ extension AppDelegate {
         )
         switch surface {
         case .panel:
+            refreshStatusPanelLastTranscription()
             statusPanelController?.toggle(relativeTo: button)
         case .menu:
             statusPanelController?.close()
@@ -60,7 +70,19 @@ extension AppDelegate {
     /// Fills the panel's context from the facts `updateMenu(for:)` has just
     /// applied to the plain items, so the two surfaces can never disagree.
     func updateStatusPanel() {
+        // A job just ended: the newest history entry may have changed.
+        let kind = latestState.kind
+        if kind != statusPanelLastKind {
+            let wasRunning = ![.idle, .completed, .failed, .blocked, .terminating].contains(statusPanelLastKind)
+            statusPanelLastKind = kind
+            // Also on every return to idle: the job's history row may be
+            // written after `.completed` was published.
+            if wasRunning || kind == .idle {
+                refreshStatusPanelLastTranscription()
+            }
+        }
         let status = statusSummary
+        updateMainWindowReadiness(status: status)
         let idle = latestState.kind == .idle
         let terminating = terminationInProgress
         let ai = currentSettings.ai
@@ -68,7 +90,7 @@ extension AppDelegate {
         let configured = promptModeSettingsViewModel.canEnableProcessing
         let aiActive = ai.mode != .off
 
-        statusPanelModel.apply(context: StatusPanelContext(
+        var context = StatusPanelContext(
             readinessTitle: status.title,
             isBlocked: status.blocked,
             fixTitle: modelReady
@@ -106,11 +128,95 @@ extension AppDelegate {
                     isUnloading: memoryPressureViewModel.isUnloading
                 )
                 : nil,
+            pausableDownload: statusPanelPausableDownload,
+            lastTranscription: currentSettings.historyEnabled && !historyDegraded ? statusPanelLastTranscription : nil,
             historyTitle: historyDegraded ? String(localized: "History (unavailable)", table: "Shell") : String(localized: "History", table: "Shell"),
             historyHelp: historyDegraded
                 ? String(localized: "The history database could not be opened. Dictation continues without saving history.", table: "Shell")
                 : nil
-        ))
+        )
+        // UI v2 fidelity F1: what the job that just ended put where. The
+        // controller keeps the job's text (`recoverableTranscript`) and
+        // target until the next job; the panel shows them only on the
+        // outcome card.
+        switch kind {
+        case .completed, .failed:
+            context.jobResult = StatusPanelContext.JobResult(
+                text: latestSnapshot?.recoverableTranscript,
+                appName: latestSnapshot?.targetApplicationName
+            )
+        default:
+            context.jobResult = nil
+        }
+        statusPanelModel.apply(context: context)
+    }
+
+    /// UI v2 wave 4: the main window's sidebar pill reads the same one-line
+    /// summary as the panel and the menu, so the three never disagree.
+    /// Also called when the window is created (it is created lazily).
+    func updateMainWindowReadiness(status: (title: String, blocked: Bool)? = nil) {
+        guard let model = mainWindow?.model else { return }
+        let status = status ?? statusSummary
+        let readiness = MainWindowReadiness(
+            statusTitle: status.title,
+            isBlocked: status.blocked,
+            shortcutGlyphs: currentSettings.shortcut.map { GeneralSettingsViewModel.glyphs(for: $0) }
+        )
+        if model.readiness != readiness {
+            model.readiness = readiness
+        }
+        // UI v2 wave 5a: Home's hero reads the same summary, the model,
+        // the microphone and the AI action the panel shows.
+        let ai = currentSettings.ai
+        let home = HomeHeroState(
+            readiness: readiness,
+            interaction: currentSettings.recordingInteraction,
+            modelName: statusPanelModelName ?? modelMenuTitle,
+            microphoneName: audioInputViewModel.currentDeviceName,
+            ai: ai.isEnabled && ai.mode != .off
+                ? .on(action: ai.activePromptMode?.menuTitle, configuration: ai.activeConfiguration?.menuTitle)
+                : .off
+        )
+        if model.home != home {
+            model.home = home
+        }
+    }
+
+    /// UI v2: the model whose download is moving bytes — the one state in
+    /// which the Speech Models card's Cancel pauses it, resumable
+    /// (`ModelOperationAdmission`: downloading + `.downloading` →
+    /// supersede). Verifying, installing or a first load: nil, no Pause.
+    private var statusPanelPausableDownload: ModelID? {
+        guard case .downloading(let id) = modelActivity,
+              case .downloading? = speechModelState(for: id) else { return nil }
+        return id
+    }
+
+    /// UI v2: fetches the newest history entry for the idle card's
+    /// preview. Only the newest row's final text and date are read; the
+    /// text goes to the panel and nowhere else.
+    func refreshStatusPanelLastTranscription() {
+        guard currentSettings.historyEnabled, !historyDegraded, !terminationInProgress else {
+            if statusPanelLastTranscription != nil {
+                statusPanelLastTranscription = nil
+                updateStatusPanel()
+            }
+            return
+        }
+        statusPanelLastTranscriptionTask?.cancel()
+        statusPanelLastTranscriptionTask = Task { [weak self] in
+            guard let self else { return }
+            let newest = try? await self.composition.historyStore.fetchPage(before: nil, limit: 1).first
+            guard !Task.isCancelled else { return }
+            let preview = newest.flatMap { entry in
+                entry.finalText.isEmpty
+                    ? nil
+                    : StatusPanelContext.LastTranscription(text: entry.finalText, createdAt: entry.createdAt)
+            }
+            guard preview != self.statusPanelLastTranscription else { return }
+            self.statusPanelLastTranscription = preview
+            self.updateStatusPanel()
+        }
     }
 
     /// The Default Action chooser: the saved actions, as `updateModeMenu`
@@ -181,6 +287,10 @@ extension AppDelegate {
             openStatusTarget()
         case .unloadModel:
             unloadModelForMemoryPressure()
+        case .pauseModelDownload(let id):
+            // The Speech Models card's Cancel: pauses a download in flight.
+            guard case .downloading(id) = modelActivity else { return }
+            performSpeechModelAction(.cancel(id))
         case .selectModel(let id):
             // `selectSpeechModel(_:)`
             performSpeechModelAction(.use(id), origin: .statusMenu)
@@ -201,6 +311,11 @@ extension AppDelegate {
             // `selectPromptMode(_:)`
             guard let mode = currentSettings.ai.promptModes.first(where: { $0.id == id }) else { return }
             selectPromptMode(mode: mode)
+        case .useAIAction(let id):
+            guard let mode = currentSettings.ai.promptModes.first(where: { $0.id == id }) else { return }
+            useAIAction(mode: mode)
+        case .openShortcuts:
+            openMainWindow(section: .shortcuts)
         case .selectConfiguration(let id):
             // `selectProviderConfiguration(_:)`
             guard let configuration = currentSettings.ai.configurations.first(where: { $0.id == id }) else { return }

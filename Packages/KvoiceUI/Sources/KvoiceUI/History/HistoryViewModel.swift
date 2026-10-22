@@ -4,6 +4,28 @@ import KvoiceAppCore
 import KvoiceDomain
 import Observation
 
+/// UI v2 fidelity F3b: History's detail segments.
+public enum HistoryTranscriptTab: String, CaseIterable, Sendable {
+    case original
+    case enhanced
+
+    /// The segment's words, translated (the raw value is a stable id).
+    public var title: String {
+        switch self {
+        case .original: return String(localized: "Original", bundle: .module)
+        case .enhanced: return String(localized: "Enhanced", bundle: .module)
+        }
+    }
+}
+
+/// UI v2 fidelity F3b: History's whole-page empty cards.
+public enum HistoryEmptyState: Equatable, Sendable {
+    /// Nothing saved yet, saving on.
+    case noHistory
+    /// Nothing saved, and Save History is off.
+    case savingOff
+}
+
 public enum HistoryViewLoadState: Equatable, Sendable {
     case idle
     case loading
@@ -39,7 +61,17 @@ public final class HistoryViewModel {
     /// `loadState == .loading`, the rows stay on screen; the view only
     /// disables Refresh and shows a small spinner.
     public private(set) var isRefreshing = false
-    public var selectedEntryID: HistoryEntryID?
+    public var selectedEntryID: HistoryEntryID? {
+        didSet {
+            // UI v2 fidelity F3b: a newly chosen entry opens on Enhanced
+            // (the detail falls back to the one transcript when AI did
+            // not change the text).
+            if selectedEntryID != oldValue { transcriptTab = .enhanced }
+        }
+    }
+
+    /// UI v2 fidelity F3b: the detail's Original / Enhanced segment.
+    public var transcriptTab: HistoryTranscriptTab = .enhanced
 
     /// Local filter over raw and final text.  The view binds to it and calls
     /// `runSearch()`; nothing here ever leaves the process (FR-HIST-009).
@@ -51,6 +83,8 @@ public final class HistoryViewModel {
     /// `searchText` into one repository read; `applyFilters()` re-reads.
     public var timeRange: HistoryTimeRange = .all
     public var durationBucket: HistoryDurationBucket?
+    /// UI v2 wave 5a "With AI" chip: only dictations an AI action changed.
+    public var onlyWithAI = false
 
     /// Whether `entries` currently holds a filtered result set (search, time
     /// range, or duration) rather than the newest-first page.
@@ -134,8 +168,13 @@ public final class HistoryViewModel {
     /// sentence alone (previews and tests that do not wire navigation).
     @ObservationIgnored public var openDataPrivacy: (@MainActor () -> Void)?
 
+    /// UI v2 fidelity F3b: the empty page's "Try a Test Dictation" (Window.dc
+    /// `historyEmpty`); the shell opens Home's test sheet. Nil hides the
+    /// button.
+    @ObservationIgnored public var startTestDictation: (@MainActor () -> Void)?
+
     /// The typing speed the "Time saved" tile assumes.  Stated in the footer.
-    public static let assumedTypingWordsPerMinute = 40
+    public nonisolated static let assumedTypingWordsPerMinute = 40
 
     /// The coordinator projection and the intent door.
     public let host: SettingsProjectionHost
@@ -190,7 +229,7 @@ public final class HistoryViewModel {
     /// The repository filter for the current controls.  Dates are resolved
     /// here so the repository never needs a clock.
     public var currentFilter: HistoryFilter {
-        HistoryFilter(timeRange: timeRange, durationBucket: durationBucket, query: searchText, now: now())
+        HistoryFilter(timeRange: timeRange, durationBucket: durationBucket, query: searchText, onlyWithAI: onlyWithAI, now: now())
     }
 
     public var isFiltered: Bool {
@@ -254,6 +293,26 @@ public final class HistoryViewModel {
     public var selectedEntry: HistoryEntry? {
         guard let selectedEntryID else { return nil }
         return entries.first { $0.id == selectedEntryID }
+    }
+
+    /// UI v2 fidelity F3b: which whole-page empty card History shows
+    /// instead of the list (Window.dc `historyEmpty` / `historyOff`) — only
+    /// when nothing at all is saved; an empty *filtered* result keeps the
+    /// list with its "No Matching Items" note.
+    public var emptyState: HistoryEmptyState? {
+        guard loadState == .empty, entries.isEmpty, !isShowingSearchResults, !isFiltered else { return nil }
+        return historyEnabled ? .noHistory : .savingOff
+    }
+
+    /// The drawn list's ↑ / ↓: the entry `step` rows away, clamped at both
+    /// ends; the first entry when nothing is selected.
+    public func selectNeighbour(step: Int) {
+        guard !entries.isEmpty else { return }
+        guard let current = selectedEntryID, let index = entries.firstIndex(where: { $0.id == current }) else {
+            selectedEntryID = step < 0 ? entries.last?.id : entries.first?.id
+            return
+        }
+        selectedEntryID = entries[min(max(index + step, 0), entries.count - 1)].id
     }
 
     public func loadIfNeeded() async {
@@ -332,6 +391,7 @@ public final class HistoryViewModel {
         searchText = ""
         timeRange = .all
         durationBucket = nil
+        onlyWithAI = false
         await load()
     }
 
@@ -390,14 +450,43 @@ public final class HistoryViewModel {
 
     public var dashboard: Dashboard {
         guard let statistics else { return .empty }
+        return Dashboard(statistics: statistics)
+    }
+
+    // MARK: Home (UI v2 wave 5a)
+
+    /// The Home page's figures and newest rows, read straight from the
+    /// repository — never from `entries`/`statistics`, which follow the
+    /// History page's filters. Nil until `refreshHome()` first finishes.
+    public private(set) var home: HomeSummary?
+
+    /// Reads today's and this week's aggregates and the newest rows for the
+    /// Home page. Only counts and the newest rows' text are read; the text
+    /// stays in this view model.
+    public func refreshHome(recentLimit: Int = 4, calendar: Calendar = .current) async {
+        let window = HomeSummary.Window(now: now(), calendar: calendar)
+        let today = (try? await repository.statistics(matching: HistoryFilter(since: window.startOfToday))) ?? .empty
+        let week = (try? await repository.statistics(matching: HistoryFilter(since: window.startOfWeek))) ?? .empty
+        let recent = (try? await repository.entries(matching: .all, before: nil, limit: max(1, recentLimit))) ?? []
+        let next = HomeSummary(today: today, week: week, recent: recent)
+        if home != next { home = next }
+    }
+
+    public var currentDate: Date { now() }
+}
+
+extension HistoryViewModel.Dashboard {
+    /// The one place the derived figures are computed, so History's strip
+    /// and Home's tiles can never disagree.
+    public init(statistics: HistoryStatistics) {
         let minutes = Double(statistics.recordingMilliseconds) / 60_000
         let wordsPerMinute: Double? = minutes > 0 ? Double(statistics.wordCount) / minutes : nil
         let averageAI: Int? = statistics.aiSessionCount > 0
             ? statistics.aiMilliseconds / statistics.aiSessionCount
             : nil
-        let typingSeconds = Double(statistics.wordCount) / Double(Self.assumedTypingWordsPerMinute) * 60
+        let typingSeconds = Double(statistics.wordCount) / Double(HistoryViewModel.assumedTypingWordsPerMinute) * 60
         let recordingSeconds = Double(statistics.recordingMilliseconds) / 1_000
-        return Dashboard(
+        self.init(
             sessions: statistics.sessionCount,
             words: statistics.wordCount,
             wordsPerMinute: wordsPerMinute,
@@ -406,6 +495,9 @@ public final class HistoryViewModel {
             timeSavedSeconds: max(0, typingSeconds - recordingSeconds)
         )
     }
+}
+
+extension HistoryViewModel {
 
     // MARK: Deletion
 

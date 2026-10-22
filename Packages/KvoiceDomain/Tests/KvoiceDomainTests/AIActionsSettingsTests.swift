@@ -16,6 +16,43 @@ final class AIActionsSettingsTests: XCTestCase {
 
     // MARK: Master switch
 
+    /// UI v2 fidelity F1 / Q2b: the panel's action chip, picked while AI is
+    /// off, sets the default action and turns AI on in one value, and that
+    /// value survives a backup round trip; with nothing to run it the pick
+    /// is refused (nil) and the stored settings are untouched.
+    func testPickingAnActionChipWhileOffEnablesItInOneValue() throws {
+        var settings = configured(isEnabled: false)
+        settings.seedBuiltInPromptModesIfNeeded()
+        let translate = try XCTUnwrap(settings.promptModes.first { $0.behavior == .translate })
+
+        let picked = try XCTUnwrap(settings.enablingAction(translate))
+        XCTAssertTrue(picked.isEnabled)
+        XCTAssertEqual(picked.activePromptModeID, translate.id)
+        XCTAssertEqual(picked.mode, .translate)
+        XCTAssertEqual(picked.baseURL, settings.baseURL, "nothing else changes")
+        XCTAssertFalse(settings.isEnabled, "a value, not a mutation")
+
+        var app = AppSettings()
+        app.ai = picked
+        let envelope = SettingsBackupEnvelope(appVersion: "1", exportedAt: Date(timeIntervalSince1970: 0), settings: app)
+        let reloaded = try SettingsBackupCoding.decode(SettingsBackupCoding.encode(envelope)).settings.ai
+        XCTAssertTrue(reloaded.isEnabled)
+        XCTAssertEqual(reloaded.activePromptModeID, translate.id)
+        XCTAssertEqual(reloaded.mode, .translate)
+
+        // Already on: the pick only switches the action.
+        let polish = try XCTUnwrap(settings.promptModes.first { $0.behavior == .polish })
+        let switched = try XCTUnwrap(picked.enablingAction(polish))
+        XCTAssertEqual(switched.activePromptModeID, polish.id)
+        XCTAssertTrue(switched.isEnabled)
+
+        // Nothing can run it: refused.
+        var unconfigured = AIEndpointSettings()
+        unconfigured.seedBuiltInPromptModesIfNeeded()
+        let first = try XCTUnwrap(unconfigured.promptModes.first)
+        XCTAssertNil(unconfigured.enablingAction(first))
+    }
+
     func testModeIsDerivedFromTheSwitchTheDefaultActionAndTheEndpoint() {
         var settings = configured()
         XCTAssertFalse(settings.isEnabled)
@@ -304,5 +341,23 @@ final class AIActionsSettingsTests: XCTestCase {
         context.clipboardText = "\n"
         XCTAssertNil(context.clipboardText)
         XCTAssertTrue(context.isEmpty)
+    }
+}
+
+// MARK: - UI v2 fidelity F3b: where a configuration runs
+
+final class AIConfigurationPlacementTests: XCTestCase {
+    func testThisMacIsDecidedByTheHostNotTheKind() {
+        XCTAssertTrue(AIConfiguration.preset(.ollama).runsOnThisMac)
+        XCTAssertTrue(AIConfiguration(name: "Apple", kind: .appleIntelligence).runsOnThisMac)
+        XCTAssertTrue(AIConfiguration(name: "LM Studio", kind: .custom, baseURL: URL(string: "http://127.0.0.1:1234/v1")).runsOnThisMac)
+        XCTAssertTrue(AIConfiguration(name: "v6", kind: .custom, baseURL: URL(string: "http://[::1]:8080/v1")).runsOnThisMac)
+        XCTAssertTrue(AIConfiguration(name: "Upper", kind: .custom, baseURL: URL(string: "http://LOCALHOST:8080/v1")).runsOnThisMac)
+
+        XCTAssertFalse(AIConfiguration(name: "Remote Ollama", kind: .ollama, baseURL: URL(string: "https://gpu.example.com/v1")).runsOnThisMac)
+        XCTAssertFalse(AIConfiguration.preset(.openAI).runsOnThisMac)
+        XCTAssertFalse(AIConfiguration(name: "PCC", kind: .privateCloudCompute).runsOnThisMac)
+        XCTAssertFalse(AIConfiguration(name: "Empty", kind: .custom, baseURL: nil).runsOnThisMac)
+        XCTAssertFalse(AIConfiguration(name: "Lookalike", kind: .custom, baseURL: URL(string: "https://localhost.example.com/v1")).runsOnThisMac)
     }
 }

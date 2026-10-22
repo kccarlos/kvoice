@@ -180,6 +180,12 @@ public actor DictationController {
         public let finishingCount: Int
         /// ADR-022 item 7: see `DictationController.overlapPausedReason`.
         public let overlapPausedReason: OverlapPauseReason?
+        /// UI v2 fidelity F1: the focused job's target app as the system
+        /// names it ("Notes"), for the status panel's "38 words → Notes"
+        /// and "Press ⌘V in Terminal to paste". Display only: it lives in
+        /// memory with the job and is never written to history (J.5 keeps
+        /// a role class there) or to diagnostics (scalars only).
+        public let targetApplicationName: String?
     }
 
     private var snapshotContinuations: [UUID: AsyncStream<Snapshot>.Continuation] = [:]
@@ -201,7 +207,8 @@ public actor DictationController {
             canRecoverFailedInsertion: recoveryRunner != nil,
             captureStarted: focused.map { $0.state.kind == .recording && $0.captureStarted } ?? false,
             finishingCount: finishingCount,
-            overlapPausedReason: overlapPausedReason
+            overlapPausedReason: overlapPausedReason,
+            targetApplicationName: focused?.job?.target?.localizedName
         )
     }
 

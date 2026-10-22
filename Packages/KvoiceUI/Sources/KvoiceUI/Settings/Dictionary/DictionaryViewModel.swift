@@ -44,6 +44,14 @@ public struct DictionaryTokenUsage: Sendable, Equatable {
     public var isNearBudget: Bool { fraction >= Self.warningFraction }
     public var isOverBudget: Bool { count > budget.budget }
 
+    /// UI v2 fidelity F3b (Window.dc "What the model sees"): "38 of 224"
+    /// or "≈ 38 of 224".
+    public var figure: String {
+        isExact
+            ? String(localized: "\(count) of \(budget.budget)", bundle: .module)
+            : String(localized: "≈ \(count) of \(budget.budget)", bundle: .module)
+    }
+
     /// "137 / 201 tokens" or "≈ 137 / 201 tokens".
     public var label: String {
         isExact
@@ -223,6 +231,39 @@ public final class DictionaryViewModel {
         candidate[index] = term
         guard await fits(candidate, adding: 0) else { return false }
         return await commit(candidate)
+    }
+
+    // MARK: In-place chip editing (UI v2 fidelity F3b)
+
+    /// The chip being edited in place, if any. The chip list replaced the
+    /// table, whose cells were editable; Return / double-click / the Edit
+    /// action open one chip's field.
+    public private(set) var editingID: DictionaryEntry.ID?
+    /// The edited chip's text, committed by `commitEditing()`.
+    public var editingText = ""
+
+    public func beginEditing(_ id: DictionaryEntry.ID) {
+        guard let entry = entries.first(where: { $0.id == id }) else { return }
+        editingID = id
+        editingText = entry.term
+    }
+
+    /// Escape: leaves the stored term as it was.
+    public func cancelEditing() {
+        editingID = nil
+        editingText = ""
+    }
+
+    /// Return or focus loss: `update(id:term:)` with the edited text. A
+    /// refused edit (duplicate, over the budget) keeps the field open with
+    /// the reason in `message`; an emptied chip is removed. Returns whether
+    /// the edit ended.
+    @discardableResult
+    public func commitEditing() async -> Bool {
+        guard let id = editingID else { return true }
+        guard await update(id: id, term: editingText) else { return false }
+        cancelEditing()
+        return true
     }
 
     public func remove(ids: Set<DictionaryEntry.ID>) async {

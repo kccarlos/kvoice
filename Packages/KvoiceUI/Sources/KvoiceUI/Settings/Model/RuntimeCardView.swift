@@ -15,7 +15,7 @@ struct RuntimeCardView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
-        Section {
+        KVCardSection {
             if !viewModel.isAvailable {
                 Text(viewModel.controlsDisabledReason ?? String(localized: "The speech runtime is not connected in this build.", bundle: .module))
                     .font(.callout)
@@ -42,7 +42,7 @@ struct RuntimeCardView: View {
             Text("Placement is Core ML's plan for where each operation runs, not a measurement. Apple Neural Engine load has no public counter; use Placement and the performance test.")
         }
         // The sampling loop is attached to the Form in `ModelSettingsView`
-        // (a modifier on a Section applies to every row).
+        // (a modifier on a section applies to every row).
     }
 
     // MARK: Memory pressure
@@ -265,7 +265,8 @@ struct RuntimeCardView: View {
                 .frame(width: 48, alignment: .trailing)
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(title) \(caption)")
+        .accessibilityLabel(Text(title))
+        .accessibilityValue(Text(verbatim: caption))
         .animation(reduceMotion ? nil : .linear(duration: 0.2), value: series.count)
     }
 }

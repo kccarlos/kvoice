@@ -110,6 +110,57 @@ final class SpeechModelsViewModelTests: XCTestCase {
         XCTAssertEqual(model.filteredCards.map(\.id), ["standard", "high", "qwen"])
     }
 
+    /// UI v2 wave 4: the design's "pick by what you dictate" filters read
+    /// the catalog entry alone.
+    func testLanguageAndLiveTextFiltersReadTheCatalogEntry() {
+        let batchOnlyEuropean = SpeechModelCatalogEntry(
+            id: "tdt", displayName: "Parakeet TDT", variantName: "v3",
+            family: "parakeet-tdt", runtime: .fluidAudioParakeetTDT, hosting: .onDevice,
+            supportsStreaming: false, supportsBatch: true, downloadBytes: 1,
+            languageCodes: ["en", "de", "fr"], languageSummary: "25 European languages", summary: "", isRecommended: false,
+            revision: "rev", manifestResource: "tdt", manifestSHA256: String(repeating: "d", count: 64)
+        )
+        let mandarin = SpeechModelCatalogEntry(
+            id: "para", displayName: "Paraformer", variantName: "zh",
+            family: "paraformer", runtime: .fluidAudioParakeetTDT, hosting: .onDevice,
+            supportsStreaming: false, supportsBatch: true, downloadBytes: 1,
+            languageCodes: ["zh"], languageSummary: "Mandarin", summary: "", isRecommended: false,
+            revision: "rev", manifestResource: "para", manifestSHA256: String(repeating: "e", count: 64)
+        )
+        // No language codes: Whisper's list, which has all three groups.
+        XCTAssertTrue(ModelCardFilter.chinese.matches(standard))
+        XCTAssertTrue(ModelCardFilter.english.matches(standard))
+        XCTAssertTrue(ModelCardFilter.european.matches(standard))
+        XCTAssertTrue(ModelCardFilter.liveText.matches(standard))
+
+        XCTAssertFalse(ModelCardFilter.chinese.matches(batchOnlyEuropean))
+        XCTAssertTrue(ModelCardFilter.english.matches(batchOnlyEuropean))
+        XCTAssertTrue(ModelCardFilter.european.matches(batchOnlyEuropean))
+        XCTAssertFalse(ModelCardFilter.liveText.matches(batchOnlyEuropean), "batch only")
+
+        XCTAssertTrue(ModelCardFilter.chinese.matches(mandarin))
+        XCTAssertFalse(ModelCardFilter.english.matches(mandarin))
+        XCTAssertFalse(ModelCardFilter.european.matches(mandarin), "English does not count as European")
+
+        XCTAssertFalse(ModelCardFilter.europeanLanguageCodes.contains("en"))
+        for filter in ModelCardFilter.allCases {
+            XCTAssertFalse(filter.title.isEmpty)
+        }
+    }
+
+    func testLanguageFiltersNarrowTheCardsWithoutFallingBack() {
+        let model = SpeechModelsViewModel(snapshot: snapshot(
+            states: ["standard": .absent, "high": .absent],
+            defaultID: "standard"
+        ))
+        model.filter = .chinese
+        XCTAssertEqual(model.filteredCards.map(\.id), ["standard", "high", "qwen"])
+        model.filter = .european
+        XCTAssertEqual(model.filteredCards.map(\.id), ["standard", "high"], "Qwen is zh/en only")
+        model.filter = .liveText
+        XCTAssertEqual(model.filteredCards.map(\.id), ["standard", "high", "qwen"])
+    }
+
     func testLifecycleActionsForwardToTheShellAndStayPendingUntilStateMoves() async {
         let recorder = ActionRecorder()
         let model = SpeechModelsViewModel(

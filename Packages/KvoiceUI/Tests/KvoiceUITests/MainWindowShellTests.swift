@@ -13,10 +13,10 @@ final class MainWindowShellTests: XCTestCase {
         XCTAssertEqual(
             MainWindowSection.allCases,
             [
-                .shortcuts, .recording, .models, .dictionary, .audioInput,
+                .home, .history,
+                .shortcuts, .recording, .models, .audioInput, .dictionary,
                 .aiActions,
-                .history, .dataPrivacy,
-                .general, .permissions, .help
+                .dataPrivacy, .permissions, .general, .help
             ]
         )
         for section in MainWindowSection.allCases {
@@ -32,22 +32,26 @@ final class MainWindowShellTests: XCTestCase {
     }
 
     func testSidebarGroupsPartitionTheSectionsInOrder() {
-        XCTAssertEqual(MainWindowSectionGroup.allCases, [.dictation, .ai, .data, .app])
-        XCTAssertEqual(MainWindowSectionGroup.dictation.sections, [.shortcuts, .recording, .models, .dictionary, .audioInput])
+        // Product decision #7 as regrouped by the owner on 2026-10-21 (UI
+        // v2 wave 5a). Help is kept, last in App: the design drew no Help
+        // row, and no page may be lost.
+        XCTAssertEqual(MainWindowSectionGroup.allCases, [.top, .dictation, .ai, .app])
+        XCTAssertEqual(MainWindowSectionGroup.top.sections, [.home, .history])
+        XCTAssertEqual(MainWindowSectionGroup.dictation.sections, [.shortcuts, .recording, .models, .audioInput, .dictionary])
         XCTAssertEqual(MainWindowSectionGroup.ai.sections, [.aiActions])
-        XCTAssertEqual(MainWindowSectionGroup.data.sections, [.history, .dataPrivacy])
-        XCTAssertEqual(MainWindowSectionGroup.app.sections, [.general, .permissions, .help])
+        XCTAssertEqual(MainWindowSectionGroup.app.sections, [.dataPrivacy, .permissions, .general, .help])
+        XCTAssertNil(MainWindowSectionGroup.top.title, "the top group is drawn without a heading")
         // Every section belongs to exactly one group, and the groups
         // concatenated are the sidebar order.
         XCTAssertEqual(MainWindowSectionGroup.allCases.flatMap(\.sections), MainWindowSection.allCases)
-        for group in MainWindowSectionGroup.allCases {
-            XCTAssertFalse(group.title.isEmpty)
+        for group in MainWindowSectionGroup.allCases where group != .top {
+            XCTAssertFalse(group.title?.isEmpty ?? true, group.rawValue)
         }
     }
 
-    func testPersistedSectionFallsBackToHistoryForNilOrUnknownValues() {
-        XCTAssertEqual(MainWindowSection(persisted: nil), .history)
-        XCTAssertEqual(MainWindowSection(persisted: "not-a-section"), .history)
+    func testPersistedSectionFallsBackToHomeForNilOrUnknownValues() {
+        XCTAssertEqual(MainWindowSection(persisted: nil), .home)
+        XCTAssertEqual(MainWindowSection(persisted: "not-a-section"), .home)
         XCTAssertEqual(MainWindowSection(persisted: "help"), .help)
         XCTAssertEqual(MainWindowSection(persisted: MainWindowSection.aiActions.rawValue), .aiActions)
     }
@@ -65,6 +69,16 @@ final class MainWindowShellTests: XCTestCase {
         for retired in MainWindowSection.retiredRawValues.keys {
             XCTAssertNil(MainWindowSection(rawValue: retired), retired)
         }
+    }
+
+    /// Owner decision 2026-10-21: a new window opens on Home unless an entry
+    /// point (a menu item, the panel, an App Intent) asked for a page.
+    func testANewWindowOpensOnHomeUnlessAPageWasRequested() {
+        XCTAssertEqual(MainWindowSection.opening(requested: nil), .home)
+        XCTAssertEqual(MainWindowSection.opening(requested: .history), .history)
+        XCTAssertEqual(MainWindowSection.opening(requested: .help), .help)
+        XCTAssertEqual(MainWindowSection.home.tileFill, .ink)
+        XCTAssertEqual(MainWindowSection.home.group, .top)
     }
 
     func testSelectionChangeIsReportedOnceAndOnlyWhenItChanges() {
@@ -233,5 +247,56 @@ final class MainWindowShellTests: XCTestCase {
         XCTAssertNotNil(GeneralSectionView())
         XCTAssertNotNil(DataPrivacySectionView(history: HistoryViewModel(repository: TestHistoryRepository())))
         XCTAssertNotNil(MainWindowView(model: MainWindowModel()) { _ in AnyView(EmptyView()) })
+    }
+}
+
+/// UI v2 wave 4: the sidebar's icon tiles and readiness pill.
+@MainActor
+final class MainWindowUIv2Tests: XCTestCase {
+    func testEverySectionTileCarriesTheDesignsMeaning() {
+        let expected: [MainWindowSection: KVColorToken] = [
+            .home: .ink, .history: .ink,
+            .recording: .voice, .models: .voice, .audioInput: .voice,
+            .dictionary: .cursor, .aiActions: .cursor,
+            .dataPrivacy: .ok, .permissions: .ok,
+            .shortcuts: .grey, .general: .grey, .help: .grey
+        ]
+        XCTAssertEqual(Set(expected.keys), Set(MainWindowSection.allCases), "every section has a tile")
+        for section in MainWindowSection.allCases {
+            XCTAssertEqual(section.tileFill, expected[section], section.rawValue)
+        }
+    }
+
+    func testGreyTokenIsTheDesignsTileGrey() {
+        XCTAssertEqual(KVColorToken.grey.hex.light, 0x8A8A93)
+        XCTAssertEqual(KVColorToken.grey.hex.dark, 0x6E6E78)
+    }
+
+    func testReadinessProjectsTheShellSummaryAndShortcut() {
+        let ready = MainWindowReadiness(statusTitle: "Ready", isBlocked: false, shortcutGlyphs: "⌃⇧Space")
+        XCTAssertEqual(ready.title, "Ready")
+        XCTAssertFalse(ready.needsAttention)
+        XCTAssertEqual(ready.tone, .ok)
+        XCTAssertEqual(ready.shortcutKeys, ["⌃", "⇧", "Space"])
+        XCTAssertEqual(ready.accessibilityLabel, "Ready. Shortcut ⌃⇧Space")
+
+        let blocked = MainWindowReadiness(statusTitle: "Microphone denied", isBlocked: true, shortcutGlyphs: nil)
+        XCTAssertTrue(blocked.needsAttention)
+        XCTAssertEqual(blocked.tone, .warn)
+        XCTAssertEqual(blocked.shortcutKeys, [])
+        XCTAssertEqual(blocked.accessibilityLabel, "Microphone denied", "no shortcut, no trailing words")
+    }
+
+    func testReadinessStartsEmptyAndIsSetByTheShell() {
+        let model = MainWindowModel()
+        XCTAssertNil(model.readiness, "no pill until the shell's first update")
+        model.readiness = .preview
+        XCTAssertEqual(model.readiness, .preview)
+    }
+
+    func testStatusToneMapsOntoTheDesignTones() {
+        XCTAssertEqual(StatusTone.positive.kvTone, .ok)
+        XCTAssertEqual(StatusTone.attention.kvTone, .warn)
+        XCTAssertEqual(StatusTone.neutral.kvTone, .neutral)
     }
 }

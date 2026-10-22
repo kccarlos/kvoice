@@ -23,6 +23,17 @@ final class ModelSettingsViewModelTests: XCTestCase {
         InstalledModelSummary(modelID: "whisper-large-v3-turbo", revision: "abc", ownership: .managedByKvoice)
     }
 
+    /// Q2: "Runtime…" in the page header did nothing; its closure now
+    /// opens the sheet through the view model.
+    func testTheHeaderRuntimeButtonOpensTheRuntimeSheet() {
+        let model = ModelSettingsViewModel(state: .absent)
+        XCTAssertFalse(model.isShowingRuntimeDetails)
+        let action = ModelSettingsView.runtimeHeaderAction(model)
+        XCTAssertEqual(action.kind, .runtimeDetails)
+        action.perform()
+        XCTAssertTrue(model.isShowingRuntimeDetails)
+    }
+
     func testAbsentOffersDownloadAndChooseExisting() {
         let model = ModelSettingsViewModel(state: .absent)
         XCTAssertEqual(model.availableActions, [.download, .chooseExisting])

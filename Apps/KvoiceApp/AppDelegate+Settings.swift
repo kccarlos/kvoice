@@ -1,6 +1,7 @@
 import AppKit
 import KvoiceAppCore
 import KvoiceDomain
+import KvoiceHotkeys
 import KvoiceUI
 
 /// Loading settings, the change handlers that remain, and shortcut
@@ -225,10 +226,25 @@ extension AppDelegate {
         } catch {
             shortcutError = error.localizedDescription
             composition.onboardingViewModel.setShortcutRegistrationState(
-                composition.shortcutAdapter.registrationState
+                composition.shortcutAdapter.registrationState,
+                problem: Self.registrationProblem(for: error)
             )
         }
         updateMenu(for: latestState)
+    }
+
+    /// The hotkey adapter's reason, without its type, for the wizard's
+    /// localized conflict sentence (UI v2 fidelity F4).
+    static func registrationProblem(for error: Error) -> ShortcutRegistrationProblem {
+        guard let error = error as? HotkeyAdapterError else { return .other }
+        switch error {
+        case .systemConflict: return .takenBySystem
+        case .applicationConflict: return .takenByMenu
+        case .accessibilityRequired: return .needsAccessibility
+        case .unavailableInAppStoreEdition: return .unavailableInEdition
+        case .busy: return .busy
+        case .unsupportedKey, .unsupportedModifier, .registrationFailed: return .other
+        }
     }
 
     func receiveShortcut(

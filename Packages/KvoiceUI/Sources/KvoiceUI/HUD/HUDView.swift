@@ -13,42 +13,62 @@ public struct HUDRecoveryActions: Sendable {
     }
 }
 
-/// SwiftUI content hosted by `HUDPanel`.  It has no buttons or focusable
+/// SwiftUI content hosted by `HUDPanel`. It has no buttons or focusable
 /// controls during dictation, so the target application remains interactive.
-/// The one exception is the failure that keeps the transcript: it shows the
-/// Copy / Insert Again buttons (ADR-022 item 6), which work on a mouse click
-/// in the non-activating panel without ever making it key.
+/// Two states take a click, never making the panel key: the failure that
+/// keeps the transcript (Copy / Insert Again, ADR-022 item 6) and Model
+/// unavailable's "Open Speech Models to reinstall" link (UI v2 fidelity F5).
 ///
-/// Two recorder styles (ADR-021) render the same `HUDViewState`:
+/// UI v2 recorder (`Recorder.dc.html`): one glyph, one title, one subtitle,
+/// one trailing signal. Orange (`kv.voice`) while it listens, blue
+/// (`kv.cursor`) while it makes text, amber (`kv.warn`) when it needs the
+/// user, red (`kv.err`) when it failed. Two recorder styles (ADR-021) render
+/// the same `HUDViewState`:
 ///
-/// - **Mini** (D.3's original): a floating material pill. Geometry is
-///   deliberately stable across phases — a fixed panel width, a fixed symbol
-///   slot, a detail area that reserves two lines, and a fixed trailing slot
-///   that holds either the recording meter and clock or the activity
-///   indicator — so recording → finalizing → transcribing → inserted swap
-///   content in place instead of resizing the panel on every transition.
-/// - **Notch**: a dark shape hanging from the menu bar under the camera
-///   housing (`HUDPlacement`), one row tall: the AI indicator and action name
-///   at the leading edge, the phase title in the middle, the meter and clock
-///   at the trailing edge. Its width is given by the controller so it always
-///   clears the housing.
+/// - **Mini**: a 316 × 54 capsule on the opaque `kv.hud` surface; a rounded
+///   rectangle (radius 18) once it carries live text or a kept transcript.
+/// - **Notch**: an opaque black shape hanging from the menu bar under the
+///   camera housing (`HUDPlacement`), always dark, 380 × 44 (62 with live
+///   text), widened by the controller past a wider housing.
 ///
-/// The one state allowed to grow, in either style, is the recoverable-
-/// transcript failure, which falls back to the mini layout because the
-/// transcript must be selectable; `HUDController.effectiveStyle` gives it
-/// Mini placement as well, so content and geometry never disagree.
+/// Motion (`Motion.dc.html` § 1·2·3, 4·6, 5, 7): the pill springs in (scale
+/// .92 → 1 and a 6 pt rise) and drops back out; the notch grows out of the
+/// housing (width 190 → full, height 0 → full) and its content fades in
+/// 120 ms later. Everything animates inside the panel's fixed frame — the
+/// `NSPanel` frame never animates. The glyph morphs (`HUDGlyphView`), the
+/// meter follows `KVLevelFollower` and folds into the glyph on release, the
+/// clock's digits roll, live words sharpen in (`HUDLiveWords`). Reduce
+/// Motion: 150 ms cross-fades, nothing moves or scales, colours still change.
+///
+/// The recoverable-transcript failure falls back to the Mini layout in
+/// either style because the transcript must be selectable;
+/// `HUDController.effectiveStyle` gives it Mini placement as well.
 public struct HUDView: View {
-    /// Width of every regular mini state. Wide enough for the longest D.4
-    /// title on one line at the headline size.
-    public static let panelWidth: CGFloat = 380
-    /// Width when a recoverable transcript is shown, the only wider state.
-    public static let recoveryPanelWidth: CGFloat = 480
-    public static let minimumPanelHeight: CGFloat = 72
-    /// The notch style's minimum width; `HUDPlacement.notchContentWidth`
-    /// widens it past the housing.
-    public static let notchPanelWidth: CGFloat = 360
+    /// Width of every Mini state, the kept transcript included (F5: the
+    /// design draws it 316 wide too).
+    public static let panelWidth: CGFloat = 316
+    public static let recoveryPanelWidth: CGFloat = 316
+    /// One row: the capsule's height.
+    public static let minimumPanelHeight: CGFloat = 54
+    /// The notch's design width; `HUDPlacement.notchContentWidth` widens it
+    /// past a wider housing.
+    public static let notchPanelWidth: CGFloat = 380
     public static let notchPanelHeight: CGFloat = 44
+    /// With a line of live text.
+    public static let notchLivePanelHeight: CGFloat = 62
     public static let notchCornerRadius: CGFloat = 18
+    /// The width the notch grows from (the design's collapsed shape).
+    static let notchCollapsedWidth: CGFloat = 190
+
+    /// How the view enters and leaves. `.still` (previews, renders) draws
+    /// the shown state without motion; the controller drives `.live`.
+    public enum Presentation: Equatable, Sendable {
+        case still
+        /// `id` changes on every appearance of the panel — a fresh content
+        /// tree, so a new job's glyph does not morph out of the last job's
+        /// check — and `shown` turns false for the exit.
+        case live(id: Int, shown: Bool)
+    }
 
     public let state: HUDViewState
     public let style: HUDStyle
@@ -58,137 +78,251 @@ public struct HUDView: View {
     /// The recovery buttons' handlers; nil renders the buttons disabled
     /// (previews, a shell that has not wired them).
     public let recoveryActions: HUDRecoveryActions?
-
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @Environment(\.colorSchemeContrast) private var contrast
+    /// Model unavailable's link; nil renders it as plain text.
+    public let openSpeechModels: (@MainActor @Sendable () -> Void)?
+    public let presentation: Presentation
+    /// Renders force Reduce Motion so stills are deterministic; nil reads
+    /// the environment.
+    public let reduceMotionOverride: Bool?
 
     public init(
         state: HUDViewState,
         style: HUDStyle = .mini,
         notchWidth: CGFloat? = nil,
-        recoveryActions: HUDRecoveryActions? = nil
+        recoveryActions: HUDRecoveryActions? = nil,
+        openSpeechModels: (@MainActor @Sendable () -> Void)? = nil,
+        presentation: Presentation = .still,
+        reduceMotionOverride: Bool? = nil
     ) {
         self.state = state
         self.style = style
         self.notchWidth = notchWidth
         self.recoveryActions = recoveryActions
+        self.openSpeechModels = openSpeechModels
+        self.presentation = presentation
+        self.reduceMotionOverride = reduceMotionOverride
     }
 
     public var body: some View {
+        HUDContent(view: self, shown: presentationShown, animatesEntrance: presentationAnimates)
+            .id(presentationID)
+    }
+
+    private var presentationID: Int {
+        if case .live(let id, _) = presentation { return id }
+        return 0
+    }
+
+    private var presentationShown: Bool {
+        if case .live(_, let shown) = presentation { return shown }
+        return true
+    }
+
+    private var presentationAnimates: Bool {
+        if case .live = presentation { return true }
+        return false
+    }
+
+    /// The same view with another presentation (the controller's exit).
+    func withPresentation(_ presentation: Presentation) -> HUDView {
+        HUDView(
+            state: state, style: style, notchWidth: notchWidth, recoveryActions: recoveryActions,
+            openSpeechModels: openSpeechModels, presentation: presentation,
+            reduceMotionOverride: reduceMotionOverride
+        )
+    }
+
+    /// The layout height of the notch for `state`.
+    public static func notchHeight(for state: HUDViewState) -> CGFloat {
+        if state.partialTranscript != nil { return notchLivePanelHeight }
+        // H5 keeps the instruction under the title from 4:30, so the long
+        // state carries a third line (the design draws only the hint).
+        if case .recording(let recording) = state.phase, recording.isLong { return notchLongPanelHeight }
+        return notchPanelHeight
+    }
+
+    /// The long-dictation notch: title, instruction and the amber hint.
+    public static let notchLongPanelHeight: CGFloat = 58
+}
+
+/// The body of `HUDView`, keyed by the presentation id so each appearance
+/// starts from a fresh tree (its `@State`: the entrance flag, the level
+/// follower, the glyph's morph).
+private struct HUDContent: View {
+    let view: HUDView
+    let shown: Bool
+    let animatesEntrance: Bool
+
+    @Environment(\.accessibilityReduceMotion) private var environmentReduceMotion
+    @Environment(\.colorSchemeContrast) private var contrast
+    @State private var appeared = false
+    @State private var follower = KVLevelFollower()
+
+    private var state: HUDViewState { view.state }
+    private var reduceMotion: Bool { view.reduceMotionOverride ?? environmentReduceMotion }
+    /// On screen and meant to be: entered, and not leaving.
+    private var visible: Bool { (appeared || !animatesEntrance) && shown }
+
+    var body: some View {
         Group {
-            if style == .notch, state.recoverableTranscript == nil {
+            if view.style == .notch, state.recoverableTranscript == nil {
                 notchBody
             } else {
                 miniBody
             }
         }
         // One VoiceOver element for the read-only phases; a container when
-        // the recovery buttons are present, so each button is reachable
-        // with its own label and hint.
-        .accessibilityElement(children: state.recoveryActions.isEmpty ? .ignore : .contain)
+        // a button or the link is present, so each is reachable with its
+        // own label and hint.
+        .accessibilityElement(children: takesClicks ? .contain : .ignore)
         .accessibilityLabel(Text(accessibilityLabel))
         .accessibilityValue(Text(accessibilityValue))
         .accessibilityAddTraits(.updatesFrequently)
-        // Normal HUD phases never intercept input. A failed clipboard
-        // fallback is the exception: the exact transcript must be selectable
-        // while this nonactivating warning remains onscreen.
-        .allowsHitTesting(state.recoverableTranscript != nil)
-        // Keyed on the phase kind, not the whole state, so a meter tick or
-        // clock tick during recording is not a cross-fade.
-        .animation(reduceMotion ? nil : .easeInOut(duration: 0.12), value: state.phase.kind)
+        // Normal HUD phases never intercept input; the kept transcript (to
+        // select it, and its buttons) and the Speech Models link do.
+        .allowsHitTesting(takesClicks)
+        .onAppear {
+            follower = KVLevelFollower(level: rawLevel)
+            // A fresh tree (new presentation id) draws once hidden, then
+            // enters on the next turn of the run loop.
+            guard animatesEntrance, !appeared else { return }
+            DispatchQueue.main.async { appeared = true }
+        }
+        .onChange(of: rawLevel) { _, raw in follower.follow(raw: raw, at: Date()) }
+    }
+
+    private var takesClicks: Bool {
+        state.recoverableTranscript != nil || state.offersSpeechModelsLink
+    }
+
+    private var rawLevel: Double {
+        guard let recording, recording.captureStarted else { return 0 }
+        return recording.inputLevel
+    }
+
+    private var recording: HUDRecordingState? {
+        if case .recording(let recording) = state.phase { return recording }
+        return nil
+    }
+
+    private var increasedContrast: Bool { contrast == .increased }
+
+    // MARK: Motion
+
+    /// Enter / exit for Mini: scale .92 → 1 with a 6 pt rise on the
+    /// design's spring, opacity with it; out: back to .92 and fade 180 ms.
+    /// Reduce Motion: a 150 ms fade only.
+    private var entranceSpring: Animation {
+        reduceMotion ? .easeInOut(duration: 0.15) : .spring(response: 0.34, dampingFraction: 0.78)
+    }
+
+    private var entranceFade: Animation {
+        reduceMotion ? .easeInOut(duration: 0.15) : (visible ? .easeOut(duration: 0.2) : .easeOut(duration: 0.18))
     }
 
     // MARK: Mini
 
+    private var miniIsTall: Bool {
+        state.partialTranscript != nil || state.recoverableTranscript != nil
+    }
+
     private var miniBody: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(alignment: .top, spacing: 12) {
-                symbol
+        let shape = HUDPillShape()
+        return VStack(alignment: .leading, spacing: 8) {
+            HStack(alignment: .center, spacing: 10) {
+                HUDGlyphView(glyph: state.glyph, diameter: 30, onNotch: false, level: follower.level, reduceMotion: reduceMotion)
 
-                VStack(alignment: .leading, spacing: 3) {
-                    HStack(alignment: .firstTextBaseline, spacing: 8) {
-                        Text(state.title)
-                            .font(.headline)
-                            .foregroundStyle(.primary)
-                            .lineLimit(1...2)
-                            .fixedSize(horizontal: false, vertical: true)
-                        if let ai = recordingAI {
-                            AIActionBadge(indicator: ai, onDark: false)
-                        }
-                        if let badge = state.finishingBadge {
-                            FinishingBadge(text: badge)
-                        }
+                VStack(alignment: .leading, spacing: 1) {
+                    HStack(alignment: .center, spacing: 6) {
+                        titleText(size: 13)
+                            .foregroundStyle(Color.kv.text)
+                        chips(onNotch: false)
                     }
-
-                    // Reserved even when empty so a state without a detail
-                    // line is the same height as one with it.
-                    Text(state.detail ?? " ")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(2...3)
-                        .fixedSize(horizontal: false, vertical: true)
+                    subtitleLines(onNotch: false)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
 
-                trailingSlot
+                trailingSlot(onNotch: false)
             }
+            // One row is the 54 pt capsule; a subtitle that wraps grows it
+            // with 8 pt to spare above and below.
+            .padding(.vertical, miniIsTall ? 0 : 8)
+            .frame(minHeight: miniIsTall ? 30 : Self.rowHeight, alignment: .center)
 
-            // ADR-017: live partial text of a streaming dictation. Present
-            // (possibly empty) from the moment streaming starts so the panel
-            // reserves the space once instead of growing on the first word;
-            // head-truncated so the newest words stay visible.
             if let partial = state.partialTranscript {
-                partialLine(partial, lines: 2)
+                HUDLiveWords(
+                    text: partial, fontSize: 13, lineHeight: 18.2, maxLines: 2,
+                    newest: Color.kv.text, older: Color.kv.text2, reduceMotion: reduceMotion
+                )
+                .padding(.leading, 40)
             }
 
             if let transcript = state.recoverableTranscript {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Transcript")
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(.secondary)
-                    ScrollView(.vertical) {
-                        Text(verbatim: transcript)
-                            .font(.body.monospaced())
-                            .textSelection(.enabled)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                    .frame(maxHeight: 220)
-                    .accessibilityLabel("Transcript to copy")
+                ScrollView(.vertical) {
+                    Text(verbatim: transcript)
+                        .font(.system(size: 12, design: .monospaced))
+                        .foregroundStyle(Color.kv.text)
+                        .lineSpacing(2)
+                        .textSelection(.enabled)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
+                .frame(maxHeight: 220)
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 8)
+                .background(Color.kv.wash, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                .accessibilityLabel(Text("Transcript to copy", bundle: .module))
             }
 
             if !state.recoveryActions.isEmpty {
                 recoveryButtons
             }
         }
-        .padding(.horizontal, 18)
-        .padding(.vertical, 13)
-        .frame(
-            width: state.recoverableTranscript == nil ? Self.panelWidth : Self.recoveryPanelWidth,
-            alignment: .leading
-        )
-        .frame(minHeight: Self.minimumPanelHeight, alignment: .leading)
-        .miniPillBackground(increasedContrast: increasedContrast)
+        .padding(.leading, 11)
+        .padding(.trailing, 14)
+        .padding(.top, miniIsTall ? 11 : 0)
+        .padding(.bottom, miniIsTall ? 12 : 0)
+        .frame(width: HUDView.panelWidth, alignment: .leading)
+        .frame(minHeight: HUDView.minimumPanelHeight, alignment: .center)
+        .background(Color.kv.hud, in: shape)
+        .overlay {
+            // The design's 0.5 pt hairline; the panel's own window shadow
+            // does the lift.
+            shape.strokeBorder(
+                increasedContrast ? Color.kv.text.opacity(0.6) : Color.kv.line,
+                lineWidth: increasedContrast ? 1 : 0.5
+            )
+        }
+        .animation(entranceSpring) { content in
+            content
+                .scaleEffect(visible || reduceMotion ? 1 : 0.92)
+                .offset(y: visible || reduceMotion ? 0 : 6)
+        }
+        .animation(entranceFade) { content in
+            content.opacity(visible ? 1 : 0)
+        }
     }
 
-    /// ADR-022 item 6. Bordered buttons at the trailing edge, Insert Again
-    /// as the prominent one because it is the recovery the user most
-    /// often wants. No key equivalents: the panel is never key, and
-    /// Escape (dismiss) is handled by the shell's monitor, not here.
+    static let rowHeight: CGFloat = 54
+
+    /// ADR-022 item 6. Trailing buttons, Insert Again as the prominent blue
+    /// one because it is the recovery the user most often wants. No key
+    /// equivalents: the panel is never key, and Escape (dismiss) is handled
+    /// by the shell's monitor, not here.
     private var recoveryButtons: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: 6) {
             Spacer(minLength: 0)
             ForEach(state.recoveryActions) { action in
                 Button {
-                    recoveryActions?.perform(action)
+                    view.recoveryActions?.perform(action)
                 } label: {
-                    Label(action.title, systemImage: action.symbolName)
+                    Text(action.title)
+                        .font(.system(size: 12, weight: action == .insertAgain ? .semibold : .regular))
                 }
-                .buttonStyle(.bordered)
+                .buttonStyle(HUDRecoveryButtonStyle(prominent: action == .insertAgain))
                 .controlSize(.small)
-                .tint(action == .insertAgain ? .accentColor : nil)
-                .disabled(recoveryActions == nil)
+                .disabled(view.recoveryActions == nil)
                 .accessibilityLabel(action.accessibilityLabel)
                 .accessibilityHint(action.accessibilityHint)
             }
@@ -200,178 +334,220 @@ public struct HUDView: View {
     /// Bottom corners only: the top edge sits flush against the menu bar.
     private var notchShape: UnevenRoundedRectangle {
         UnevenRoundedRectangle(
-            bottomLeadingRadius: Self.notchCornerRadius,
-            bottomTrailingRadius: Self.notchCornerRadius,
+            bottomLeadingRadius: HUDView.notchCornerRadius,
+            bottomTrailingRadius: HUDView.notchCornerRadius,
             style: .continuous
         )
     }
 
     private var notchBody: some View {
+        let width = view.notchWidth ?? HUDView.notchPanelWidth
+        let height = HUDView.notchHeight(for: state)
+        let grown = visible || reduceMotion
+        return ZStack(alignment: .top) {
+            // H2: opaque black is deliberate, not a placeholder material —
+            // the Notch style continues the camera housing it hangs under,
+            // and a HUD is allowed to not match the system appearance
+            // (`panels.md › HUD-style panels`). Do not "fix" this to a
+            // material; that was considered and rejected in the 2026-09-16
+            // design review (see `Docs/Architecture.md › The recorder HUD`).
+            notchShape
+                .fill(Color.black)
+                .overlay {
+                    notchShape.strokeBorder(Color.white.opacity(increasedContrast ? 0.5 : 0.14), lineWidth: 1)
+                }
+                // Motion § 1·2·3: grows out of the housing — width 380 ms,
+                // height 320 ms on the design's overshoot curve; back in
+                // without overshoot (a height cannot go below zero).
+                .animation(grown ? .timingCurve(0.34, 1.56, 0.64, 1, duration: 0.38) : .easeIn(duration: 0.2)) { shape in
+                    shape.frame(width: grown ? width : HUDView.notchCollapsedWidth)
+                }
+                .animation(grown ? .timingCurve(0.34, 1.56, 0.64, 1, duration: 0.32) : .easeIn(duration: 0.2)) { shape in
+                    shape.frame(height: grown ? height : 0)
+                }
+                .animation(reduceMotion ? .easeInOut(duration: 0.15) : nil) { shape in
+                    shape.opacity(reduceMotion ? (visible ? 1 : 0) : 1)
+                }
+
+            notchContent(width: width, height: height)
+                .animation(reduceMotion ? .easeInOut(duration: 0.15) : .easeOut(duration: 0.16).delay(visible ? 0.12 : 0)) { content in
+                    content.opacity(visible ? 1 : 0)
+                }
+        }
+        .frame(width: width, height: height, alignment: .top)
+        // Always dark: the kv tokens resolve to their dark values and
+        // `.primary` is white whatever the system appearance.
+        .environment(\.colorScheme, .dark)
+    }
+
+    private func notchContent(width: CGFloat, height: CGFloat) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(alignment: .center, spacing: 10) {
-                // Leading slot: the recording dot and the AI controls while
-                // recording, otherwise the phase symbol — same minimum width
-                // either way, so the title does not shift when recording
-                // ends.
-                Group {
-                    if let ai = recordingAI {
-                        HStack(spacing: 8) {
-                            symbol
-                            AIActionBadge(indicator: ai, onDark: true)
-                        }
-                    } else {
-                        symbol
-                    }
-                }
-                .frame(minWidth: 28, alignment: .leading)
+                HUDGlyphView(glyph: state.glyph, diameter: 24, onNotch: true, level: follower.level, reduceMotion: reduceMotion)
+                chips(onNotch: true)
 
                 VStack(alignment: .leading, spacing: 0) {
-                    HStack(alignment: .firstTextBaseline, spacing: 6) {
-                        Text(state.title)
-                            .font(.subheadline.weight(.semibold))
-                            .foregroundStyle(.primary)
-                            .lineLimit(1)
-                        if let badge = state.finishingBadge {
-                            FinishingBadge(text: badge)
-                        }
-                    }
-                    if let detail = state.detail, !detail.isEmpty {
-                        // H3: .caption2 sat at the 10 pt macOS floor; .subheadline
-                        // is 11 pt and still fits `notchPanelHeight` unchanged.
-                        Text(detail)
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                            .lineLimit(1)
-                    }
+                    titleText(size: 12)
+                        .foregroundStyle(Color.white)
+                    subtitleLines(onNotch: true)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
 
-                trailingSlot
+                trailingSlot(onNotch: true)
             }
 
             if let partial = state.partialTranscript {
-                partialLine(partial, lines: 1)
+                HUDLiveWords(
+                    text: partial, fontSize: 12, lineHeight: 15, maxLines: 1,
+                    newest: .white, older: .white, reduceMotion: reduceMotion
+                )
+                .padding(.leading, 34)
             }
         }
-        .padding(.horizontal, 16)
-        .padding(.top, 6)
-        .padding(.bottom, 9)
-        .frame(width: notchWidth ?? Self.notchPanelWidth, alignment: .leading)
-        .frame(minHeight: Self.notchPanelHeight, alignment: .top)
-        // H2: opaque black is deliberate, not a placeholder material — the
-        // Notch style continues the camera housing it hangs under, and a
-        // HUD is allowed to not match the system appearance
-        // (`panels.md › HUD-style panels`). Do not "fix" this to a
-        // material; that was considered and rejected in the 2026-09-16
-        // design review (see `Docs/Architecture.md › The recorder HUD`).
-        .background(Color.black, in: notchShape)
-        .overlay {
-            notchShape.strokeBorder(Color.white.opacity(increasedContrast ? 0.5 : 0.14), lineWidth: 1)
-        }
-        // Black background: fix the scheme so `.primary` is white whatever
-        // the system appearance.
-        .environment(\.colorScheme, .dark)
+        .padding(.leading, 12)
+        .padding(.trailing, 16)
+        .frame(width: width, height: height, alignment: .leading)
     }
 
     // MARK: Shared pieces
 
-    private var increasedContrast: Bool {
-        contrast == .increased
+    private func titleText(size: CGFloat) -> some View {
+        Text(state.title)
+            .font(.system(size: size, weight: .semibold))
+            .lineLimit(1)
+            .truncationMode(.tail)
+            .layoutPriority(1)
     }
 
-    fileprivate static let miniPillShape = RoundedRectangle(cornerRadius: 16, style: .continuous)
-
-    /// The AI indicator only while recording; nil for every other phase and
-    /// for a job that carries none (the onboarding test).
-    private var recordingAI: HUDAIIndicator? {
-        if case .recording(let recording) = state.phase {
-            return recording.ai
-        }
-        return nil
-    }
-
-    /// The phase symbol — except while recording, where the slot holds the
-    /// recording dot: hollow and pulsing until the first buffer with signal
-    /// ("Starting mic…"), solid once the recording is live (2026-09-16).
+    /// The AI action chip while recording (ADR-021), the action's badge
+    /// while polishing (F5) and the "1 finishing" badge (ADR-022 item 7).
+    /// `ModeChip`'s cursor-soft / cursor-ink resolve to the design's notch
+    /// literals (#1E2A45 / #8AB0FA) under the notch's dark scheme.
     @ViewBuilder
-    private var symbol: some View {
-        if case .recording(let recording) = state.phase {
-            RecordingDot(live: recording.captureStarted, reduceMotion: reduceMotion)
-                .frame(width: style == .notch ? 16 : 28, height: 28)
-                .accessibilityHidden(true)
-        } else {
-            Image(systemName: state.symbolName)
-                .font(.system(size: style == .notch ? 16 : 22, weight: .semibold))
-                .foregroundStyle(symbolColor)
-                .frame(width: 28, height: 28)
-                .accessibilityHidden(true)
+    private func chips(onNotch: Bool) -> some View {
+        if let ai = recording?.ai {
+            ModeChip(
+                text: ai.chipText,
+                symbolName: ai.chipSymbolName,
+                isActive: ai.isEnabled,
+                shortcut: ai.actionName == nil ? nil : ai.shortcutBadge
+            )
+            .frame(maxWidth: 140, alignment: .leading)
+            .fixedSize(horizontal: onNotch, vertical: false)
+        }
+        if let badge = state.processingBadge {
+            ModeChip(text: badge)
+                .frame(maxWidth: 120, alignment: .leading)
+                .fixedSize(horizontal: onNotch, vertical: false)
+        }
+        if let badge = state.finishingBadge {
+            ModeChip(text: badge).fixedSize()
         }
     }
 
-    private func partialLine(_ partial: String, lines: Int) -> some View {
-        Text(verbatim: partial.isEmpty ? " " : partial)
-            .font(style == .notch ? .caption : .callout)
-            .foregroundStyle(.primary)
-            .lineLimit(lines, reservesSpace: true)
-            .truncationMode(.head)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .privacySensitive()
-            // Announcing every revision would talk over the user;
-            // the outcome announcement carries the result.
-            .accessibilityHidden(true)
-    }
-
-    /// Meter and clock while recording, activity indicator while working,
-    /// otherwise empty — always the same width, so the text column does not
-    /// reflow between phases.
+    /// The instruction or outcome line. While recording: the instruction,
+    /// and from 4:30 the length hint on a line of its own in amber (the
+    /// instruction never disappears, H5 — the design drops it, see the F5
+    /// design problems). Otherwise `HUDViewState.subtitle`.
     @ViewBuilder
-    private var trailingSlot: some View {
-        Group {
-            if case .recording(let recording) = state.phase {
-                // Starting: every bar inactive and the clock dimmed at 0:00;
-                // the level and the clock only move once the recording is
-                // live (the controller holds both at zero until then).
-                HStack(spacing: 8) {
-                    Meter(level: recording.captureStarted ? recording.inputLevel : 0, reduceMotion: reduceMotion)
-                    Text(HUDViewState.formatElapsed(recording.captureStarted ? recording.elapsed : .zero))
-                        .font(.callout.monospacedDigit())
-                        .foregroundStyle(.secondary)
-                        .opacity(recording.captureStarted ? 1 : 0.45)
-                        .frame(minWidth: 36, alignment: .trailing)
+    private func subtitleLines(onNotch: Bool) -> some View {
+        let secondary = onNotch ? Self.notchText2 : Color.kv.text2
+        if let recording {
+            Text(recording.instruction)
+                .font(.system(size: 11))
+                .foregroundStyle(secondary)
+                .lineLimit(1)
+            if let hint = recording.lengthHint {
+                Text(hint)
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(onNotch ? Self.notchWarn : Color.kv.warnInk)
+                    .lineLimit(1)
+            }
+        } else if let subtitle = state.subtitle {
+            switch subtitle.style {
+            case .link:
+                Button {
+                    view.openSpeechModels?()
+                } label: {
+                    Text(subtitle.text)
+                        .font(.system(size: 11))
+                        .foregroundStyle(onNotch ? Self.notchLink : Color.kv.cursorInk)
+                        .lineLimit(1)
                 }
-            } else if state.showsActivityIndicator {
-                if reduceMotion {
-                    Image(systemName: "hourglass")
-                        .foregroundStyle(.secondary)
-                } else {
-                    ProgressView()
-                        .controlSize(.small)
-                }
-            } else {
-                Color.clear
+                .buttonStyle(.plain)
+                .disabled(view.openSpeechModels == nil)
+                .accessibilityLabel(subtitle.text)
+                .accessibilityHint(Text("Opens Speech Models in the KVoice window.", bundle: .module))
+            case .plain:
+                Text(subtitle.text)
+                    .font(.system(size: 11))
+                    .foregroundStyle(secondary)
+                    .lineLimit(subtitle.wraps && !onNotch ? 3 : 1)
+                    .truncationMode(.tail)
+                    .fixedSize(horizontal: false, vertical: subtitle.wraps && !onNotch)
             }
         }
-        .frame(width: 76, height: 28, alignment: .trailing)
-        .accessibilityHidden(true)
     }
 
-    private var symbolColor: Color {
-        switch state.symbolTone {
-        case .neutral: return .primary
-        case .accent: return .accentColor
-        case .secondary: return .secondary
-        case .success: return .green
-        case .warning: return .orange
-        case .fatal: return .red
+    static let notchText2 = Color(red: 163 / 255, green: 164 / 255, blue: 174 / 255)
+    static let notchWarn = Color(red: 1, green: 201 / 255, blue: 102 / 255)
+    static let notchLink = Color(red: 138 / 255, green: 176 / 255, blue: 250 / 255)
+
+    /// Meter and clock while recording. On release the bars fold into the
+    /// glyph (each slides 8·(i+1) pt left and flattens to .4 while fading,
+    /// 220 ms) and the clock fades.
+    @ViewBuilder
+    private func trailingSlot(onNotch: Bool) -> some View {
+        if let recording {
+            HStack(spacing: 10) {
+                HUDMeter(
+                    level: follower.level,
+                    live: recording.captureStarted,
+                    boxHeight: onNotch ? 18 : 22,
+                    onNotch: onNotch,
+                    reduceMotion: reduceMotion
+                )
+                clock(recording, onNotch: onNotch)
+            }
+            .fixedSize()
+            .accessibilityHidden(true)
+            .transition(reduceMotion ? .opacity.animation(.easeInOut(duration: 0.15)) : .asymmetric(
+                insertion: .opacity.animation(.easeOut(duration: 0.2)),
+                removal: AnyTransition.modifier(active: HUDMeterFold(active: true), identity: HUDMeterFold(active: false))
+                    .animation(.easeOut(duration: 0.22))
+            ))
         }
+    }
+
+    /// The clock (m:ss), whose digits roll (§ 7: numericText, 320 ms on
+    /// cubic-bezier(.34,1.4,.64,1)); dimmed at 0:00 while the mic starts;
+    /// amber from 4:30.
+    private func clock(_ recording: HUDRecordingState, onNotch: Bool) -> some View {
+        let text = HUDViewState.formatElapsed(recording.captureStarted ? recording.elapsed : .zero)
+        let color: Color = state.detailTone == .warn
+            ? (onNotch ? Self.notchWarn : Color.kv.warnInk)
+            : (onNotch ? Self.notchText2 : Color.kv.text2)
+        return Text(verbatim: text)
+            .font(KVFont.metric())
+            .foregroundStyle(color)
+            .contentTransition(reduceMotion ? .opacity : .numericText())
+            .animation(reduceMotion ? nil : .timingCurve(0.34, 1.4, 0.64, 1, duration: 0.32), value: text)
+            .opacity(recording.captureStarted ? 1 : 0.45)
+            .frame(minWidth: 34, alignment: .trailing)
     }
 
     private var accessibilityLabel: String {
         var label = state.accessibilityTitle
+        if let badge = state.processingBadge {
+            label += ", \(badge)"
+        }
         if let badge = state.finishingBadge {
             label += ", \(badge)"
         }
-        if let detail = state.detail, !detail.isEmpty {
+        if case .recording = state.phase, let detail = state.detail, !detail.isEmpty {
+            return "\(label). \(detail)"
+        }
+        if let detail = state.spokenDetail, !detail.isEmpty {
             return "\(label). \(detail)"
         }
         return label
@@ -391,270 +567,136 @@ public struct HUDView: View {
     }
 }
 
-/// ADR-022 item 7: "1 finishing" beside the title while an older job is
-/// still in post-processing behind the one shown. A capsule in the same
-/// caption weight as the AI badge; never a control.
-struct FinishingBadge: View {
-    let text: String
+/// The Mini outline: a capsule while the pill is one 54 pt row, a rounded
+/// rectangle with the design's 18 pt radius once it grows (live text, a
+/// kept transcript, a subtitle that wraps).
+struct HUDPillShape: InsettableShape {
+    var inset: CGFloat = 0
 
-    var body: some View {
-        Text(verbatim: text)
-            .font(.caption2.weight(.semibold))
-            .foregroundStyle(.secondary)
-            .padding(.horizontal, 6)
-            .padding(.vertical, 2)
-            .background(Color.secondary.opacity(0.18), in: Capsule())
-            .lineLimit(1)
-            .fixedSize()
-            .accessibilityHidden(true)
+    func path(in rect: CGRect) -> Path {
+        let box = rect.insetBy(dx: inset, dy: inset)
+        let radius = rect.height <= HUDView.minimumPanelHeight + 0.5 ? box.height / 2 : 18 - inset
+        return Path(roundedRect: box, cornerRadius: max(0, radius), style: .continuous)
+    }
+
+    func inset(by amount: CGFloat) -> HUDPillShape {
+        HUDPillShape(inset: inset + amount)
     }
 }
 
-/// ADR-021: the sparkles indicator plus the action name and its ⌘ badge.
-/// A plain label, not a control — the HUD never takes input; the keys are
-/// handled by the recording key monitor.
-private struct AIActionBadge: View {
-    let indicator: HUDAIIndicator
-    let onDark: Bool
+/// The recorder's five-bar meter (Motion § 1·2·3 / 4·6): 3 pt bars, 2 pt
+/// apart, at `4 + h·level·(box − 4)` pt for h = .45 .8 1 .7 .5 — live
+/// signal, so 70 ms linear. While the mic starts every bar is a 6 pt stub
+/// in `meter-off` (#4A4B55 on the notch).
+struct HUDMeter: View {
+    static let peaks: [CGFloat] = [0.45, 0.8, 1, 0.7, 0.5]
+
+    let level: Double
+    let live: Bool
+    let boxHeight: CGFloat
+    let onNotch: Bool
+    let reduceMotion: Bool
+    @Environment(\.hudMeterFolded) private var folded
+
+    static func barHeight(peak: CGFloat, level: Double, live: Bool, boxHeight: CGFloat) -> CGFloat {
+        guard live else { return 6 }
+        return 4 + peak * CGFloat(min(max(level, 0), 1)) * (boxHeight - 4)
+    }
 
     var body: some View {
-        HStack(spacing: 4) {
-            Image(systemName: indicator.symbolName)
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(indicator.isEnabled ? Color.accentColor : Color.secondary)
-            if let name = indicator.actionName {
-                Text(verbatim: name)
-                    .font(.caption.weight(.medium))
-                    .foregroundStyle(indicator.isEnabled ? .primary : .secondary)
-                    .lineLimit(1)
-                    .truncationMode(.tail)
-                    .frame(maxWidth: 120, alignment: .leading)
-            }
-            if let badge = indicator.shortcutBadge {
-                Text(verbatim: badge)
-                    .font(.caption2.monospacedDigit())
-                    .foregroundStyle(.secondary)
+        HStack(alignment: .center, spacing: 2) {
+            ForEach(Array(Self.peaks.enumerated()), id: \.offset) { index, peak in
+                Capsule(style: .continuous)
+                    .fill(color)
+                    .frame(width: 3, height: Self.barHeight(peak: peak, level: level, live: live, boxHeight: boxHeight))
+                    // The fold on release: into the glyph, flattened.
+                    .scaleEffect(x: 1, y: folded ? 0.4 : 1)
+                    .offset(x: folded ? -8 * CGFloat(index + 1) : 0)
             }
         }
-        .padding(.horizontal, 7)
-        .padding(.vertical, 3)
-        .background(
-            (onDark ? Color.white : Color.primary).opacity(0.1),
-            in: Capsule(style: .continuous)
-        )
+        .frame(height: boxHeight, alignment: .center)
+        .animation(reduceMotion ? nil : .linear(duration: 0.07), value: level)
+        .animation(.easeInOut(duration: 0.22), value: live)
         .accessibilityHidden(true)
+    }
+
+    private var color: Color {
+        if live { return onNotch ? HUDGlyphView.solid(.voice, onNotch: true) : Color.kv.voice }
+        return onNotch ? Color(red: 74 / 255, green: 75 / 255, blue: 85 / 255) : Color.kv.meterOff
+    }
+}
+
+/// The meter's removal on release (Motion § 1·2·3): the bars slide into
+/// the glyph and flatten (`HUDMeter` reads the flag) while the slot fades.
+private struct HUDMeterFold: ViewModifier {
+    let active: Bool
+
+    func body(content: Content) -> some View {
+        content
+            .environment(\.hudMeterFolded, active)
+            .opacity(active ? 0 : 1)
+    }
+}
+
+private struct HUDMeterFoldedKey: EnvironmentKey {
+    static let defaultValue = false
+}
+
+extension EnvironmentValues {
+    var hudMeterFolded: Bool {
+        get { self[HUDMeterFoldedKey.self] }
+        set { self[HUDMeterFoldedKey.self] = newValue }
+    }
+}
+
+/// Copy is a bordered `kv.surface` button; Insert Again the one blue
+/// (`kv.cursor`) button. Drawn here rather than with `.borderedProminent`,
+/// which greys out in a window that is not key — and the HUD panel never
+/// is.
+private struct HUDRecoveryButtonStyle: ButtonStyle {
+    let prominent: Bool
+    @Environment(\.isEnabled) private var isEnabled
+
+    func makeBody(configuration: Configuration) -> some View {
+        let shape = RoundedRectangle(cornerRadius: 7, style: .continuous)
+        configuration.label
+            .foregroundStyle(prominent ? Color.white : Color.kv.text)
+            .padding(.horizontal, 10)
+            .frame(height: 26)
+            .background(prominent ? Color.kv.cursor : Color.kv.surface, in: shape)
+            .overlay {
+                if !prominent {
+                    shape.strokeBorder(Color.kv.line, lineWidth: 1)
+                }
+            }
+            .opacity(isEnabled ? (configuration.isPressed ? 0.75 : 1) : 0.45)
+            .contentShape(shape)
     }
 }
 
 #if DEBUG
-// One preview per phase. The HUD is a nonactivating panel that only appears
-// mid-dictation, so these are the only practical way to see its states side by
-// side without recording something for each one.
-#Preview("HUD: recording") {
-    HUDView(state: HUDViewState(
-        phase: .recording(HUDRecordingState(
-            inputLevel: 0.62,
-            elapsed: .seconds(7),
-            mode: .pushToTalk,
-            ai: HUDAIIndicator(isEnabled: true, actionName: "Polish", shortcutBadge: "⌘1")
-        ))
-    ))
-    .padding()
-}
-
-#Preview("HUD: starting mic (both styles)") {
-    VStack(spacing: 24) {
-        HUDView(state: HUDViewState(
-            phase: .recording(HUDRecordingState(
-                mode: .pushToTalk,
-                ai: HUDAIIndicator(isEnabled: true, actionName: "Polish", shortcutBadge: "⌘1"),
-                captureStarted: false
-            ))
-        ))
-        HUDView(
-            state: HUDViewState(
-                phase: .recording(HUDRecordingState(
-                    mode: .pushToTalk,
-                    ai: HUDAIIndicator(isEnabled: true, actionName: "Polish", shortcutBadge: "⌘1"),
-                    captureStarted: false
-                ))
-            ),
-            style: .notch,
-            notchWidth: 420
-        )
-    }
-    .padding()
-}
-
-#Preview("HUD: recording, notch style") {
-    VStack(spacing: 24) {
-        HUDView(
-            state: HUDViewState(
-                phase: .recording(HUDRecordingState(
-                    inputLevel: 0.62,
-                    elapsed: .seconds(7),
-                    mode: .pushToTalk,
-                    ai: HUDAIIndicator(isEnabled: true, actionName: "Polish", shortcutBadge: "⌘1")
-                ))
-            ),
-            style: .notch,
-            notchWidth: 420
-        )
-        HUDView(
-            state: HUDViewState(
-                phase: .recording(HUDRecordingState(
-                    inputLevel: 0.2,
-                    elapsed: .seconds(71),
-                    mode: .toggle,
-                    ai: HUDAIIndicator(isEnabled: false, actionName: "Translate", shortcutBadge: "⌘2")
-                ))
-            ),
-            style: .notch
-        )
-        HUDView(state: HUDViewState(phase: .transcribing), style: .notch)
-        HUDView(state: HUDViewState(phase: .completed(HUDCompletionState(kind: .success))), style: .notch)
-    }
-    .padding()
-}
-
-#Preview("HUD: transcribing") {
-    HUDView(state: HUDViewState(phase: .transcribing))
-        .padding()
-}
-
-#Preview("HUD: processing AI") {
-    HUDView(state: HUDViewState(
-        phase: .processingAI(HUDProcessingAIState(
-            mode: .translate,
-            targetLanguageDisplayName: "Japanese"
-        ))
-    ))
-    .padding()
-}
-
-#Preview("HUD: completed with warning") {
-    HUDView(state: HUDViewState(
-        phase: .completed(HUDCompletionState(
-            kind: .clipboardFallback,
-            warningMessage: "Copied to the clipboard instead."
-        ))
-    ))
-    .padding()
-}
-
-// The widest layout: a failed insertion keeps the transcript selectable so the
-// user can rescue it, which is the one state where the HUD accepts clicks.
-#Preview("HUD: failed with recoverable transcript") {
-    HUDView(state: HUDViewState(
-        phase: .failed(HUDFailureState(
-            code: "insertion.failed",
-            message: "Could not insert or copy the transcript."
-        )),
-        recoverableTranscript: """
-        I think we should ship the menu bar work first, then look at the \
-        onboarding copy.
-        """
-    ))
-    .padding()
-}
-#endif
-
-/// The recording indicator (2026-09-16): a hollow ring that pulses while
-/// the input route is still coming up, a solid accent dot once the first
-/// buffer with signal has been captured. The pulse is an opacity cycle on
-/// the ring only, so it is a repaint; under Reduce Motion the ring is
-/// static, matching the meter's own animation guard.
-///
-/// Shared with the status menu's header row (P-D3, `StatusMenuHeaderView`),
-/// which adds the idle form: a hollow ring in `tint` that never pulses.
-struct RecordingDot: View {
-    let live: Bool
-    let reduceMotion: Bool
-    /// The ring and dot colour; the HUD uses the accent, the menu's idle
-    /// row a secondary tint so a menu that is not recording shows no accent.
-    var tint: Color = .accentColor
-    /// False for the idle ring: hollow, static, whatever `live` says.
-    var pulses = true
-    var diameter: CGFloat = 12
-
-    @State private var pulsing = false
-
-    var body: some View {
-        ZStack {
-            Circle()
-                .strokeBorder(tint, lineWidth: 2)
-                .opacity(live ? 0 : (pulsing ? 0.35 : 1))
-            Circle()
-                .fill(tint)
-                .opacity(live ? 1 : 0)
-        }
-        .frame(width: diameter, height: diameter)
-        .animation(reduceMotion ? nil : .easeInOut(duration: 0.15), value: live)
-        .onAppear { startPulsingIfNeeded() }
-        .onChange(of: live) { _, _ in startPulsingIfNeeded() }
-        .onChange(of: pulses) { _, _ in startPulsingIfNeeded() }
-    }
-
-    private func startPulsingIfNeeded() {
-        guard !live, !reduceMotion, pulses else {
-            pulsing = false
-            return
-        }
-        withAnimation(.easeInOut(duration: 0.7).repeatForever(autoreverses: true)) {
-            pulsing = true
-        }
-    }
-}
-
-/// H1/N22: Mini's pill on macOS 26 and later — the textbook floating
-/// functional element Liquid Glass is for (`liquid-glass.md › The two
-/// layers`). Below 26, the material path is unchanged, border included;
-/// glass draws its own edge, so the border is material-only. Glass answers
-/// Reduce Transparency and Increase Contrast by itself (`liquid-glass.md ›
-/// Which variant`), so `increasedContrast` only matters on the material path.
-private extension View {
-    @ViewBuilder
-    func miniPillBackground(increasedContrast: Bool) -> some View {
-        if #available(macOS 26, *) {
-            self.glassEffect(.regular, in: HUDView.miniPillShape)
-        } else {
-            self
-                .background(
-                    increasedContrast ? AnyShapeStyle(.thickMaterial) : AnyShapeStyle(.regularMaterial),
-                    in: HUDView.miniPillShape
-                )
-                .overlay {
-                    HUDView.miniPillShape
-                        .strokeBorder(Color.primary.opacity(increasedContrast ? 0.6 : 0.12), lineWidth: 1)
-                }
-        }
-    }
-}
-
-/// Five bars driven by the smoothed level from `HUDRecordingFeedbackFilter`.
-/// The bars are fixed-size and only their fill changes, so a level update is
-/// a repaint, not a layout pass. Shared with the status menu's header row
-/// (P-D3), which draws it at `scale` 0.75 to fit a menu row.
-struct Meter: View {
-    let level: Double
-    let reduceMotion: Bool
-    var scale: CGFloat = 1
-    /// The lit bars' colour; the menu row passes the selected-text colour
-    /// while highlighted, where accent-on-accent would vanish.
-    var tint: Color = .accentColor
-    var inactive: Color = Color.secondary.opacity(0.25)
-
-    var body: some View {
-        HStack(alignment: .bottom, spacing: 2 * scale) {
-            ForEach(0..<5, id: \.self) { index in
-                let threshold = Double(index + 1) / 5
-                Capsule(style: .continuous)
-                    .fill(level >= threshold ? tint : inactive)
-                    .frame(width: 4 * scale, height: CGFloat(8 + index * 3) * scale)
+// The HUD is a nonactivating panel that only appears mid-dictation, so these
+// are the practical way to see its states side by side;
+// `LayoutSnapshotTests.testRenderEveryHUDState` renders all of them.
+#Preview("HUD: every state, Mini") {
+    ScrollView {
+        VStack(spacing: 16) {
+            ForEach(HUDViewState.galleryStates, id: \.name) { entry in
+                HUDView(state: entry.state)
             }
         }
-        .frame(height: 24 * scale, alignment: .bottom)
-        .animation(reduceMotion ? nil : .easeOut(duration: 0.08), value: level)
-        .accessibilityHidden(true)
+        .padding()
     }
 }
+
+#Preview("HUD: every state, Notch") {
+    ScrollView {
+        VStack(spacing: 16) {
+            ForEach(HUDViewState.galleryStates.filter { $0.state.recoverableTranscript == nil }, id: \.name) { entry in
+                HUDView(state: entry.state, style: .notch)
+            }
+        }
+        .padding()
+    }
+}
+#endif

@@ -34,6 +34,11 @@ public final class HUDController {
     /// wiring is visible instead of silent.
     public var recoveryActions: HUDRecoveryActions?
 
+    /// UI v2 fidelity F5: Model unavailable's "Open Speech Models to
+    /// reinstall" link. Set once at launch (`AppDelegate+Menu`); nil renders
+    /// the line as plain text.
+    public var openSpeechModels: (@MainActor @Sendable () -> Void)?
+
     /// P-D3: the status menu's header row follows the *rendered* state —
     /// the one that went through `HUDRecordingFeedbackFilter` — so its
     /// meter and clock are the HUD's own 20 Hz smoothed feed rather than a
@@ -50,6 +55,19 @@ public final class HUDController {
     /// so the two never disagree.
     public let dismissTimings: HUDDismissTimings
 
+    /// UI v2 fidelity F5 (Motion § 1·2·3): how long the panel stays ordered
+    /// in after a dismissal so the exit can play (the pill drops to .92 and
+    /// fades in 180 ms; the notch shrinks back). The logical state —
+    /// `isVisible`, `renderState`, the observer's `.idle` — changes at once;
+    /// only `orderOut` waits. Zero (the default, and every test that does
+    /// not ask for it) orders out at once; the app passes `exitDuration`.
+    public let exitDelay: Duration
+    public static let exitDuration: Duration = .milliseconds(240)
+    /// Bumped each time the panel goes from hidden to shown, so the view
+    /// starts a fresh tree and plays its entrance (`HUDView.Presentation`).
+    public private(set) var presentationID = 0
+    private var hideTask: Task<Void, Never>?
+
     /// Internal (not private) so tests can await the timer they advanced.
     private(set) var dismissalTask: Task<Void, Never>?
     /// Times the auto-dismissal; tests inject a `ParkingClock`.
@@ -63,15 +81,18 @@ public final class HUDController {
     public init(
         announce: (@MainActor (String) -> Void)? = nil,
         dismissTimings: HUDDismissTimings = .compiled,
-        clock: any KvoiceClock = SystemKvoiceClock()
+        clock: any KvoiceClock = SystemKvoiceClock(),
+        exitDelay: Duration = .zero
     ) {
         self.announce = announce ?? Self.postVoiceOverAnnouncement
         self.dismissTimings = dismissTimings
         self.clock = clock
+        self.exitDelay = exitDelay
     }
 
     isolated deinit {
         dismissalTask?.cancel()
+        hideTask?.cancel()
         panel?.orderOut(nil)
     }
 
@@ -110,10 +131,18 @@ public final class HUDController {
         }
 
         let hudPanel = ensurePanel()
+        // A panel that is hidden — or still playing its exit — enters anew.
+        let entering = !isVisible
+        if entering {
+            hideTask?.cancel()
+            hideTask = nil
+            presentationID += 1
+        }
         // Keep regular HUD states transparent to mouse input. A retained
-        // transcript is the explicit recovery surface, so allow selection
-        // without making the nonactivating panel key or main.
-        let ignoresMouse = rendered.recoverableTranscript == nil
+        // transcript is the explicit recovery surface, and Model
+        // unavailable's link takes its one click — both without making the
+        // nonactivating panel key or main.
+        let ignoresMouse = rendered.recoverableTranscript == nil && !rendered.offersSpeechModelsLink
         if hudPanel.ignoresMouseEvents != ignoresMouse {
             hudPanel.ignoresMouseEvents = ignoresMouse
         }
@@ -128,6 +157,13 @@ public final class HUDController {
             hudPanel.showWithoutActivating()
         }
         isVisible = true
+        if entering {
+            // The window shadow is computed from the content; refresh it
+            // once the entrance has settled.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) { [weak hudPanel] in
+                hudPanel?.invalidateShadow()
+            }
+        }
 
         if previousKind != rendered.phase.kind, let announcement = rendered.accessibilityAnnouncement {
             announce(announcement)
@@ -168,10 +204,34 @@ public final class HUDController {
     }
 
     private func hidePanel() {
+        let wasVisible = isVisible
         isVisible = false
         panel?.ignoresMouseEvents = true
-        panel?.orderOut(nil)
         recordingScreen = nil
+        // Already hidden with an exit playing (the auto-dismissal fired,
+        // then the shell's own dismissal lands): let that exit finish.
+        if !wasVisible, hideTask != nil { return }
+        guard wasVisible, exitDelay > .zero, let panel, panel.isVisible,
+              let hostingView = panel.contentView as? HUDHostingView else {
+            hideTask?.cancel()
+            hideTask = nil
+            panel?.orderOut(nil)
+            return
+        }
+        // Play the exit on the last content, then order out — unless a new
+        // `show` takes the panel back first (it cancels this task).
+        hostingView.rootView = hostingView.rootView.withPresentation(.live(id: presentationID, shown: false))
+        hideTask?.cancel()
+        hideTask = Task { [weak self, clock, exitDelay] in
+            do {
+                try await clock.sleep(for: exitDelay)
+            } catch {
+                return
+            }
+            guard let self, !Task.isCancelled, !self.isVisible else { return }
+            self.hideTask = nil
+            self.panel?.orderOut(nil)
+        }
     }
 
     private func ensurePanel() -> HUDPanel {
@@ -179,7 +239,10 @@ public final class HUDController {
             return panel
         }
 
-        let hudPanel = HUDPanel(contentView: HUDHostingView(rootView: HUDView(state: renderState, recoveryActions: recoveryActions)))
+        let hudPanel = HUDPanel(contentView: HUDHostingView(rootView: HUDView(
+            state: renderState, recoveryActions: recoveryActions, openSpeechModels: openSpeechModels,
+            presentation: .live(id: presentationID, shown: true)
+        )))
         panel = hudPanel
         return hudPanel
     }
@@ -191,7 +254,10 @@ public final class HUDController {
         geometry: HUDScreenGeometry
     ) {
         let notchWidth = HUDPlacement.notchContentWidth(minimum: HUDView.notchPanelWidth, screen: geometry)
-        let view = HUDView(state: state, style: style, notchWidth: notchWidth, recoveryActions: recoveryActions)
+        let view = HUDView(
+            state: state, style: style, notchWidth: notchWidth, recoveryActions: recoveryActions,
+            openSpeechModels: openSpeechModels, presentation: .live(id: presentationID, shown: true)
+        )
         guard let hostingView = panel.contentView as? HUDHostingView else {
             panel.contentView = HUDHostingView(rootView: view)
             return
@@ -236,7 +302,7 @@ public final class HUDController {
         case .notch:
             contentSize = CGSize(
                 width: max(HUDPlacement.notchContentWidth(minimum: HUDView.notchPanelWidth, screen: geometry), fittingSize.width),
-                height: max(HUDView.notchPanelHeight, fittingSize.height)
+                height: max(HUDView.notchHeight(for: renderState), fittingSize.height)
             )
         }
 

@@ -377,6 +377,21 @@ public final class RuntimeCardViewModel {
         ]
     }
 
+    /// UI v2 fidelity F3 (Models.dc Placement column): each graph's Neural
+    /// Engine share, for the bars on the "In use" card. Empty whenever
+    /// `placementLines` has no current plan to show (no model, a
+    /// platform-placed model, a pending or stale plan).
+    public var placementBars: [(label: String, share: Double)] {
+        guard let snapshot, snapshot.residentModelID != nil,
+              snapshot.runtime?.hasComputeUnitChoice ?? true,
+              let placement = snapshot.placement, placement.modelID == snapshot.residentModelID,
+              placement.computeUnits == snapshot.computeUnits else { return [] }
+        return [
+            (String(localized: "Encoder", bundle: .module), placement.encoder),
+            (String(localized: "Decoder", bundle: .module), placement.decoder)
+        ].compactMap { label, graph in graph.map { (label, $0.share(of: .neuralEngine)) } }
+    }
+
     public var memoryFootprintDescription: String {
         memoryFootprintBytes.map { Self.formatBytes($0) } ?? "—"
     }

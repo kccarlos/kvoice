@@ -325,7 +325,8 @@ final class AppComposition {
             globalInputMonitorsAvailable: edition.hasGlobalInputMonitors
         )
         shortcutAdapter.modifierKeyDisplayName = { DomainCopy.localized($0.displayName) }
-        let hudController = HUDController(dismissTimings: tunables.hudDismissTimings)
+        // F5: the panel stays ordered in for the exit animation.
+        let hudController = HUDController(dismissTimings: tunables.hudDismissTimings, exitDelay: HUDController.exitDuration)
         let onboardingIntentRouter = AppOnboardingIntentRouter()
         let onboardingViewModel = OnboardingViewModel(
             modelState: modelTrustFailure.map { .error($0) } ?? .absent,

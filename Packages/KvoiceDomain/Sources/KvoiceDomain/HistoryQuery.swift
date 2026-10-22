@@ -94,6 +94,9 @@ public struct HistoryFilter: Sendable, Equatable {
     /// Substring over raw and final text (case-folded); whitespace-only is
     /// treated as no query.  Never leaves the process (FR-HIST-009).
     public var query: String
+    /// UI v2 wave 5a "With AI": only rows whose AI action succeeded
+    /// (`HistoryAIStatus.succeeded`).
+    public var onlyWithAI: Bool
 
     public static let all = HistoryFilter()
 
@@ -101,20 +104,24 @@ public struct HistoryFilter: Sendable, Equatable {
         since: Date? = nil,
         minimumDurationMilliseconds: Int? = nil,
         maximumDurationMilliseconds: Int? = nil,
-        query: String = ""
+        query: String = "",
+        onlyWithAI: Bool = false
     ) {
         self.since = since
         self.minimumDurationMilliseconds = minimumDurationMilliseconds
         self.maximumDurationMilliseconds = maximumDurationMilliseconds
         self.query = query
+        self.onlyWithAI = onlyWithAI
     }
 
     public init(
         timeRange: HistoryTimeRange,
         durationBucket: HistoryDurationBucket?,
         query: String = "",
+        onlyWithAI: Bool = false,
         now: Date
     ) {
+        self.onlyWithAI = onlyWithAI
         since = timeRange.startDate(now: now)
         if let durationBucket {
             let bounds = durationBucket.milliseconds
@@ -138,13 +145,14 @@ public struct HistoryFilter: Sendable, Equatable {
     }
 
     public var isEmpty: Bool {
-        since == nil && !restrictsDuration && normalizedQuery == nil
+        since == nil && !restrictsDuration && normalizedQuery == nil && !onlyWithAI
     }
 
     /// In-memory evaluation, used by the default repository implementation
     /// and by fakes.  The SQLite store evaluates the same rules in SQL.
     public func matches(_ entry: HistoryEntry) -> Bool {
         if let since, entry.createdAt < since { return false }
+        if onlyWithAI, entry.aiStatus != .succeeded { return false }
         if restrictsDuration {
             guard let duration = entry.recordingDurationMilliseconds else { return false }
             if let lower = minimumDurationMilliseconds, duration < lower { return false }

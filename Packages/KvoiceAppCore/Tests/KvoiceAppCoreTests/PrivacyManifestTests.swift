@@ -1,3 +1,4 @@
+import Foundation
 import XCTest
 
 /// ADR-026: the app's privacy manifest declares exactly the required-reason
@@ -72,17 +73,22 @@ final class PrivacyManifestTests: XCTestCase {
     func testDeclaredCategoriesAreExactlyTheOnesTheSourcesUse() throws {
         let sources = try shippedSources()
         XCTAssertGreaterThan(sources.count, 100, "the scan found the sources")
+        // Code only: a doc comment naming an API is not a use. The comment
+        // lines are dropped once, not once per category (the per-category
+        // re-split made this the suite's slowest test, /health 2026-10-22).
+        let code = sources.map { file in
+            file.text.split(separator: "\n")
+                .filter { !$0.trimmingCharacters(in: .whitespaces).hasPrefix("//") }
+                .joined(separator: "\n")
+        }
         var used: Set<String> = []
-        for (category, tokens) in Self.categoryTokens {
-            // Code only: a doc comment naming an API is not a use.
-            let hit = sources.contains { file in
-                file.text.split(separator: "\n").contains { line in
-                    let code = line.trimmingCharacters(in: .whitespaces)
-                    guard !code.hasPrefix("//") else { return false }
-                    return tokens.contains { code.contains($0) }
-                }
-            }
-            if hit { used.insert(category) }
+        // A literal byte search: `String.contains` compares by grapheme and
+        // took a second over the whole tree.
+        for (category, tokens) in Self.categoryTokens
+        where code.contains(where: { text in
+            tokens.contains { (text as NSString).range(of: $0, options: .literal).location != NSNotFound }
+        }) {
+            used.insert(category)
         }
         let entries = try XCTUnwrap(try manifest()["NSPrivacyAccessedAPITypes"] as? [[String: Any]])
         let declared = Set(entries.compactMap { $0["NSPrivacyAccessedAPIType"] as? String })

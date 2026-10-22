@@ -33,7 +33,21 @@ public struct HUDAIIndicator: Equatable, Sendable {
     }
 
     public var symbolName: String {
-        isEnabled ? "sparkles" : "sparkles.slash"
+        isEnabled ? "sparkles" : "circle.slash"
+    }
+
+    /// The UI v2 mode chip's text: the action name ("Clean Up"), or "AI on"
+    /// / "AI off" when the job carries no action.
+    public var chipText: String {
+        if let actionName { return actionName }
+        return isEnabled ? AIActionsCopy.aiOn : AIActionsCopy.aiOff
+    }
+
+    /// The chip's leading symbol: none for a named action that will run (the
+    /// design's "Clean Up ⌘1"), sparkles otherwise, struck through when off.
+    public var chipSymbolName: String? {
+        if isEnabled { return actionName == nil ? symbolName : nil }
+        return symbolName
     }
 
     /// One line for VoiceOver's value and the notch style's caption.
@@ -42,11 +56,11 @@ public struct HUDAIIndicator: Equatable, Sendable {
         case (true, let name?):
             return String(localized: "AI on, \(name)", bundle: .module)
         case (true, nil):
-            return String(localized: "AI on", bundle: .module)
+            return AIActionsCopy.aiOn
         case (false, let name?):
             return String(localized: "AI off, \(name)", bundle: .module)
         case (false, nil):
-            return String(localized: "AI off", bundle: .module)
+            return AIActionsCopy.aiOff
         }
     }
 }
@@ -91,15 +105,30 @@ public struct HUDRecordingState: Equatable, Sendable {
         self.captureStarted = captureStarted
     }
 
-    /// Length hint for the recording detail line, or nil under 4:30.
+    /// Length hint for the recording detail line, or nil under 4:30. Short
+    /// enough for its own line beside the meter (UI v2: the recorder's
+    /// subtitle turns amber from 4:30, the clock with it).
     public var lengthHint: String? {
         if elapsed >= Self.longDictationWarningAfter, let maximumDuration {
-            return String(localized: "Long dictation — recording stops automatically at \(HUDViewState.formatElapsed(maximumDuration)).", bundle: .module)
+            return String(localized: "Stops automatically at \(HUDViewState.formatElapsed(maximumDuration))", bundle: .module)
         }
         if elapsed >= Self.longDictationHintAfter {
-            return String(localized: "Long dictation — KVoice works best with shorter input.", bundle: .module)
+            return String(localized: "Shorter input works best", bundle: .module)
         }
         return nil
+    }
+
+    /// True from 4:30: the length hint and the clock render in the warning
+    /// tone.
+    public var isLong: Bool {
+        lengthHint != nil
+    }
+
+    /// The release / toggle instruction, which never disappears (H5).
+    public var instruction: String {
+        mode == .pushToTalk
+            ? String(localized: "Release to stop", bundle: .module)
+            : String(localized: "Press again to stop", bundle: .module)
     }
 }
 
@@ -125,11 +154,60 @@ public struct HUDCompletionState: Equatable, Sendable {
     /// True when the recording was stopped by the hard cap; the completion
     /// then keeps the longer warning timing even on a plain success.
     public let durationCapReached: Bool
+    /// UI v2 fidelity F5: why AI was skipped (`.aiFallback`), for the
+    /// recorder's short "Local Ollama didn't answer" line. A code, never text.
+    public let aiFallback: AIErrorCode?
+    /// UI v2 fidelity F5: why the text went to the clipboard
+    /// (`.clipboardFallback`), for the short "— press ⌘V" line the HUD and
+    /// the status panel share.
+    public let clipboardReason: ClipboardFallbackReason?
 
-    public init(kind: HUDCompletionKind, warningMessage: String? = nil, durationCapReached: Bool = false) {
+    public init(
+        kind: HUDCompletionKind,
+        warningMessage: String? = nil,
+        durationCapReached: Bool = false,
+        aiFallback: AIErrorCode? = nil,
+        clipboardReason: ClipboardFallbackReason? = nil
+    ) {
         self.kind = kind
         self.warningMessage = warningMessage
         self.durationCapReached = durationCapReached
+        self.aiFallback = aiFallback
+        self.clipboardReason = clipboardReason
+    }
+}
+
+/// UI v2 fidelity F5: the facts the recorder's subtitle names — the model
+/// that transcribes ("Whisper large-v3-turbo · on device"), the AI action
+/// and the configuration it runs on ("Clean Up" · "Local Ollama"), the
+/// target app ("into Notes") and, once inserted, how many words went in
+/// ("38 words → Notes"). Display only: built by the shell from the job's
+/// settings snapshot and target, kept in memory with the rendered state,
+/// never written to history (J.5) or to diagnostics (scalars only) — the
+/// word count is a number, never the text.
+public struct HUDJobFacts: Equatable, Sendable {
+    public var modelName: String?
+    public var aiActionName: String?
+    public var aiProviderName: String?
+    public var targetAppName: String?
+    public var wordCount: Int?
+
+    public init(
+        modelName: String? = nil,
+        aiActionName: String? = nil,
+        aiProviderName: String? = nil,
+        targetAppName: String? = nil,
+        wordCount: Int? = nil
+    ) {
+        func clean(_ value: String?) -> String? {
+            guard let value = value?.trimmingCharacters(in: .whitespacesAndNewlines), !value.isEmpty else { return nil }
+            return value
+        }
+        self.modelName = clean(modelName)
+        self.aiActionName = clean(aiActionName)
+        self.aiProviderName = clean(aiProviderName)
+        self.targetAppName = clean(targetAppName)
+        self.wordCount = wordCount.map { max(0, $0) }
     }
 }
 
@@ -228,17 +306,43 @@ public enum HUDPhaseKind: String, Equatable, Sendable, CaseIterable {
     case idle, blocked, recording, finalizing, transcribing, processingAI, inserting, completed, failed
 }
 
-/// Colour semantics for the HUD symbol, named rather than coloured so the
-/// mapping is testable and the view is the only place that picks a `Color`.
-/// Accent while recording, secondary while working, green on success, orange
-/// for anything the user should read, red only for a fatal model error.
-public enum HUDSymbolTone: String, Equatable, Sendable {
-    case neutral
-    case accent
-    case secondary
-    case success
-    case warning
-    case fatal
+/// How the HUD's leading glyph is filled (UI v2 recorder): a hollow ring
+/// (the mic is still starting), a solid disc (recording live, inserted, a
+/// fatal error), or a soft tinted disc (working, warnings, failures).
+public enum HUDGlyphFill: String, Equatable, Sendable {
+    case ring
+    case solid
+    case soft
+}
+
+/// What sits inside the glyph.
+public enum HUDGlyphMark: Equatable, Sendable {
+    case none
+    /// An SF Symbol.
+    case symbol(String)
+    /// The rotating arc of the processing phases; static under Reduce
+    /// Motion.
+    case spinner
+}
+
+/// The recorder's leading glyph, named rather than coloured so the mapping
+/// is testable and the view is the only place that picks a `Color`. Orange
+/// (voice) while it listens, blue (cursor) while it makes text, amber
+/// (warn) when it needs the user, red (err) when it failed.
+public struct HUDGlyph: Equatable, Sendable {
+    public let tone: KVTone
+    public let fill: HUDGlyphFill
+    public let mark: HUDGlyphMark
+
+    public init(tone: KVTone, fill: HUDGlyphFill, mark: HUDGlyphMark) {
+        self.tone = tone
+        self.fill = fill
+        self.mark = mark
+    }
+
+    /// The ring pulses until the mic delivers audio (not under Reduce
+    /// Motion).
+    public var pulses: Bool { fill == .ring }
 }
 
 /// Immutable, render-only state for the HUD. `partialTranscript` is retained
@@ -266,6 +370,9 @@ public struct HUDViewState: Equatable, Sendable {
     /// it off, and the press that would have overlapped got the busy pulse.
     /// The detail line says why, once. Kept in the processing phases only.
     public let overlapPausedReason: OverlapPauseReason?
+    /// UI v2 fidelity F5: what the subtitle names (`HUDJobFacts`). Dropped
+    /// while idle.
+    public let facts: HUDJobFacts
 
     public init(
         phase: HUDPhase,
@@ -274,8 +381,14 @@ public struct HUDViewState: Equatable, Sendable {
         busyHint: Bool = false,
         canRecoverFailedInsertion: Bool = false,
         finishingCount: Int = 0,
-        overlapPausedReason: OverlapPauseReason? = nil
+        overlapPausedReason: OverlapPauseReason? = nil,
+        facts: HUDJobFacts = HUDJobFacts()
     ) {
+        if case .idle = phase {
+            self.facts = HUDJobFacts()
+        } else {
+            self.facts = facts
+        }
         // ADR-017 (amending FR-STT-001): live partial text is shown only
         // while a streaming dictation is being captured or transcribed. Every
         // other phase drops it, so the final text is the only text a
@@ -332,6 +445,25 @@ public struct HUDViewState: Equatable, Sendable {
 
     public static let idle = Self(phase: .idle)
 
+    /// The same state with its recording payload replaced — every other
+    /// field carried. `HUDRecordingFeedbackFilter` rebuilds the recording
+    /// on each meter tick; rebuilding the whole state from scratch there
+    /// once dropped `finishingCount`, so the "1 finishing" badge never
+    /// reached the real recorder (F5).
+    public func replacingRecording(_ recording: HUDRecordingState) -> HUDViewState {
+        guard case .recording = phase else { return self }
+        return HUDViewState(
+            phase: .recording(recording),
+            partialTranscript: partialTranscript,
+            recoverableTranscript: recoverableTranscript,
+            busyHint: busyHint,
+            canRecoverFailedInsertion: canRecoverFailedInsertion,
+            finishingCount: finishingCount,
+            overlapPausedReason: overlapPausedReason,
+            facts: facts
+        )
+    }
+
     /// The recovery buttons this state offers: both while the controller
     /// says the failed job is recoverable, none otherwise. Escape still
     /// dismisses.
@@ -373,7 +505,7 @@ public struct HUDViewState: Equatable, Sendable {
             case .success:
                 return String(localized: "Inserted", bundle: .module)
             case .aiFallback:
-                return String(localized: "Inserted local transcript; AI unavailable", bundle: .module)
+                return String(localized: "Inserted without AI", bundle: .module)
             case .clipboardFallback:
                 return String(localized: "Copied to clipboard", bundle: .module)
             }
@@ -408,9 +540,7 @@ public struct HUDViewState: Equatable, Sendable {
         case .recording(let state):
             // H5: the release/toggle instruction never disappears — the
             // long-dictation note is appended beside it, not swapped in.
-            let instruction = state.mode == .pushToTalk
-                ? String(localized: "Release to stop", bundle: .module)
-                : String(localized: "Press again to stop", bundle: .module)
+            let instruction = state.instruction
             if let hint = state.lengthHint {
                 return String(localized: "\(instruction) · \(hint)", bundle: .module)
             }
@@ -431,46 +561,43 @@ public struct HUDViewState: Equatable, Sendable {
         }
     }
 
-    public var symbolName: String {
+    public var glyph: HUDGlyph {
         switch phase {
         case .idle:
-            return "mic"
+            return HUDGlyph(tone: .neutral, fill: .soft, mark: .symbol("mic"))
         case .blocked:
-            return "exclamationmark.triangle"
-        case .recording:
-            return "waveform"
+            return HUDGlyph(tone: .warn, fill: .soft, mark: .symbol("exclamationmark"))
+        case .recording(let state):
+            return state.captureStarted
+                ? HUDGlyph(tone: .voice, fill: .solid, mark: .symbol("mic.fill"))
+                : HUDGlyph(tone: .voice, fill: .ring, mark: .none)
         case .finalizing, .transcribing, .processingAI, .inserting:
-            return "ellipsis.circle"
+            return HUDGlyph(tone: .cursor, fill: .soft, mark: .spinner)
         case .completed(let state):
             switch state.kind {
             case .success:
-                return "checkmark.circle"
+                return HUDGlyph(tone: .cursor, fill: .solid, mark: .symbol("checkmark"))
             case .aiFallback:
-                // D.4: "Checkmark + warning".
-                return "checkmark.circle.trianglebadge.exclamationmark"
+                // Text still went in: amber, not red.
+                return HUDGlyph(tone: .warn, fill: .soft, mark: .symbol("exclamationmark"))
             case .clipboardFallback:
-                return "doc.on.clipboard"
+                return HUDGlyph(tone: .warn, fill: .soft, mark: .symbol("doc.on.clipboard"))
             }
         case .failed(let state):
-            return state.isFatal ? "xmark.octagon" : "exclamationmark.triangle"
+            if state.isFatal, recoverableTranscript == nil {
+                return HUDGlyph(tone: .err, fill: .solid, mark: .symbol("xmark"))
+            }
+            return HUDGlyph(tone: .err, fill: .soft, mark: .symbol("exclamationmark"))
         }
     }
 
-    public var symbolTone: HUDSymbolTone {
-        switch phase {
-        case .idle:
-            return .neutral
-        case .recording:
-            return .accent
-        case .finalizing, .transcribing, .processingAI, .inserting:
-            return .secondary
-        case .completed(let state):
-            return state.kind == .success ? .success : .warning
-        case .blocked:
-            return .warning
-        case .failed(let state):
-            return state.isFatal ? .fatal : .warning
+    /// The tone of the subtitle and the clock: warn from 4:30 of a
+    /// recording, neutral otherwise.
+    public var detailTone: KVTone {
+        if case .recording(let state) = phase, state.isLong {
+            return .warn
         }
+        return .neutral
     }
 
     /// What VoiceOver should say when this state first appears, or nil for
@@ -481,7 +608,7 @@ public struct HUDViewState: Equatable, Sendable {
         case .idle, .finalizing, .transcribing, .processingAI, .inserting:
             return nil
         case .recording, .blocked, .completed, .failed:
-            if let detail, !detail.isEmpty {
+            if let detail = spokenDetail, !detail.isEmpty {
                 return "\(accessibilityTitle). \(detail)"
             }
             return accessibilityTitle
@@ -552,14 +679,16 @@ public struct HUDViewState: Equatable, Sendable {
         canRecoverFailedInsertion: Bool = false,
         captureStarted: Bool = true,
         finishingCount: Int = 0,
-        overlapPausedReason: OverlapPauseReason? = nil
+        overlapPausedReason: OverlapPauseReason? = nil,
+        facts: HUDJobFacts = HUDJobFacts()
     ) {
         switch dictationState {
         case .idle, .terminating:
             self.init(phase: .idle)
         case .blocked(let reason):
             self.init(
-                phase: .blocked(HUDBlockedState(code: reason.code, message: DomainCopy.localized(reason.message)))
+                phase: .blocked(HUDBlockedState(code: reason.code, message: DomainCopy.localized(reason.message))),
+                facts: facts
             )
         case .recording(let recording):
             self.init(
@@ -574,17 +703,18 @@ public struct HUDViewState: Equatable, Sendable {
                     )
                 ),
                 partialTranscript: partialTranscript,
-                finishingCount: finishingCount
+                finishingCount: finishingCount,
+                facts: facts
             )
         case .finalizing:
             self.init(
                 phase: .finalizing, partialTranscript: partialTranscript, busyHint: busyHint,
-                finishingCount: finishingCount, overlapPausedReason: overlapPausedReason
+                finishingCount: finishingCount, overlapPausedReason: overlapPausedReason, facts: facts
             )
         case .transcribing:
             self.init(
                 phase: .transcribing, partialTranscript: partialTranscript, busyHint: busyHint,
-                finishingCount: finishingCount, overlapPausedReason: overlapPausedReason
+                finishingCount: finishingCount, overlapPausedReason: overlapPausedReason, facts: facts
             )
         case .processingAI(_, let mode):
             self.init(
@@ -597,30 +727,36 @@ public struct HUDViewState: Equatable, Sendable {
                 partialTranscript: partialTranscript,
                 busyHint: busyHint,
                 finishingCount: finishingCount,
-                overlapPausedReason: overlapPausedReason
+                overlapPausedReason: overlapPausedReason,
+                facts: facts
             )
         case .inserting:
             self.init(
                 phase: .inserting, partialTranscript: partialTranscript, busyHint: busyHint,
-                finishingCount: finishingCount, overlapPausedReason: overlapPausedReason
+                finishingCount: finishingCount, overlapPausedReason: overlapPausedReason, facts: facts
             )
         case .completed(_, let summary):
             let kind: HUDCompletionKind
+            var clipboardReason: ClipboardFallbackReason?
             switch summary.insertion {
             case .inserted, .deliveredInApp, .abortedAtTermination:
                 kind = summary.aiFallback == nil ? .success : .aiFallback
-            case .copiedToClipboard:
+            case .copiedToClipboard(let reason):
                 kind = .clipboardFallback
+                clipboardReason = reason
             }
             self.init(
                 phase: .completed(
                     HUDCompletionState(
                         kind: kind,
                         warningMessage: summary.warningMessage.map { DomainCopy.localized($0) },
-                        durationCapReached: summary.durationCapReached
+                        durationCapReached: summary.durationCapReached,
+                        aiFallback: summary.aiFallback,
+                        clipboardReason: clipboardReason
                     )
                 ),
-                partialTranscript: partialTranscript
+                partialTranscript: partialTranscript,
+                facts: facts
             )
         case .failed(_, let failure):
             let fatalModelCodes: Set<String> = [
@@ -644,7 +780,8 @@ public struct HUDViewState: Equatable, Sendable {
                 ),
                 partialTranscript: partialTranscript,
                 recoverableTranscript: recoverableTranscript,
-                canRecoverFailedInsertion: canRecoverFailedInsertion
+                canRecoverFailedInsertion: canRecoverFailedInsertion,
+                facts: facts
             )
         }
     }

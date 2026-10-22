@@ -74,6 +74,7 @@ extension DictationJobRunner {
             job?.recordTranscriptionDuration(
                 result.timings.inferenceEnd - result.timings.requestStart
             )
+            job?.recordTranscribedModel(result.modelID)
 
             // Second line against the same hallucination: a trailing segment
             // that is a known silence phrase over quiet audio is dropped.

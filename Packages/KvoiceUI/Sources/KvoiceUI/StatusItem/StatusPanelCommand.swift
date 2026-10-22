@@ -23,6 +23,11 @@ public enum StatusPanelCommand: Equatable, Sendable {
     case openStatusTarget
     /// `unloadModelForMemoryPressure` — Unload Model Now.
     case unloadModel
+    /// UI v2: Pause on the card's download — the Speech Models card's
+    /// Cancel for that model (`performSpeechModelAction(.cancel)`), which
+    /// pauses a download in flight (resumable there). The one panel command
+    /// with no menu row: the menu has no download progress to pause.
+    case pauseModelDownload(ModelID)
     // Transcription
     /// `selectSpeechModel(_:)` with the entry's id.
     case selectModel(ModelID)
@@ -40,11 +45,20 @@ public enum StatusPanelCommand: Equatable, Sendable {
     case toggleAI
     /// `selectPromptMode(_:)` with the action's id.
     case selectDefaultAction(UUID)
+    /// UI v2 fidelity F1: an action chip picked while AI is off — the
+    /// design's chip row is one choice (Off or an action), so the pick
+    /// turns AI on with that action in one settings write. The shell
+    /// refuses it the way `toggleAI` does (opens AI Actions) when no
+    /// configuration can run.
+    case useAIAction(UUID)
     /// `selectProviderConfiguration(_:)` with the configuration's id.
     case selectConfiguration(UUID)
     /// `openAIActions` — the Configuration chooser's "add one" row.
     case openAIActions
     // App
+    /// UI v2 fidelity F1: the idle card's "Set Shortcut…" link — the
+    /// Shortcuts page, where the recording shortcut is confirmed.
+    case openShortcuts
     /// `openHistory` (⌘H).
     case openHistory
     /// `openSettings` (⌘,).
@@ -77,11 +91,11 @@ public enum StatusPanelCommand: Equatable, Sendable {
         switch self {
         case .openStatusTarget, .openModels, .openAudioInput, .openAIActions,
              .openHistory, .openSettings, .openSetup, .openHelp, .showAbout, .quit,
-             .insertTranscriptAgain:
+             .insertTranscriptAgain, .openShortcuts:
             return true
         case .toggleDictation, .cancelCurrentDictation, .copyTranscript, .copyLastTranscription,
-             .unloadModel, .selectModel, .selectLanguage, .selectMicrophone, .toggleAI,
-             .selectDefaultAction, .selectConfiguration:
+             .unloadModel, .pauseModelDownload, .selectModel, .selectLanguage, .selectMicrophone, .toggleAI,
+             .selectDefaultAction, .useAIAction, .selectConfiguration:
             return false
         }
     }

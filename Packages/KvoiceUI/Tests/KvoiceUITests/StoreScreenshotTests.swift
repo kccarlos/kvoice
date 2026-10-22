@@ -26,9 +26,9 @@ import KvoiceDomain
 /// and the social preview draw `Docs/assets/kvoice-icon.png`.
 ///
 /// Skipped otherwise, so the suite stays fast. The harness's limits
-/// (`Docs/Design/README.md`) apply: no materials, toggles draw off; the
-/// pages are shown without the sidebar, whose offscreen selection draws
-/// black. Nothing here is personal: every value is a fixture.
+/// (`Docs/Design/README.md`) apply: no materials. The main-window pages
+/// are shown in the drawn UI v2 shell, sidebar included. Nothing here is
+/// personal: every value is a fixture.
 @MainActor
 final class StoreScreenshotTests: XCTestCase {
     private static let canvas = NSSize(width: 1440, height: 900)
@@ -56,20 +56,16 @@ final class StoreScreenshotTests: XCTestCase {
                 AnyView(DictationScene())
             ),
             (
-                // The Actions list only: the AI Actions page's configuration
-                // footer names Private Cloud Compute, which no build offers yet.
                 "2-ai-actions",
                 "Speak once. Get an email, a translation, notes.",
                 "Thirteen AI actions turn what you said into finished text: polish, message, TODO list, summary, Q&A and more.",
-                AnyView(StoreWindowFrame(title: "AI Actions") {
-                    PromptModeSettingsView(viewModel: .previewSeeded())
-                })
+                AnyView(StoreAppWindow(section: .aiActions) { LayoutSnapshotTests.content(for: .aiActions) })
             ),
             (
                 "3-models",
                 "Speech recognition on your Mac",
                 "Whisper, Parakeet, Apple Speech and more. Works offline once a model is installed.",
-                AnyView(StoreWindowFrame(title: "Speech Models") { DesignGalleryTests.seededModelsSection() })
+                AnyView(StoreAppWindow(section: .models) { DesignGalleryTests.seededModelsSection() })
             ),
             (
                 "4-private",
@@ -232,8 +228,8 @@ private struct StoreShot<Content: View>: View {
 }
 
 /// A plain window around a page: a title bar with the three window
-/// buttons and the page's name, rounded corners and a shadow. The real
-/// window has a sidebar, which does not render cleanly offscreen.
+/// buttons and the page's name, rounded corners and a shadow, for the
+/// setup wizard's window.
 private struct StoreWindowFrame<Content: View>: View {
     let title: LocalizedStringKey
     @ViewBuilder let content: () -> Content
@@ -265,12 +261,35 @@ private struct StoreWindowFrame<Content: View>: View {
     }
 }
 
+/// The main window as it is: the drawn sidebar and a page, with the
+/// window buttons over the sidebar's top, rounded corners and a shadow.
+private struct StoreAppWindow: View {
+    let section: MainWindowSection
+    let page: () -> AnyView
+
+    var body: some View {
+        MainWindowView(model: MainWindowModel(selection: section)) { _ in page() }
+            .overlay(alignment: .topLeading) {
+                HStack(spacing: 8) {
+                    Circle().fill(Color(red: 1.0, green: 0.37, blue: 0.34)).frame(width: 12, height: 12)
+                    Circle().fill(Color(red: 1.0, green: 0.74, blue: 0.18)).frame(width: 12, height: 12)
+                    Circle().fill(Color(red: 0.16, green: 0.79, blue: 0.26)).frame(width: 12, height: 12)
+                }
+                .padding(.leading, 14)
+                .padding(.top, 14)
+            }
+            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).stroke(Color.black.opacity(0.18), lineWidth: 1))
+            .shadow(color: .black.opacity(0.35), radius: 30, y: 14)
+    }
+}
+
 /// The first screenshot: a document being dictated into, under a menu bar
 /// with the Notch recorder (the one recorder style that renders offscreen
 /// as it looks on screen) showing the live transcript.
 private struct DictationScene: View {
     private let typed = "Notes from Tuesday: the beta goes out on Friday, the release notes are nearly done, and we"
-    private let partial = "should ship the menu bar work first and then look at the onboarding copy"
+    private let partial = "still need to update the screenshots before we ship"
 
     var body: some View {
         VStack(spacing: 0) {

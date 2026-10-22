@@ -11,70 +11,27 @@ struct ShortcutCardView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
-        GroupBox {
-            VStack(alignment: .leading, spacing: 10) {
-                HStack(alignment: .firstTextBaseline) {
-                    Label(ShortcutCard.title, systemImage: ShortcutCard.symbolName)
-                        .font(.headline)
-                    Spacer()
-                    StatusLabel(card.status.displayName, symbol: symbolName, tone: tone)
-                        .labelStyle(.titleAndIcon)
-                        .font(.subheadline.weight(.medium))
-                        .accessibilityLabel("\(ShortcutCard.title) status")
-                        .accessibilityValue(card.status.displayName)
-                }
-
-                Text(ShortcutCard.rationale)
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-
-                if let readout = card.readout {
-                    SettingsFactRow("Shortcut", readout)
-                }
-
-                if let failure = card.failureDescription {
-                    StatusLabel(failure, symbol: "exclamationmark.triangle.fill", tone: .attention)
-                        .labelStyle(.titleAndIcon)
-                        .font(.caption)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .accessibilityLabel("Shortcut problem: \(failure)")
-                }
-
-                HStack(alignment: .firstTextBaseline) {
-                    Button(card.action.title) {
-                        onAction()
-                    }
-                    .accessibilityLabel("\(card.action.title) for \(ShortcutCard.title)")
-                    .accessibilityHint(card.action == .confirmRecommended
-                        ? "Confirms the recommended shortcut. It is not active until it is confirmed."
-                        : "Opens the shortcut recorder to pick a different key.")
-
-                    // P-M9 (2026-09-16): the card's own refresh button was
-                    // dropped — the page refreshes itself every second and
-                    // offers one Refresh in its footer (M9).
-                    Spacer()
-
-                    Text(lastCheckedDescription)
-                        .font(.caption)
-                        .foregroundStyle(.tertiary)
-                        .accessibilityLabel("Last checked: \(lastCheckedDescription)")
-                }
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-        }
-        .animation(reduceMotion ? nil : .easeInOut(duration: 0.2), value: card.status)
-        .accessibilityElement(children: .contain)
-        .accessibilityLabel("\(ShortcutCard.title), \(card.status.displayName)")
-    }
-
-    private var symbolName: String {
-        switch card.status {
-        case .registered: return "checkmark.circle.fill"
-        case .unavailable: return "xmark.octagon.fill"
-        case .notConfigured: return "circle.dashed"
-        case .notRegistered: return "questionmark.circle"
-        }
+        PermissionRowCard(
+            glyph: KVGlyphs.keys,
+            tileFill: .grey,
+            name: ShortcutCard.title,
+            text: card.status == .registered && card.readout != nil
+                ? String(localized: "\(card.readout ?? "") is registered with macOS.", bundle: .module)
+                : ShortcutCard.rationale,
+            hint: card.failureDescription,
+            statusLabel: card.status.displayName,
+            tone: card.status == .registered ? .ok : (card.status == .unavailable ? .warn : .neutral),
+            action: .init(
+                title: card.action.title,
+                isPrimary: card.status != .registered,
+                isInProgress: false,
+                hint: card.action == .confirmRecommended
+                    ? String(localized: "Confirms the recommended shortcut. It is not active until it is confirmed.", bundle: .module)
+                    : String(localized: "Opens the shortcut recorder to pick a different key.", bundle: .module),
+                perform: onAction
+            ),
+            checked: lastCheckedDescription
+        )
     }
 
     private var tone: StatusTone {

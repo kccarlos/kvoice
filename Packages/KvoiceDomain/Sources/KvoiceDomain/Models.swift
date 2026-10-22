@@ -347,6 +347,21 @@ public struct AIEndpointSettings: Codable, Sendable, Equatable {
         activePromptModeID = promptMode.id
     }
 
+    /// UI v2 fidelity F1: the status panel's chip row is one choice — Off
+    /// or an action — so picking an action makes it the default *and* turns
+    /// AI on, as one value (one `.setAI` write; two writes would race, the
+    /// second reading settings the first has not committed). Nil when AI is
+    /// off and nothing could run it (no usable configuration): the caller
+    /// opens AI Actions instead, as `toggleAI` does. The right-click menu's
+    /// Default Action keeps product decision #6 (`apply(promptMode:)` only).
+    public func enablingAction(_ promptMode: PromptMode) -> AIEndpointSettings? {
+        var ai = self
+        ai.apply(promptMode: promptMode)
+        guard ai.isEnabled || ai.canEnableProcessing else { return nil }
+        ai.isEnabled = true
+        return ai
+    }
+
     public var activePromptMode: PromptMode? {
         guard let activePromptModeID else { return nil }
         return promptModes.first { $0.id == activePromptModeID }

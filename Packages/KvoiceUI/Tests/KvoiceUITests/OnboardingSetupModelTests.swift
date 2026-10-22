@@ -32,7 +32,8 @@ final class OnboardingSetupModelTests: XCTestCase {
 
         XCTAssertEqual(model.modelDisplayName, "Apple Speech")
         XCTAssertEqual(model.modelDetailLine, "Apple Speech · Built into macOS", "no '0 bytes' download size")
-        XCTAssertTrue(model.modelSourceNote.hasPrefix("Recommended for this Mac: ready in seconds, with nothing large to download."))
+        XCTAssertTrue(model.modelSourceNote.hasPrefix("Ready in seconds, with nothing large to download."))
+        XCTAssertEqual(model.modelChip.title, "Recommended for this Mac")
         XCTAssertEqual(model.modelPrimaryActionTitle, "Install Model")
         XCTAssertEqual(model.actionBar.primaryTitle, "Install Model")
     }
@@ -47,7 +48,7 @@ final class OnboardingSetupModelTests: XCTestCase {
         XCTAssertEqual(model.alternativeModelTitle, "Use Whisper v3 Turbo Instead")
         let note = model.alternativeModelNote ?? ""
         XCTAssertTrue(note.contains("632 MB"), note)
-        XCTAssertTrue(note.contains("the first time it loads it is optimized for your Mac"), note)
+        XCTAssertTrue(note.contains("is optimized for your Mac on first load"), note)
 
         model.useAlternativeModel()
         XCTAssertEqual(intents, [.useSpeechModel("whisper")])
@@ -71,7 +72,7 @@ final class OnboardingSetupModelTests: XCTestCase {
     func testAWhisperCardWarnsAboutTheOneTimeOptimization() {
         let model = OnboardingViewModel(stage: .speechModel)
         model.setModelEntry(whisper)
-        XCTAssertTrue(model.modelSourceNote.contains("The first time it loads, it is optimized for your Mac, which can take a few minutes."))
+        XCTAssertTrue(model.modelSourceNote.contains("The first load optimizes it for your Mac, which can take a few minutes."))
         XCTAssertEqual(model.modelPrimaryActionTitle, "Download Model")
     }
 

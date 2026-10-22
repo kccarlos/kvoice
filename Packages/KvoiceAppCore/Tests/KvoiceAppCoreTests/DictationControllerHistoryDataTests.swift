@@ -51,6 +51,36 @@ final class DictationControllerHistoryDataTests: XCTestCase {
         XCTAssertNil(entries.first?.aiDurationMilliseconds, "AI was off")
     }
 
+    /// Q2: with no explicit selection (the resident default serves the
+    /// job) the row's model was empty and History said "Model: Unknown"
+    /// for every dictation. The row names the model the engine ran.
+    func testTheRowNamesTheModelThatRanWhenNothingWasSelected() async {
+        let history = InMemoryHistoryRepository()
+        let controller = DictationController(
+            audio: FakeAudioCaptureService(),
+            transcription: FakeTranscriptionEngine(result: transcript("default model")),
+            insertion: FakeTextInsertionService(target: target),
+            settings: FakeSettingsRepository(settings: AppSettings(historyEnabled: true)),
+            history: history
+        )
+        _ = await controller.handleShortcut(.keyDown, mode: .pushToTalk)
+        _ = await controller.handleShortcut(.keyUp, mode: .pushToTalk)
+        await controller.waitForCompletion()
+
+        let entries = await history.entries
+        XCTAssertEqual(entries.map(\.modelID), ["fixture"])
+    }
+
+    func testTheJobFallsBackToItsSelectionWhenTheEngineNamesNoModel() {
+        var job = DictationJob(id: JobID(), startedAt: Date(), target: nil, modeSnapshot: .off,
+                               translationTargetSnapshot: nil, modelIDSnapshot: "selected")
+        XCTAssertEqual(job.historyModelID, "selected")
+        job.recordTranscribedModel("")
+        XCTAssertEqual(job.historyModelID, "selected")
+        job.recordTranscribedModel("ran")
+        XCTAssertEqual(job.historyModelID, "ran")
+    }
+
     func testAudioIsNotStoredByDefault() async {
         let history = InMemoryHistoryRepository()
         let audioStore = SpyAudioStore()

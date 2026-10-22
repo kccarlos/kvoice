@@ -24,79 +24,38 @@ struct PermissionCardView: View {
     }
 
     var body: some View {
-        GroupBox {
-            VStack(alignment: .leading, spacing: 10) {
-                HStack(alignment: .firstTextBaseline) {
-                    Label(card.kind.title, systemImage: card.kind.symbolName)
-                        .font(.headline)
-                    Spacer()
-                    stateBadge
-                }
-
-                Text(card.rationale)
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-
-                if card.showsSystemSettingsPath() || deepLinkFailed {
-                    Text(deepLinkFailed
-                        ? "System Settings could not be opened automatically. Go to \(card.kind.systemSettingsPath) and enable KVoice."
-                        : "If the button does not open the right pane: \(card.kind.systemSettingsPath).")
-                        .font(.caption)
-                        .foregroundStyle(deepLinkFailed ? .primary : .secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .accessibilityLabel("Written path: \(card.kind.systemSettingsPath)")
-                }
-
-                HStack(alignment: .firstTextBaseline) {
-                    Button(actionTitle ?? card.action().title) {
-                        onAction()
-                    }
-                    .disabled(isActionInProgress)
-                    .accessibilityLabel("\(actionTitle ?? card.action().title) for \(card.kind.title)")
-                    .accessibilityHint(actionHint)
-
-                    if isActionInProgress {
-                        ProgressView()
-                            .controlSize(.small)
-                            .accessibilityLabel("Waiting for macOS")
-                    }
-
-                    // P-M9 (2026-09-16): the card's own refresh button was
-                    // dropped — the page refreshes itself every second and
-                    // offers one Refresh in its footer instead of one per
-                    // card (M9: "a page that refreshes itself").
-                    Spacer()
-
-                    Text(lastCheckedDescription)
-                        .font(.caption)
-                        .foregroundStyle(.tertiary)
-                        .accessibilityLabel("Last checked: \(lastCheckedDescription)")
-                }
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-        }
-        .animation(reduceMotion ? nil : .easeInOut(duration: 0.2), value: presented)
-        .animation(reduceMotion ? nil : .easeInOut(duration: 0.2), value: isActionInProgress)
-        .accessibilityElement(children: .contain)
-        .accessibilityLabel("\(card.kind.title) permission, \(presented.displayName)")
+        let action = card.action()
+        let needsAction = action != .refresh || deepLinkFailed
+        PermissionRowCard(
+            glyph: card.kind == .microphone ? KVGlyphs.mic : KVGlyphs.access,
+            tileFill: card.kind == .microphone ? .voice : .ok,
+            name: card.kind.title,
+            text: card.rationale,
+            hint: card.kind == .accessibility && presented != .granted
+                ? String(localized: "Until it’s on, text is copied to the clipboard instead.", bundle: .module)
+                : nil,
+            note: card.showsSystemSettingsPath() || deepLinkFailed
+                ? (deepLinkFailed
+                    ? String(localized: "System Settings could not be opened automatically. Go to \(card.kind.systemSettingsPath) and enable KVoice.", bundle: .module)
+                    : String(localized: "If the button does not open the right pane: \(card.kind.systemSettingsPath).", bundle: .module))
+                : nil,
+            statusLabel: presented.displayName,
+            tone: presented == .granted ? .ok : (presented == .notRequested || presented == .unknown ? .neutral : .warn),
+            action: needsAction ? .init(
+                title: actionTitle ?? action.title,
+                isPrimary: action != .refresh,
+                isInProgress: isActionInProgress,
+                hint: actionHint,
+                perform: onAction
+            ) : nil,
+            checked: lastCheckedDescription
+        )
     }
 
     private var stateBadge: some View {
-        StatusLabel(presented.displayName, symbol: symbolName, tone: tone)
-            .labelStyle(.titleAndIcon)
-            .font(.subheadline.weight(.medium))
+        StatusPill(text: presented.displayName, tone: tone.kvTone, filled: true)
             .accessibilityLabel("\(card.kind.title) status")
             .accessibilityValue(presented.displayName)
-    }
-
-    private var symbolName: String {
-        switch presented {
-        case .granted: return "checkmark.circle.fill"
-        case .denied, .restricted: return "xmark.octagon.fill"
-        case .notRequested: return "circle.dashed"
-        case .unknown: return "questionmark.circle"
-        }
     }
 
     private var tone: StatusTone {

@@ -36,7 +36,7 @@ final class HUDViewStateTests: XCTestCase {
             } else {
                 XCTAssertTrue(state.isVisible)
                 XCTAssertFalse(state.title.isEmpty)
-                XCTAssertFalse(state.symbolName.isEmpty)
+                XCTAssertNotEqual(state.glyph.tone, .neutral)
             }
         }
 
@@ -255,7 +255,7 @@ final class HUDViewStateTests: XCTestCase {
             .attaching(aiFallback: .aiTimeout, durationCapReached: false)
         let state = HUDViewState(dictationState: .completed(UUID(), summary))
 
-        XCTAssertEqual(state.title, "Inserted local transcript; AI unavailable")
+        XCTAssertEqual(state.title, "Inserted without AI")
         XCTAssertEqual(state.detail, KVoiceErrorCode.aiTimeout.userFacingMessage)
         XCTAssertEqual(state.autoDismissAfter, .milliseconds(2_500))
     }
@@ -329,8 +329,24 @@ final class HUDViewStateTests: XCTestCase {
         }
         XCTAssertEqual(detail(at: 10), "Release to stop")
         // H5: appended to the release instruction, never replacing it.
-        XCTAssertEqual(detail(at: 270), "Release to stop · Long dictation — KVoice works best with shorter input.")
-        XCTAssertEqual(detail(at: 300), "Release to stop · Long dictation — recording stops automatically at 10:00.")
+        XCTAssertEqual(detail(at: 270), "Release to stop · Shorter input works best")
+        XCTAssertEqual(detail(at: 300), "Release to stop · Stops automatically at 10:00")
+    }
+
+    /// UI v2: from 4:30 the hint gets its own amber line and the clock turns
+    /// amber; the instruction stays (H5).
+    func testLongRecordingTurnsTheSubtitleAndClockToTheWarningTone() {
+        func state(at seconds: Int, mode: RecordingInteraction = .pushToTalk) -> HUDViewState {
+            HUDViewState(phase: .recording(HUDRecordingState(elapsed: .seconds(seconds), mode: mode)))
+        }
+        XCTAssertEqual(state(at: 269).detailTone, .neutral)
+        XCTAssertEqual(state(at: 270).detailTone, .warn)
+        XCTAssertEqual(state(at: 312).detailTone, .warn)
+        guard case .recording(let long) = state(at: 312, mode: .toggle).phase else { return XCTFail("recording") }
+        XCTAssertTrue(long.isLong)
+        XCTAssertEqual(long.instruction, "Press again to stop")
+        XCTAssertEqual(long.lengthHint, "Stops automatically at 10:00")
+        XCTAssertEqual(HUDViewState(phase: .transcribing).detailTone, .neutral)
     }
 
     func testBusyHintOnlyAppliesToProcessingPhases() {
@@ -409,19 +425,84 @@ final class HUDViewStateTests: XCTestCase {
 
     // MARK: - Symbol tones, elapsed format, announcements
 
-    func testSymbolToneFollowsColourSemantics() {
-        XCTAssertEqual(HUDViewState(phase: .recording(HUDRecordingState())).symbolTone, .accent)
-        XCTAssertEqual(HUDViewState(phase: .transcribing).symbolTone, .secondary)
-        XCTAssertEqual(HUDViewState(phase: .processingAI(HUDProcessingAIState(mode: .polish))).symbolTone, .secondary)
-        XCTAssertEqual(HUDViewState(phase: .completed(HUDCompletionState(kind: .success))).symbolTone, .success)
-        XCTAssertEqual(HUDViewState(phase: .completed(HUDCompletionState(kind: .aiFallback))).symbolTone, .warning)
-        XCTAssertEqual(HUDViewState(phase: .completed(HUDCompletionState(kind: .clipboardFallback))).symbolTone, .warning)
-        XCTAssertEqual(HUDViewState(phase: .blocked(HUDBlockedState(code: "x", message: "y"))).symbolTone, .warning)
-        XCTAssertEqual(HUDViewState(phase: .failed(HUDFailureState(code: "x", message: "y"))).symbolTone, .warning)
+    /// UI v2 recorder: orange while it listens, blue while it makes text,
+    /// amber when it needs the user, red when it failed.
+    func testGlyphFollowsTheRecorderColourSemantics() {
+        func glyph(_ phase: HUDPhase, recoverable: String? = nil) -> HUDGlyph {
+            HUDViewState(phase: phase, recoverableTranscript: recoverable).glyph
+        }
+        XCTAssertEqual(glyph(.recording(HUDRecordingState(captureStarted: false))), HUDGlyph(tone: .voice, fill: .ring, mark: .none))
+        XCTAssertTrue(glyph(.recording(HUDRecordingState(captureStarted: false))).pulses)
+        XCTAssertEqual(glyph(.recording(HUDRecordingState())), HUDGlyph(tone: .voice, fill: .solid, mark: .symbol("mic.fill")))
+        XCTAssertFalse(glyph(.recording(HUDRecordingState())).pulses)
+        for phase: HUDPhase in [.finalizing, .transcribing, .processingAI(HUDProcessingAIState(mode: .polish)), .inserting] {
+            XCTAssertEqual(glyph(phase), HUDGlyph(tone: .cursor, fill: .soft, mark: .spinner), "\(phase.kind)")
+        }
+        XCTAssertEqual(glyph(.completed(HUDCompletionState(kind: .success))), HUDGlyph(tone: .cursor, fill: .solid, mark: .symbol("checkmark")))
+        XCTAssertEqual(glyph(.completed(HUDCompletionState(kind: .aiFallback))), HUDGlyph(tone: .warn, fill: .soft, mark: .symbol("exclamationmark")))
+        XCTAssertEqual(glyph(.completed(HUDCompletionState(kind: .clipboardFallback))), HUDGlyph(tone: .warn, fill: .soft, mark: .symbol("doc.on.clipboard")))
+        XCTAssertEqual(glyph(.blocked(HUDBlockedState(code: "x", message: "y"))), HUDGlyph(tone: .warn, fill: .soft, mark: .symbol("exclamationmark")))
+        XCTAssertEqual(glyph(.failed(HUDFailureState(code: "x", message: "y"))), HUDGlyph(tone: .err, fill: .soft, mark: .symbol("exclamationmark")))
         XCTAssertEqual(
-            HUDViewState(phase: .failed(HUDFailureState(code: "x", message: "y", isFatal: true))).symbolTone,
-            .fatal
+            glyph(.failed(HUDFailureState(code: "x", message: "y")), recoverable: "kept"),
+            HUDGlyph(tone: .err, fill: .soft, mark: .symbol("exclamationmark"))
         )
+        XCTAssertEqual(
+            glyph(.failed(HUDFailureState(code: "x", message: "y", isFatal: true))),
+            HUDGlyph(tone: .err, fill: .solid, mark: .symbol("xmark"))
+        )
+    }
+
+    /// The AI chip reads like the design's mode chip: the action name, or
+    /// AI on / off when the job has none; a symbol only when it adds
+    /// meaning.
+    func testAIChipTextAndSymbol() {
+        let on = HUDAIIndicator(isEnabled: true, actionName: "Clean Up", shortcutBadge: "⌘1")
+        XCTAssertEqual(on.chipText, "Clean Up")
+        XCTAssertNil(on.chipSymbolName)
+        XCTAssertEqual(HUDAIIndicator(isEnabled: true).chipText, "AI on")
+        XCTAssertEqual(HUDAIIndicator(isEnabled: true).chipSymbolName, "sparkles")
+        XCTAssertEqual(HUDAIIndicator(isEnabled: false, actionName: "Clean Up").chipText, "Clean Up")
+        XCTAssertEqual(HUDAIIndicator(isEnabled: false, actionName: "Clean Up").chipSymbolName, "circle.slash")
+        XCTAssertEqual(HUDAIIndicator(isEnabled: false).chipText, "AI off")
+    }
+
+    /// Every SF Symbol the recorder draws exists on this system — a missing
+    /// name renders nothing (the AI-off chip once asked for a
+    /// non-existent "sparkles.slash").
+    @MainActor
+    func testEveryRecorderSymbolExists() {
+        var names = Set<String>()
+        for (_, state) in HUDViewState.galleryStates {
+            if case .symbol(let name) = state.glyph.mark { names.insert(name) }
+        }
+        for indicator in [HUDAIIndicator(isEnabled: true), HUDAIIndicator(isEnabled: false), HUDAIIndicator(isEnabled: false, actionName: "x")] {
+            names.insert(indicator.symbolName)
+            if let chip = indicator.chipSymbolName { names.insert(chip) }
+        }
+        names.formUnion(HUDRecoveryAction.allCases.map(\.symbolName))
+        for name in names {
+            XCTAssertNotNil(NSImage(systemSymbolName: name, accessibilityDescription: nil), name)
+        }
+    }
+
+    /// Every gallery state (the snapshot and preview fixture) is visible
+    /// and titled, and the gallery covers every phase the HUD can show.
+    func testGalleryCoversEveryVisiblePhase() {
+        let states = HUDViewState.galleryStates.map(\.state)
+        XCTAssertTrue(states.allSatisfy { $0.isVisible && !$0.title.isEmpty })
+        let kinds = Set(states.map(\.phase.kind))
+        XCTAssertEqual(kinds, Set(HUDPhaseKind.allCases).subtracting([.idle]))
+    }
+
+    /// The UI v2 meter: bars scale between 45 % and 100 % of their resting
+    /// height with the level, and stay at rest (unlit) while the mic starts.
+    func testMeterBarScale() {
+        XCTAssertEqual(Meter.barScale(level: 0, live: true), 0.45, accuracy: 0.0001)
+        XCTAssertEqual(Meter.barScale(level: 1, live: true), 1, accuracy: 0.0001)
+        XCTAssertEqual(Meter.barScale(level: 4, live: true), 1, accuracy: 0.0001)
+        XCTAssertEqual(Meter.barScale(level: 0.3, live: false), 1)
+        XCTAssertEqual(Meter.barHeights, [8, 14, 20, 12, 6])
     }
 
     func testElapsedFormatsAsMinutesAndSeconds() {
@@ -461,7 +542,7 @@ final class HUDViewStateTests: XCTestCase {
         XCTAssertEqual(starting.accessibilityAnnouncement, "Starting microphone. Release to stop")
         XCTAssertEqual(startingState.inputLevel, 0)
         XCTAssertEqual(startingState.elapsed, .zero)
-        XCTAssertEqual(starting.symbolTone, .accent, "same tone family; the view draws the dot hollow")
+        XCTAssertEqual(starting.glyph.fill, .ring, "the view draws the voice ring hollow")
 
         let live = HUDViewState(
             dictationState: .recording(RecordingState(jobID: jobID, elapsed: .seconds(2))),
@@ -582,7 +663,7 @@ final class HUDViewStateTests: XCTestCase {
         guard case .recording(let recording) = state.phase else { return XCTFail("expected recording") }
         XCTAssertEqual(recording.ai, indicator)
         XCTAssertEqual(indicator.symbolName, "sparkles")
-        XCTAssertEqual(HUDAIIndicator(isEnabled: false).symbolName, "sparkles.slash")
+        XCTAssertEqual(HUDAIIndicator(isEnabled: false).symbolName, "circle.slash")
         XCTAssertEqual(indicator.accessibilityDescription, "AI on, Polish")
         XCTAssertEqual(HUDAIIndicator(isEnabled: false, actionName: "Shout").accessibilityDescription, "AI off, Shout")
         XCTAssertEqual(HUDAIIndicator(isEnabled: false).accessibilityDescription, "AI off")

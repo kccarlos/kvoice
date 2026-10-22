@@ -403,6 +403,12 @@ extension AppDelegate {
             self?.showTutorial()
         }
         viewModel.microphoneTest.refreshInputDevice()
+        // UI v2 fidelity F4: the level test and the Ready checklist name the
+        // input the resolver picks (the wizard's picker writes the same
+        // setting as Settings › Microphone), not only the system default.
+        viewModel.inputDeviceNameProvider = { [weak self] in
+            self?.audioInputViewModel.selection.device?.name
+        }
         // Best-effort: the estimate hook defaults to nil until the integrator
         // wires it, in which case the model step shows nothing.
         Task { [weak self] in

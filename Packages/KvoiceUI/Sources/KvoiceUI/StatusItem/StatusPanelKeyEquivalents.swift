@@ -73,4 +73,15 @@ public enum StatusItemClick {
     public static func surface(isRightButton: Bool, option: Bool, control: Bool) -> Surface {
         (isRightButton || option || control) ? .menu : .panel
     }
+
+    /// What VoiceOver reads for the status item. The artwork carries no
+    /// description, so without it the item was announced as nothing (Q2).
+    public static let accessibilityLabel = "KVoice"
+
+    /// The custom action that opens the menu. The menu is the "keyboard /
+    /// VoiceOver fallback" (P-D4), but an Accessibility client cannot
+    /// right-click and the button answered AXShowMenu with nothing.
+    public static var showMenuActionName: String {
+        String(localized: "Show Menu", bundle: .module)
+    }
 }

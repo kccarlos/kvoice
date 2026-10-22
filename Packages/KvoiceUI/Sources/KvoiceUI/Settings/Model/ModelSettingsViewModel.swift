@@ -165,6 +165,10 @@ public final class ModelSettingsViewModel {
     /// refused then because the running job holds the model.
     public private(set) var dictationIsActive = false
     public private(set) var spaceEstimate: ModelSpaceEstimate?
+    /// The Runtime details sheet. Here, not in the view's `@State`: the
+    /// header's "Runtime…" closure travels through a preference and outlived
+    /// the binding it captured, so the button did nothing (Q2).
+    public var isShowingRuntimeDetails = false
 
     /// The state-changing action the user just asked for, until the shell's
     /// published state moves on. The shell reflects a click only on its next

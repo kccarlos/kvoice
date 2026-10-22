@@ -2,11 +2,11 @@ import AppKit
 import SwiftUI
 import KvoiceUI
 
-/// The one main window (product decision #7, regrouped 2026-09-13): a sidebar
-/// of `MainWindowSection`s under four headings — Dictation (Shortcuts &
-/// Triggers, Recording, Speech Models, Audio Input), AI (AI Actions), Data
-/// (History, Data & Privacy), App (General, Permissions, Help) — hosting the
-/// existing views. Every "open History / Settings / Model…" entry point in the
+/// The one main window (product decision #7, regrouped by the owner on
+/// 2026-10-21): a sidebar of `MainWindowSection`s — an untitled top group
+/// (Home, History), then Dictation (Shortcuts, Recording, Speech Models,
+/// Microphone, Dictionary), AI (AI Actions), App (Data & Privacy,
+/// Permissions, General, Help) — hosting the existing views. Every "open History / Settings / Model…" entry point in the
 /// app lands here through `open(section:)`.
 ///
 /// Owned by AppKit rather than a SwiftUI scene:
@@ -15,8 +15,11 @@ import KvoiceUI
 /// and a `WindowGroup` would open at launch. `OnboardingWindowController`
 /// works the same way.
 ///
-/// The window frame is autosaved by AppKit; the selected section is persisted
-/// through `LocalState.mainWindowSection` so both survive a relaunch.
+/// The window frame is autosaved by AppKit. A newly created window opens on
+/// Home unless an entry point asked for a page (owner decision 2026-10-21,
+/// `MainWindowSection.opening(requested:)`); within a launch the window keeps
+/// the page it last showed. The selection is still written to
+/// `LocalState.mainWindowSection`, which no longer picks the opening page.
 @MainActor
 final class MainWindowController: NSWindowController {
     /// View models for the sections the app delegate does not own directly.
@@ -25,10 +28,10 @@ final class MainWindowController: NSWindowController {
     let surface: SettingsSurface
     let model: MainWindowModel
 
-    init(appDelegate: AppDelegate) {
+    init(appDelegate: AppDelegate, requestedSection: MainWindowSection?) {
         surface = SettingsSurface(appDelegate: appDelegate)
         model = MainWindowModel(
-            selection: MainWindowSection(persisted: appDelegate.currentLocalState.mainWindowSection),
+            selection: MainWindowSection.opening(requested: requestedSection),
             showTutorialBanner: appDelegate.shouldOfferTutorialBanner(),
             onSelectionChange: { [weak appDelegate] section in
                 appDelegate?.mainWindowSectionChanged(section)
@@ -41,28 +44,30 @@ final class MainWindowController: NSWindowController {
             }
         )
         let surface = surface
+        let model = model
+        appDelegate.configureHomeTestDictation()
         let rootView = MainWindowView(model: model) { [weak appDelegate] section in
             guard let appDelegate else { return AnyView(EmptyView()) }
+            if section == .home {
+                return AnyView(HomeView(model: model, history: appDelegate.historyViewModel, testDictation: appDelegate.homeTestDictation))
+            }
             return Self.content(for: section, appDelegate: appDelegate, surface: surface)
         }
-        // NSHostingController rather than NSHostingView so SwiftUI owns the
-        // toolbar: the sidebar toggle and the navigation title need it.
+        // NSHostingController: the content view controller AppKit sizes.
         let hosting = NSHostingController(rootView: rootView)
-        // Without this the controller publishes SwiftUI's ideal size as its
-        // preferredContentSize and the window grows to fit the History
-        // split view (observed: 1054×1194) instead of keeping the size below.
-        hosting.sizingOptions = []
+        // SwiftUI manages neither the size nor the title bar: see
+        // `MainWindowChrome.configure(_:)` for why each is off.
+        MainWindowChrome.configure(hosting)
         let window = NSWindow(contentViewController: hosting)
-        // M13/N27: no AppKit title — `MainWindowView`'s `.navigationTitle`
-        // (`model.selection.title`) is what the hosting controller's unified
-        // toolbar shows, and `toolbars.md › Titles` says not to title a
-        // window with the app's own name. A static "kvoice" here only ever
-        // showed before SwiftUI's first layout pass, if at all; left
-        // unset, that gap is a blank title bar rather than a wrong one.
-        window.styleMask = [.titled, .closable, .resizable, .miniaturizable, .fullSizeContentView]
+        // UI v2 fidelity F2: the design has no toolbar and no visible title
+        // — the drawn sidebar runs to the top with the traffic lights in it
+        // and the detail column starts with an empty 38 pt strip. The title
+        // is still set (`MainWindowView` keeps it on the selected page) for
+        // VoiceOver and the Window list; `toolbars.md › Titles` (M13/N27):
+        // never the app's own name.
+        MainWindowChrome.configure(window)
         window.isReleasedWhenClosed = false
         window.tabbingMode = .disallowed
-        window.toolbarStyle = .unified
         // One size for the window, set here rather than inside any section.
         // When every tab carried its own minWidth/minHeight, the largest one
         // silently dictated the window size and switching tabs resized it.
@@ -118,6 +123,10 @@ final class MainWindowController: NSWindowController {
         surface: SettingsSurface
     ) -> AnyView {
         switch section {
+        case .home:
+            // Built in `init`, which has the window model the page needs.
+            return AnyView(EmptyView())
+
         case .history:
             return AnyView(HistoryView(viewModel: appDelegate.historyViewModel))
 
@@ -170,7 +179,10 @@ final class MainWindowController: NSWindowController {
                     appDelegate?.composition.shortcutAdapter.presentRecorder()
                 },
                 triggers: surface.triggerOptionBindings,
-                availability: appDelegate.settingsAvailability
+                availability: appDelegate.settingsAvailability,
+                shortcutRegistration: { [weak appDelegate] in
+                    appDelegate?.composition.shortcutAdapter.registrationState ?? .unregistered
+                }
             ))
 
         case .recording:

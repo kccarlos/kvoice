@@ -36,6 +36,10 @@ public struct DictationJob: Sendable, Equatable {
     public private(set) var durationCapReached: Bool
     public private(set) var aiCancelled: Bool
     public private(set) var transcriptionDuration: Duration?
+    /// The model the engine reports it ran. `modelIDSnapshot` is the
+    /// explicit selection only and is empty when the resident default
+    /// served the job — every History row then read "Model: Unknown" (Q2).
+    public private(set) var transcribedModelID: ModelID?
     // MARK: History and data
     /// Wall time of a successful AI request, for the history row's
     /// `aiDurationMilliseconds` (the "Avg AI time" tile).
@@ -82,6 +86,16 @@ public struct DictationJob: Sendable, Equatable {
 
     public mutating func recordTranscriptionDuration(_ duration: Duration) {
         transcriptionDuration = duration
+    }
+
+    public mutating func recordTranscribedModel(_ modelID: ModelID) {
+        transcribedModelID = modelID.isEmpty ? nil : modelID
+    }
+
+    /// What History records as the job's model: the one that ran, else the
+    /// selection the job started with.
+    public var historyModelID: ModelID {
+        transcribedModelID ?? modelIDSnapshot
     }
 
     public mutating func markDurationCapReached() {

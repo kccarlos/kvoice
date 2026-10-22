@@ -21,25 +21,24 @@ final class OnboardingWindowController: NSObject, NSWindowDelegate {
     private let window: NSWindow
     private let viewModel: OnboardingViewModel
 
-    /// `aiSettingsViewModel` backs the AI Actions link on the Ready page
-    /// (the Optional AI step left the wizard on 2026-09-16). `showSetup()` in
-    /// `AppDelegate+Onboarding.swift` constructs this controller with the
-    /// view model only, so when it is not passed the controller resolves it
-    /// from the app delegate and installs the shell hooks the setup screens
-    /// need (System Settings deep links, input device name, space estimate).
-    init(
-        viewModel: OnboardingViewModel,
-        aiSettingsViewModel: AISettingsViewModel? = nil
-    ) {
-        let appDelegate = NSApp.delegate as? AppDelegate
-        appDelegate?.installOnboardingSurfaceHooks()
-        let aiViewModel = aiSettingsViewModel ?? appDelegate?.aiSettingsViewModel
+    /// The app delegate is passed in, never looked up: under
+    /// `@NSApplicationDelegateAdaptor` `NSApp.delegate` is SwiftUI's own
+    /// adaptor, so `NSApp.delegate as? AppDelegate` was always nil and none
+    /// of the shell hooks the setup screens need were installed — Ready's
+    /// Quick Tour and AI Actions links did nothing, and the System Settings
+    /// deep links, the focus restore after a TCC prompt, the input name and
+    /// the space estimate were missing too (owner report 2026-10-21). It
+    /// also supplies the AI view model behind Ready's AI Actions link and
+    /// summary, and the input picker.
+    init(viewModel: OnboardingViewModel, appDelegate: AppDelegate) {
+        appDelegate.installOnboardingSurfaceHooks()
 
         self.viewModel = viewModel
         let hostingController = NSHostingController(
             rootView: OnboardingView(
                 viewModel: viewModel,
-                aiSettingsViewModel: aiViewModel
+                aiSettingsViewModel: appDelegate.aiSettingsViewModel,
+                audioInput: appDelegate.audioInputViewModel
             )
         )
         window = NSWindow(

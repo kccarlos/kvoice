@@ -106,6 +106,21 @@ public final class AISettingsViewModel {
 
     public var activeConfigurationID: UUID? { host.settings.ai.activeConfigurationID }
 
+    /// The active AI action's name ("Clean Up"), for the setup wizard's
+    /// Ready line (UI v2 fidelity F4); nil when none is chosen.
+    public var activeActionName: String? {
+        let ai = host.settings.ai
+        guard let id = ai.activePromptModeID else { return nil }
+        return ai.promptModes.first { $0.id == id }?.name
+    }
+
+    /// The active configuration's name ("Local Ollama"); nil without one.
+    public var activeConfigurationName: String? {
+        let ai = host.settings.ai
+        guard let id = ai.activeConfigurationID else { return nil }
+        return ai.configurations.first { $0.id == id }?.name
+    }
+
     /// Model identifiers reported by the endpoint, so the user can pick instead
     /// of typing one exactly.
     public private(set) var discoveredModels: [String] = []

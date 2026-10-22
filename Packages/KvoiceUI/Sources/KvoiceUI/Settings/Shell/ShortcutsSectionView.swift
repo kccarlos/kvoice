@@ -70,6 +70,8 @@ public struct ShortcutsSectionView: View {
     /// ADR-022 item 3: every control here is a recording setting, disabled
     /// with a footnote while a job holds its settings snapshot.
     private let availability: SettingsAvailabilityModel
+    private let shortcutRegistration: (@MainActor () -> ShortcutRegistrationState)?
+    @State private var registration: ShortcutRegistrationState?
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -77,8 +79,10 @@ public struct ShortcutsSectionView: View {
         general: GeneralSettingsViewModel = .init(),
         onChooseShortcut: @escaping @MainActor () -> Void = {},
         triggers: TriggerOptionBindings = .init(),
-        availability: SettingsAvailabilityModel = .init()
+        availability: SettingsAvailabilityModel = .init(),
+        shortcutRegistration: (@MainActor () -> ShortcutRegistrationState)? = nil
     ) {
+        self.shortcutRegistration = shortcutRegistration
         self.general = general
         self.onChooseShortcut = onChooseShortcut
         self.triggers = triggers
@@ -86,50 +90,81 @@ public struct ShortcutsSectionView: View {
     }
 
     public var body: some View {
-        Form {
+        KVCardPage {
             recordingShortcutSection
             secondaryTriggersSection
         }
-        .formStyle(.grouped)
     }
 
     // MARK: Recording shortcut
 
     private var recordingShortcutSection: some View {
-        Section {
-            VStack(alignment: .leading, spacing: 6) {
-                SettingsFactRow("Recording shortcut", general.shortcutDescription, systemImage: "keyboard")
-
-                // Two buttons side by side when there is room, stacked when
-                // the pane is narrow.
-                ViewThatFits(in: .horizontal) {
-                    HStack { shortcutButtons }
-                    VStack(alignment: .leading, spacing: 6) { shortcutButtons }
+        // UI v2 fidelity F3 (Window.dc `shortcuts`): the shortcut as keycaps
+        // with its registration chip, the trigger as a segmented control
+        // whose sub-line says what the chosen mode does, and the two
+        // buttons on their own row.
+        KVCardSection {
+            LabeledContent {
+                HStack(spacing: 8) {
+                    if let shortcut = general.confirmedShortcut {
+                        Keycaps(StatusPanelState.keyCaps(GeneralSettingsViewModel.glyphs(for: shortcut)))
+                    } else {
+                        Text("None", bundle: .module).foregroundStyle(Color.kv.text2).font(.system(size: 12))
+                    }
+                    if let registration, general.confirmedShortcut != nil {
+                        let card = ShortcutCard(confirmed: general.confirmedShortcut, registration: registration, lastChecked: nil)
+                        KVChip(card.status.displayName, tone: card.status == .registered ? .ok : .warn)
+                    }
                 }
+            } label: {
+                Text("Shortcut", bundle: .module)
             }
-            .animation(reduceMotion ? nil : .default, value: general.confirmedShortcut)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(Text("Recording shortcut", bundle: .module))
+            .accessibilityValue(Text(verbatim: general.shortcutDescription))
 
-            Picker("Trigger", selection: $general.recordingInteraction) {
-                Text("Push-to-Talk (hold)")
-                    .tag(RecordingInteraction.pushToTalk)
-                Text("Toggle (press to start, press to stop)")
-                    .tag(RecordingInteraction.toggle)
-                Text("Hybrid (tap to toggle, hold to talk)")
-                    .tag(RecordingInteraction.hybrid)
+            LabeledContent {
+                KVSegmented("Trigger mode", selection: $general.recordingInteraction, options: [
+                    (.pushToTalk, String(localized: "Push-to-Talk", bundle: .module)),
+                    (.toggle, String(localized: "Toggle", bundle: .module)),
+                    (.hybrid, String(localized: "Hybrid", bundle: .module))
+                ])
+                .accessibilityHint(Text("Choose whether holding or pressing the shortcut controls recording. Hybrid treats a quick tap as a toggle and a hold as push-to-talk.", bundle: .module))
+            } label: {
+                Text("Trigger", bundle: .module)
+                Text(Self.triggerSubline(general.recordingInteraction))
             }
-            .accessibilityLabel("Trigger mode")
-            .accessibilityHint("Choose whether holding or pressing the shortcut controls recording. Hybrid treats a quick tap as a toggle and a hold as push-to-talk.")
+
+            HStack(spacing: 6) { shortcutButtons }
+                .animation(reduceMotion ? nil : .default, value: general.confirmedShortcut)
         } header: {
-            Text("Recording Shortcut")
+            Text("Recording Shortcut", bundle: .module)
         } footer: {
             SettingsFooter(note: general.refusalNote) {
                 Text(availability.footnote(
                     .shortcut,
-                    base: String(localized: "The key that starts a dictation. Push-to-Talk is the safe default.", bundle: .module)
+                    base: String(localized: "Push-to-Talk is the safe default.", bundle: .module)
                 ))
             }
         }
         .disabled(!availability.isEnabled(.shortcut))
+        .task {
+            guard let shortcutRegistration else { return }
+            while !Task.isCancelled {
+                let latest = shortcutRegistration()
+                if latest != registration { registration = latest }
+                do { try await Task.sleep(for: .seconds(1)) } catch { return }
+            }
+        }
+    }
+
+    /// The trigger row's sub-line: what the chosen mode does.
+    static func triggerSubline(_ interaction: RecordingInteraction) -> String {
+        switch interaction {
+        case .pushToTalk: String(localized: "Hold to record, release to stop", bundle: .module)
+        case .toggle: String(localized: "Press to start, press again to stop", bundle: .module)
+        case .hybrid: String(localized: "Tap to toggle, hold to talk", bundle: .module)
+        }
     }
 
     @ViewBuilder
@@ -143,7 +178,7 @@ public struct ShortcutsSectionView: View {
         } label: {
             Text(general.confirmedShortcut == nil
                 ? "Use Recommended Shortcut"
-                : "Choose Another Shortcut…")
+                : "Change Shortcut…")
         }
         .accessibilityLabel(general.confirmedShortcut == nil
             ? "Use recommended shortcut"
@@ -151,7 +186,7 @@ public struct ShortcutsSectionView: View {
         .accessibilityHint("The shortcut is not active until it is confirmed. Right Option on its own is offered in the recorder.")
 
         if general.confirmedShortcut != nil {
-            Button("Clear Shortcut", role: .destructive) {
+            Button("Clear", role: .destructive) {
                 general.clearShortcut()
             }
             .accessibilityLabel("Clear confirmed shortcut")
@@ -162,7 +197,7 @@ public struct ShortcutsSectionView: View {
     // MARK: Secondary triggers
 
     private var secondaryTriggersSection: some View {
-        Section {
+        KVCardSection {
             // The job refusal applies to the rows, not the Section: the
             // footer's full-edition link (ADR-026) must never be dead.
             Group {
@@ -172,28 +207,28 @@ public struct ShortcutsSectionView: View {
                 hint: "An extra way to cancel a dictation in progress. Escape always cancels."
             )
             placeholderToggle(
-                "Double-press to send (press Return after inserting)",
+                "Double-press to send",
+                sub: "Presses Return after inserting",
                 binding: triggers.autoSend,
                 hint: "Press the recording shortcut twice quickly while recording to have KVoice press Return once the text is inserted. Never used when the text went to the clipboard."
             )
-            .controlSize(.mini)
 
             placeholderToggle(
                 "Middle mouse button toggles recording",
                 binding: triggers.middleMouseToggle,
                 hint: "Hold the middle mouse button past the activation delay to start; press it again to stop. Ordinary middle clicks pass through. Needs Accessibility permission."
             )
-            .controlSize(.mini)
             // ADR-026: not in the App Store edition (no global monitor).
             .disabled(!availability.isEnabled(.middleMouseTrigger))
             if triggers.middleMouseToggle?.wrappedValue == true, let delay = triggers.middleMouseActivationDelayMilliseconds {
                 middleMouseDelaySlider(delay)
             }
-            SettingsResetRow(.triggers, host: general.host, origin: .page(.shortcuts))
             }
             .disabled(!availability.isEnabled(.triggers))
         } header: {
-            Text("More Ways to Trigger")
+            KVHeaderRow("More Ways to Trigger") {
+                SettingsResetRow(.triggers, host: general.host, origin: .page(.shortcuts))
+            }
         } footer: {
             SettingsFooter(note: triggers.refusalNote?()) {
                 Text(availability.footnote(.triggers, base: footerText))
@@ -207,9 +242,9 @@ public struct ShortcutsSectionView: View {
         // ADR-026: the App Store edition has no global Escape monitor; its
         // sentence (the middle mouse row's reason) replaces the claim.
         if availability.edition == .appStore, let reason = availability.disabledReason(.middleMouseTrigger) {
-            return String(localized: "Extras beside the recording shortcut.", bundle: .module) + " " + reason
+            return reason
         }
-        let base = String(localized: "Extras beside the recording shortcut. Escape always cancels.", bundle: .module)
+        let base = String(localized: "Escape always cancels.", bundle: .module)
         return triggers.isBound ? base : base + " " + String(localized: "Dimmed options are not adjustable in this build yet.", bundle: .module)
     }
 
@@ -262,8 +297,11 @@ public struct ShortcutsSectionView: View {
         }
     }
 
-    private func placeholderToggle(_ title: LocalizedStringKey, binding: Binding<Bool>?, hint: LocalizedStringKey) -> some View {
-        Toggle(title, isOn: binding ?? .constant(false))
+    private func placeholderToggle(_ title: LocalizedStringKey, sub: LocalizedStringKey? = nil, binding: Binding<Bool>?, hint: LocalizedStringKey) -> some View {
+        Toggle(isOn: binding ?? .constant(false)) {
+            Text(title, bundle: .module)
+            if let sub { Text(sub, bundle: .module) }
+        }
             .disabled(binding == nil)
             .accessibilityLabel(title)
             .accessibilityHint(binding == nil ? "Not adjustable in this build." : hint)
@@ -275,19 +313,25 @@ public struct ShortcutsSectionView: View {
             get: { Double(delay.wrappedValue) },
             set: { delay.wrappedValue = Int($0.rounded()) }
         )
-        return VStack(alignment: .leading, spacing: 2) {
-            Slider(value: value, in: Double(range.lowerBound)...Double(range.upperBound), step: 50) {
-                Text("Activation delay")
-            } minimumValueLabel: {
-                Text("0 s")
-            } maximumValueLabel: {
-                Text("2 s")
+        return LabeledContent {
+            HStack(spacing: 10) {
+                Slider(value: value, in: Double(range.lowerBound)...Double(range.upperBound), step: 50) {
+                    Text("Activation delay", bundle: .module)
+                }
+                .labelsHidden()
+                .controlSize(.small)
+                .tint(Color.kv.cursor)
+                .frame(width: 160)
+                .accessibilityLabel(Text("Middle mouse activation delay", bundle: .module))
+                .accessibilityValue(Text("\(delay.wrappedValue) milliseconds", bundle: .module))
+                Text(verbatim: "\(delay.wrappedValue) ms")
+                    .font(.system(size: 12, design: .monospaced))
+                    .foregroundStyle(Color.kv.text2)
+                    .frame(width: 52, alignment: .leading)
             }
-            .accessibilityLabel("Middle mouse activation delay")
-            .accessibilityValue("\(delay.wrappedValue) milliseconds")
-            Text("Hold for \(delay.wrappedValue) ms before recording starts.")
-                .font(.caption)
-                .foregroundStyle(.secondary)
+        } label: {
+            Text("Activation delay", bundle: .module)
+            Text("Hold this long before recording starts", bundle: .module)
         }
     }
 }

@@ -62,7 +62,7 @@ struct PrivacyAboutSections: View {
     // MARK: Privacy
 
     private var privacySection: some View {
-        Section {
+        KVCardSection {
             Label {
                 Text("Audio is captured only while you dictate and is transcribed on this Mac by the local Whisper model. No recording is saved and nothing is uploaded.")
             } icon: {
@@ -86,9 +86,9 @@ struct PrivacyAboutSections: View {
     // MARK: Network matrix
 
     private var networkSection: some View {
-        Section {
+        KVCardSection {
             networkRow(
-                "AI Off",
+                "AI off",
                 "No network I/O during dictation once the model is installed."
             )
             networkRow(
@@ -107,10 +107,10 @@ struct PrivacyAboutSections: View {
 
     private func networkRow(_ title: LocalizedStringKey, _ detail: LocalizedStringKey) -> some View {
         VStack(alignment: .leading, spacing: 2) {
-            Text(title).font(.headline)
+            Text(title).font(.system(size: 13))
             Text(detail)
-                .font(.callout)
-                .foregroundStyle(.secondary)
+                .font(.system(size: 11))
+                .foregroundStyle(Color.kv.text2)
                 .fixedSize(horizontal: false, vertical: true)
         }
         .accessibilityElement(children: .combine)
@@ -119,7 +119,7 @@ struct PrivacyAboutSections: View {
     // MARK: Logs
 
     private var logSection: some View {
-        Section {
+        KVCardSection {
             Text("Diagnostics record scalars only: state names, error codes, timings, and byte counts. Transcript text, audio, and API keys are never written to a log, and Copy Diagnostics below is redacted the same way.")
                 .font(.callout)
                 .foregroundStyle(.secondary)
@@ -145,7 +145,7 @@ struct PrivacyAboutSections: View {
     // MARK: Data
 
     private var dataSection: some View {
-        Section {
+        KVCardSection {
             if let folder = viewModel.dataFolderURL {
                 SettingsPathRow("Data folder", folder)
                 Button("Open Data Folder") {
@@ -212,8 +212,10 @@ struct LicensesSheet: View {
                     .textSelection(.enabled)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(20)
-                    .accessibilityLabel("Open-source licenses")
             }
+            // On the scroll view, not the selectable text (see HistoryView's
+            // transcriptBox).
+            .accessibilityLabel("Open-source licenses")
             Divider()
             SheetButtonBar(
                 confirmTitle: "Done",

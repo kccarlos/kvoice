@@ -36,28 +36,35 @@ public struct GeneralSectionView: View {
     }
 
     public var body: some View {
-        Form {
+        KVCardPage {
             appearanceSection
             languageSection
             memorySection
             backupSection
             setupSection
-            troubleshootingSection
         }
-        .formStyle(.grouped)
     }
 
     // MARK: Appearance and startup
 
     private var appearanceSection: some View {
-        Section {
+        KVCardSection {
             Toggle("Show KVoice in Dock", isOn: $viewModel.showDockIcon)
                 .accessibilityLabel("Show KVoice in Dock")
                 .accessibilityHint("When enabled, KVoice appears in the Dock as well as the menu bar. The menu-bar item is always shown.")
 
-            Toggle("Launch at Login", isOn: $viewModel.launchAtLogin)
-                .accessibilityLabel("Launch at Login")
-                .accessibilityHint("Registers KVoice as a login item through macOS. The status below is what macOS reports.")
+            HStack(spacing: 12) {
+                Toggle("Launch at Login", isOn: $viewModel.launchAtLogin)
+                    .accessibilityLabel("Launch at Login")
+                    .accessibilityHint("Registers KVoice as a login item through macOS. The status below is what macOS reports.")
+                if let chip = Self.loginChip(viewModel.launchAtLoginStatus) {
+                    KVChip(chip.0, tone: chip.1)
+                        .accessibilityLabel(Text("Login item status", bundle: .module))
+                        .accessibilityValue(Text(viewModel.launchAtLoginStatus.displayName))
+                        .help(viewModel.launchAtLoginStatus.displayName)
+                }
+            }
+            .animation(reduceMotion ? nil : .default, value: viewModel.launchAtLoginStatus)
                 .task {
                     // The user can approve or remove the login item in System
                     // Settings at any time, so the section reads the real
@@ -67,20 +74,6 @@ public struct GeneralSectionView: View {
                 .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
                     viewModel.refreshLaunchAtLoginStatus()
                 }
-
-            LabeledContent("Login item status") {
-                if viewModel.launchAtLoginNeedsApproval {
-                    StatusLabel(viewModel.launchAtLoginStatus.displayName, symbol: "exclamationmark.triangle.fill", tone: .attention)
-                        .labelStyle(.titleAndIcon)
-                } else {
-                    Text(viewModel.launchAtLoginStatus.displayName)
-                        .foregroundStyle(.secondary)
-                }
-            }
-            .accessibilityElement(children: .combine)
-            .accessibilityLabel("Login item status")
-            .accessibilityValue(viewModel.launchAtLoginStatus.displayName)
-            .animation(reduceMotion ? nil : .default, value: viewModel.launchAtLoginStatus)
 
             if viewModel.launchAtLoginNeedsApproval {
                 Button("Open Login Items Settings") {
@@ -100,7 +93,7 @@ public struct GeneralSectionView: View {
             Text("Appearance and Startup")
         } footer: {
             SettingsFooter(note: viewModel.refusalNote) {
-                Text("KVoice always lives in the menu bar; macOS may ask you to approve the login item once.")
+                Text("KVoice always lives in the menu bar.")
             }
         }
     }
@@ -111,11 +104,15 @@ public struct GeneralSectionView: View {
     /// macOS does, so a user who cannot read the current one can still find
     /// theirs. The change takes effect on relaunch — the alert says why.
     private var languageSection: some View {
-        Section {
-            Picker("Interface language", selection: $viewModel.interfaceLanguage) {
-                Text("Follow System").tag(InterfaceLanguage.system)
-                Text(verbatim: "English").tag(InterfaceLanguage.english)
-                Text(verbatim: "简体中文").tag(InterfaceLanguage.simplifiedChinese)
+        KVCardSection {
+            LabeledContent {
+                KVSelect("Interface language", selection: $viewModel.interfaceLanguage, current: Self.languageTitle(viewModel.interfaceLanguage)) {
+                    Text("Follow System").tag(InterfaceLanguage.system)
+                    Text(verbatim: "English").tag(InterfaceLanguage.english)
+                    Text(verbatim: "简体中文").tag(InterfaceLanguage.simplifiedChinese)
+                }
+            } label: {
+                Text("Interface language")
             }
             .accessibilityLabel("Interface language")
             .accessibilityHint("Changes the language of KVoice's windows and menus after a relaunch.")
@@ -131,9 +128,7 @@ public struct GeneralSectionView: View {
         } header: {
             Text("Language")
         } footer: {
-            SettingsFooter(note: viewModel.refusalNote) {
-                Text("The language of KVoice's own windows and menus. Speech recognition and translation languages are set in Speech Models and AI Actions.")
-            }
+            SettingsFooter(note: viewModel.refusalNote) { EmptyView() }
         }
     }
 
@@ -143,16 +138,18 @@ public struct GeneralSectionView: View {
     /// menu and the Runtime card's banner) is always offered under critical
     /// pressure; this toggle is the only way it happens without being asked.
     private var memorySection: some View {
-        Section {
-            Toggle("Free model memory under critical pressure automatically", isOn: $viewModel.freeModelMemoryUnderCriticalPressure)
-                .accessibilityHint("When enabled, KVoice unloads the speech model on its own if the Mac reaches critical memory pressure and no dictation is running. The next dictation reloads it.")
-            SettingsResetRow(.freeModelMemoryUnderCriticalPressure, host: viewModel.host, origin: .page(.general))
-        } header: {
-            Text("Memory")
-        } footer: {
-            SettingsFooter(note: viewModel.refusalNote) {
-                Text("Only under critical system memory pressure and only while idle; the next dictation reloads the model.")
+        KVCardSection {
+            Toggle(isOn: $viewModel.freeModelMemoryUnderCriticalPressure) {
+                Text("Free model memory under critical pressure")
+                Text("Only while idle; the next dictation reloads the model")
             }
+                .accessibilityHint("When enabled, KVoice unloads the speech model on its own if the Mac reaches critical memory pressure and no dictation is running. The next dictation reloads it.")
+        } header: {
+            KVHeaderRow("Memory") {
+                SettingsResetRow(.freeModelMemoryUnderCriticalPressure, host: viewModel.host, origin: .page(.general))
+            }
+        } footer: {
+            SettingsFooter(note: viewModel.refusalNote) { EmptyView() }
         }
     }
 
@@ -163,28 +160,32 @@ public struct GeneralSectionView: View {
     /// against the automatic snapshot an apply takes first. Neither ever
     /// touches `SecretSettings` — the footer says so.
     private var backupSection: some View {
-        Section {
-            ViewThatFits(in: .horizontal) {
-                HStack(spacing: 8) { backupButtons }
-                VStack(alignment: .leading, spacing: 8) { backupButtons }
-            }
-
-            if backup.backups.isEmpty {
-                Text("No automatic backups yet. One is made the first time you import or restore settings.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            } else {
-                Menu("Restore Previous Settings…") {
-                    ForEach(backup.backups) { listing in
-                        Button(listing.exportedAt.formatted(date: .abbreviated, time: .shortened)) {
-                            backup.selectBackupForRestore(listing)
+        KVCardSection {
+            LabeledContent {
+                HStack(spacing: 6) {
+                    backupButtons
+                    Menu {
+                        ForEach(backup.backups) { listing in
+                            Button(listing.exportedAt.formatted(date: .abbreviated, time: .shortened)) {
+                                backup.selectBackupForRestore(listing)
+                            }
                         }
+                    } label: {
+                        Text("Restore…")
                     }
+                    .menuIndicator(.hidden)
+                    .fixedSize()
+                    .disabled(backup.backups.isEmpty)
+                    .help(backup.backups.isEmpty
+                        ? Text("No automatic backups yet. One is made the first time you import or restore settings.")
+                        : Text("Lists automatic snapshots taken before an import, newest first."))
+                    .accessibilityHint(backup.backups.isEmpty
+                        ? Text("No automatic backups yet. One is made the first time you import or restore settings.")
+                        : Text("Lists automatic snapshots taken before an import, newest first."))
                 }
-                .accessibilityHint("Lists automatic snapshots taken before an import, newest first.")
+            } label: {
+                Text("Settings")
             }
-
             if let message = backup.message {
                 Text(message)
                     .font(.caption)
@@ -212,9 +213,9 @@ public struct GeneralSectionView: View {
 
     @ViewBuilder
     private var backupButtons: some View {
-        Button("Export Settings…") { backup.exportToPanel() }
+        Button("Export…") { backup.exportToPanel() }
             .accessibilityHint("Saves your settings, without API keys, as a JSON file.")
-        Button("Import Settings…") { backup.importFromPanel() }
+        Button("Import…") { backup.importFromPanel() }
             .accessibilityHint("Choose a settings file. You will see what will change before anything is applied.")
     }
 
@@ -242,12 +243,14 @@ public struct GeneralSectionView: View {
     // MARK: Setup guide
 
     private var setupSection: some View {
-        Section {
-            actionRow(
-                "Reset Onboarding…",
-                detail: "Replays the setup guide from the first screen. Model, history, shortcut, and settings are kept."
-            ) {
-                isConfirmingResetOnboarding = true
+        // UI v2 fidelity F3 (Window.dc `general`): the setup guide and the
+        // restart / reset tools in one "Setup and Troubleshooting" card.
+        KVCardSection {
+            LabeledContent {
+                Button("Open Setup Guide…") { isConfirmingResetOnboarding = true }
+                    .accessibilityHint("Replays the setup guide from the first screen. Model, history, shortcut, and settings are kept.")
+            } label: {
+                Text("Setup Guide")
             }
             .confirmationDialog("Reset Onboarding?", isPresented: $isConfirmingResetOnboarding, titleVisibility: .visible) {
                 Button("Reset Onboarding") { viewModel.resetOnboarding() }
@@ -255,36 +258,21 @@ public struct GeneralSectionView: View {
             } message: {
                 Text("The setup guide will open again from the first screen. Your model, history, shortcut, and other settings are kept.")
             }
-        } header: {
-            Text("Setup Guide")
-        } footer: {
-            Text("The first-run guide, for walking through the model, permissions, and shortcut again. It deletes nothing.")
-        }
-    }
-
-    // MARK: Troubleshooting
-
-    private var troubleshootingSection: some View {
-        Section {
-            actionRow(
-                "Restart KVoice…",
-                detail: "Quits and relaunches the app. A dictation in progress is cancelled."
-            ) {
-                isConfirmingRestart = true
+            LabeledContent {
+                HStack(spacing: 6) {
+                    Button("Restart KVoice…") { isConfirmingRestart = true }
+                        .accessibilityHint("Quits and relaunches the app. A dictation in progress is cancelled.")
+                    Button("Reset Preferences…", role: .destructive) { isConfirmingResetPreferences = true }
+                        .accessibilityHint("Returns appearance and recording behavior to their defaults. AI configurations, API keys, shortcuts, history, and the model are kept.")
+                }
+            } label: {
+                Text("Restart or reset")
             }
             .confirmationDialog("Restart KVoice?", isPresented: $isConfirmingRestart, titleVisibility: .visible) {
                 Button("Restart") { help.restartApp() }
                 Button("Cancel", role: .cancel) {}
             } message: {
                 Text("KVoice quits and opens again. Nothing is deleted; a dictation in progress is cancelled.")
-            }
-
-            actionRow(
-                "Reset Preferences…",
-                detail: "Returns appearance and recording behavior to their defaults. AI configurations, API keys, shortcuts, history, and the model are kept.",
-                role: .destructive
-            ) {
-                isConfirmingResetPreferences = true
             }
             .confirmationDialog("Reset preferences to defaults?", isPresented: $isConfirmingResetPreferences, titleVisibility: .visible) {
                 Button("Reset Preferences", role: .destructive) { help.resetPreferences() }
@@ -293,31 +281,26 @@ public struct GeneralSectionView: View {
                 Text("Dock icon, Launch at Login, typed insertion, history saving, the recording options, automatic memory unloading, and the window layout go back to their defaults. Your AI configurations, API keys, shortcut, history entries, and model are kept.")
             }
         } header: {
-            Text("Troubleshooting")
-        } footer: {
-            Text("For when something is stuck. Restart keeps everything; Reset Preferences keeps your data and shortcut and asks first.")
+            Text("Setup and Troubleshooting")
         }
     }
 
-    /// A one-line explanation with its button: the macOS Settings shape for
-    /// an action row. `LabeledContent` lets the explanation wrap in the label
-    /// column while the button keeps its size, so nothing clips in a narrow
-    /// pane.
-    private func actionRow(
-        _ title: LocalizedStringKey,
-        detail: LocalizedStringKey,
-        role: ButtonRole? = nil,
-        action: @escaping @MainActor () -> Void
-    ) -> some View {
-        LabeledContent {
-            Button(title, role: role) { action() }
-                .fixedSize()
-                .accessibilityHint(detail)
-        } label: {
-            Text(detail)
-                .font(.callout)
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
+    static func loginChip(_ status: LaunchAtLoginStatus) -> (String, KVTone)? {
+        switch status {
+        case .enabled: (String(localized: "Approved", bundle: .module), .ok)
+        case .requiresApproval: (String(localized: "Needs approval", bundle: .module), .warn)
+        case .notFound: (String(localized: "Unavailable", bundle: .module), .warn)
+        case .notRegistered, .unknown: nil
         }
     }
+
+    static func languageTitle(_ language: InterfaceLanguage) -> String {
+        switch language {
+        case .system: String(localized: "Follow System", bundle: .module)
+        case .english: "English"
+        case .simplifiedChinese: "简体中文"
+        }
+    }
+
+
 }

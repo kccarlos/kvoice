@@ -55,9 +55,12 @@ final class HUDPlacementTests: XCTestCase {
     // MARK: Notch style
 
     func testNotchStyleHangsCentredUnderTheHousingWithoutTouchingTheMenuBar() {
-        let width = HUDPlacement.notchContentWidth(minimum: HUDView.notchPanelWidth, screen: notched)
+        // F5: the design's 380 already clears this 260 pt housing; a
+        // smaller minimum shows the widening rule itself.
+        XCTAssertEqual(HUDPlacement.notchContentWidth(minimum: HUDView.notchPanelWidth, screen: notched), 380, "the design width")
+        let width = HUDPlacement.notchContentWidth(minimum: 300, screen: notched)
         XCTAssertEqual(width, 260 + 2 * HUDPlacement.notchSidePadding, "wider than the housing plus room for the meter and time")
-        XCTAssertGreaterThan(width, HUDView.notchPanelWidth)
+        XCTAssertGreaterThan(width, 300)
         let frame = HUDPlacement.frame(for: .notch, contentSize: CGSize(width: width, height: 44), screen: notched)
 
         XCTAssertEqual(frame.maxY, 945, "the top edge meets the bottom of the menu bar / housing")

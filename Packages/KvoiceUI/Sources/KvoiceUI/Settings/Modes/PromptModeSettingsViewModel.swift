@@ -487,6 +487,13 @@ public struct PromptModeDraft: Equatable, Sendable {
     public var usesSystemInstructionsTemplate: Bool
     public var includesClipboardText: Bool
     public var includesSelectedText: Bool
+    /// Q3: the per-action mode settings (formal writing, second
+    /// translation, …), edited in the action detail with everything else
+    /// and saved by its Save, so Cancel reverts them too.
+    public var options: PromptModeOptions
+    /// The shipped action this draft edits, if any — read only: it decides
+    /// which mode settings apply (`settingsFamily`), never written back.
+    public private(set) var builtInKey: String?
 
     public init(
         name: String = "",
@@ -500,7 +507,8 @@ public struct PromptModeDraft: Equatable, Sendable {
         // the rest. Shipped actions carry the full prompt and turn this off.
         usesSystemInstructionsTemplate: Bool = true,
         includesClipboardText: Bool = false,
-        includesSelectedText: Bool = false
+        includesSelectedText: Bool = false,
+        options: PromptModeOptions = .init()
     ) {
         self.name = name
         self.behavior = behavior
@@ -512,6 +520,8 @@ public struct PromptModeDraft: Equatable, Sendable {
         self.usesSystemInstructionsTemplate = usesSystemInstructionsTemplate
         self.includesClipboardText = includesClipboardText
         self.includesSelectedText = includesSelectedText
+        self.options = options
+        builtInKey = nil
     }
 
     public init(mode: PromptMode) {
@@ -526,6 +536,8 @@ public struct PromptModeDraft: Equatable, Sendable {
         usesSystemInstructionsTemplate = mode.usesSystemInstructionsTemplate
         includesClipboardText = mode.includesClipboardText
         includesSelectedText = mode.includesSelectedText
+        options = mode.options
+        builtInKey = mode.builtInKey
     }
 
     /// Starts a new action from a shipped one, which is easier than writing a
@@ -534,11 +546,29 @@ public struct PromptModeDraft: Equatable, Sendable {
         self.init(mode: template)
         self.name = name
         triggerWords = []
+        // A new action, not the shipped one: its mode settings follow
+        // the new action's own family.
+        builtInKey = nil
+    }
+
+    /// Which mode settings this draft offers, from its behaviour now (a
+    /// switch to Translate offers the translation settings at once).
+    public var settingsFamily: PromptModeSettingsFamily {
+        PromptMode(name: name, behavior: behavior, prompt: prompt, builtInKey: builtInKey).settingsFamily
     }
 
     public var isComplete: Bool {
         !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
             && !prompt.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            && hasCompleteSecondLanguage
+    }
+
+    /// A second translation, when on, needs both a name and a code (the old
+    /// card's Apply refused either empty; the detail's Save does now).
+    var hasCompleteSecondLanguage: Bool {
+        guard behavior == .translate, let second = options.secondTranslationLanguage else { return true }
+        return !second.displayName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            && !second.bcp47.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
     /// The system prompt this draft would send, for the editor's preview.
@@ -557,6 +587,14 @@ public struct PromptModeDraft: Equatable, Sendable {
         mode.usesSystemInstructionsTemplate = usesSystemInstructionsTemplate
         mode.includesClipboardText = includesClipboardText
         mode.includesSelectedText = includesSelectedText
+        var options = options
+        if let second = options.secondTranslationLanguage {
+            options.secondTranslationLanguage = TranslationLanguage(
+                bcp47: second.bcp47.trimmingCharacters(in: .whitespacesAndNewlines),
+                displayName: second.displayName.trimmingCharacters(in: .whitespacesAndNewlines)
+            )
+        }
+        mode.options = options
     }
 
     /// An icon is one emoji; anything longer keeps only its first character.

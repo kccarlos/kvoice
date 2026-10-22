@@ -94,13 +94,12 @@ public struct RecordingSectionView: View {
     }
 
     public var body: some View {
-        Form {
+        KVCardPage {
             feedbackSection
             recorderSection
             insertedTextSection
             durationSection
         }
-        .formStyle(.grouped)
     }
 
     // MARK: Recorder
@@ -110,46 +109,47 @@ public struct RecordingSectionView: View {
     /// a job runs); the preview beside it is a static sketch of the two
     /// shapes, not the live HUD.
     private var recorderSection: some View {
-        Section {
-            Picker("Recorder style", selection: recorderStyleSelection) {
-                Text("Mini").tag(HUDStyle.mini)
-                Text("Notch").tag(HUDStyle.notch)
+        // UI v2 fidelity F3 (Window.dc `isRecorder`): two pressable cards
+        // drawing each recorder, not a segmented control over a sketch.
+        let enabled = options.recorderStyle != nil && availability.isEnabled(.recorderStyle)
+        return VStack(alignment: .leading, spacing: 6) {
+            KVHeaderRow("Recorder") {
+                SettingsResetRow(.recorderStyle, host: general.host, origin: .page(.recording))
             }
-            .pickerStyle(.segmented)
-            .disabled(options.recorderStyle == nil || !availability.isEnabled(.recorderStyle))
-            .accessibilityLabel("Recorder style")
+            .font(.system(size: 13, weight: .semibold))
+            .padding(.horizontal, 2)
+            HStack(spacing: 10) {
+                RecorderStyleCard(style: .mini, selection: recorderStyleSelection)
+                RecorderStyleCard(style: .notch, selection: recorderStyleSelection)
+            }
+            .disabled(!enabled)
+            .accessibilityElement(children: .contain)
+            .accessibilityLabel(Text("Recorder style", bundle: .module))
             .accessibilityHint(options.recorderStyle == nil
-                ? "Not adjustable in this build."
-                : "Mini floats near the bottom of the screen; Notch hangs from the menu bar under the camera housing.")
-            RecorderStylePreview(style: recorderStyleSelection.wrappedValue)
-                .frame(maxWidth: .infinity)
-                .accessibilityHidden(true)
-            SettingsResetRow(.recorderStyle, host: general.host, origin: .page(.recording))
-        } header: {
-            Text("Recorder")
-        } footer: {
-            SettingsFooter(note: options.refusalNote?()) {
-                Text(availability.footnote(
-                    .recorderStyle,
-                    base: String(localized: "Both styles show the level, the time, and the AI controls; Notch hangs under the camera housing.", bundle: .module)
-                ))
+                ? Text("Not adjustable in this build.", bundle: .module)
+                : Text("Mini floats near the bottom of the screen; Notch hangs from the menu bar under the camera housing.", bundle: .module))
+            let note = availability.isEnabled(.recorderStyle) ? options.refusalNote?() : availability.footnote(.recorderStyle, base: "")
+            if let note, !note.isEmpty {
+                Text(note)
+                    .font(.system(size: 11))
+                    .foregroundStyle(Color.kv.text2)
+                    .padding(.horizontal, 2)
             }
         }
     }
 
-    // MARK: While recording
-
     private var feedbackSection: some View {
-        Section {
+        KVCardSection {
             placeholderToggle(
                 "Sound feedback",
                 binding: options.soundFeedback,
                 hint: "Plays a short sound when recording starts, stops, is cancelled, and when the text is inserted. The start sound plays once the microphone is actually delivering audio."
             )
-            HStack {
-                Picker("Sound", selection: cueSetSelection) {
-                    Text("KVoice tones").tag(RecordingFeedbackCueSet.kvoice)
-                    Text("Classic system sounds").tag(RecordingFeedbackCueSet.systemClassic)
+            LabeledContent {
+              HStack(spacing: 6) {
+                KVSelect("Sound", selection: cueSetSelection, current: Self.cueSetTitle(cueSetSelection.wrappedValue)) {
+                    Text("KVoice tones", bundle: .module).tag(RecordingFeedbackCueSet.kvoice)
+                    Text("Classic system sounds", bundle: .module).tag(RecordingFeedbackCueSet.systemClassic)
                     Divider()
                     ForEach(RecordingFeedbackCueSet.systemSoundNames, id: \.self) { name in
                         Text(verbatim: name).tag(RecordingFeedbackCueSet.system(name: name))
@@ -165,6 +165,9 @@ public struct RecordingSectionView: View {
                 }
                 .disabled(options.previewCue == nil || options.cueSet == nil)
                 .accessibilityHint("Plays the start sound of the selected set.")
+              }
+            } label: {
+                Text("Sound", bundle: .module)
             }
             // On one row, not the Section (a Section modifier applies to
             // every row): re-read the devices so the note tracks the
@@ -180,14 +183,15 @@ public struct RecordingSectionView: View {
             )
             // The feedback block is one row of the resolver (sound, cue
             // set, mute, and keep-on-clipboard from the section below).
-            SettingsResetRow(.recordingFeedback, host: general.host, origin: .page(.recording))
         } header: {
-            Text("While Recording")
+            KVHeaderRow("While Recording") {
+                SettingsResetRow(.recordingFeedback, host: general.host, origin: .page(.recording))
+            }
         } footer: {
             SettingsFooter(note: options.refusalNote?()) {
                 Text(availability.footnote(
                     .recordingFeedback,
-                    base: pendingNote(String(localized: "What you hear while dictating. Mute restores the volume on every exit.", bundle: .module))
+                    base: pendingNote(String(localized: "Mute restores the volume on every exit.", bundle: .module))
                 ))
             }
         }
@@ -205,7 +209,7 @@ public struct RecordingSectionView: View {
     // MARK: Inserted text
 
     private var insertedTextSection: some View {
-        Section {
+        KVCardSection {
             // The job refusal applies to the rows, not the Section: the
             // footer's full-edition link (ADR-026) must never be dead.
             Group {
@@ -214,40 +218,37 @@ public struct RecordingSectionView: View {
                 binding: options.addSpaceAfterInsertion,
                 hint: "Appends one space to the inserted text so the next dictation continues the sentence. History keeps the text without it."
             )
-            .controlSize(.mini)
             placeholderToggle(
                 "Automatic text formatting",
                 binding: options.automaticTextFormatting,
                 hint: "Trims the ends and collapses runs of spaces in the inserted text. It never changes case or punctuation."
             )
-            .controlSize(.mini)
-            Toggle(
-                "Type into apps that block direct insertion (terminals)",
-                // ADR-026: the App Store edition always types, whatever the
-                // stored value (a backup from the other edition may say off).
-                isOn: availability.edition == .appStore ? .constant(true) : $general.typedInsertionEnabled
-            )
-                .controlSize(.mini)
-                // ADR-026: held on in the App Store edition (typing is how
+            // ADR-026: the App Store edition always types, whatever the
+            // stored value (a backup from the other edition may say off).
+            Toggle(isOn: availability.edition == .appStore ? .constant(true) : $general.typedInsertionEnabled) {
+                Text("Type into apps that block direct insertion", bundle: .module)
+                Text(availability.edition == .appStore ? "Always on in this edition" : "Terminals and some web apps", bundle: .module)
+            }
+                    // ADR-026: held on in the App Store edition (typing is how
                 // text is inserted there); the reason is in the footer.
                 .disabled(!availability.isEnabled(.typedInsertion))
                 .accessibilityLabel("Type into apps that block direct insertion")
                 .accessibilityHint("When an app's text field cannot be written through Accessibility, KVoice types the text as keystrokes instead of copying it to the clipboard.")
             placeholderToggle(
-                "Keep the transcript on the clipboard after inserting",
+                "Keep the transcript on the clipboard",
                 binding: options.preserveClipboard,
                 hint: "Also copies the inserted text to the clipboard. Off, a successful insertion never touches the clipboard."
-            )
-            .controlSize(.mini)
-            SettingsResetRow(
-                [.addSpaceAfterInsertion, .automaticTextFormatting, .typedInsertionEnabled],
-                host: general.host,
-                origin: .page(.recording)
             )
             }
             .disabled(!availability.isEnabled(.insertedText))
         } header: {
-            Text("Inserted Text")
+            KVHeaderRow("Inserted Text") {
+                SettingsResetRow(
+                    [.addSpaceAfterInsertion, .automaticTextFormatting, .typedInsertionEnabled],
+                    host: general.host,
+                    origin: .page(.recording)
+                )
+            }
         } footer: {
             SettingsFooter(note: options.refusalNote?() ?? general.refusalNote) {
                 Text(availability.footnote(
@@ -263,7 +264,7 @@ public struct RecordingSectionView: View {
     /// ADR-026: the App Store edition types; the footer says so instead of
     /// describing Accessibility insertion it does not have.
     private var insertedTextFooter: String {
-        let base = String(localized: "How the finished text reaches the app. Accessibility insertion is always tried first.", bundle: .module)
+        let base = String(localized: "Accessibility insertion is always tried first.", bundle: .module)
         guard availability.edition == .appStore,
               let reason = availability.disabledReason(.typedInsertion) else { return base }
         return reason
@@ -272,25 +273,30 @@ public struct RecordingSectionView: View {
     // MARK: Duration
 
     private var durationSection: some View {
-        Section {
-            Picker("Maximum recording length", selection: maxDurationSelection) {
-                ForEach(RecordingOptionBindings.maxDurationChoices, id: \.title) { choice in
-                    Text(domain: choice.title).tag(choice.seconds)
+        KVCardSection {
+            LabeledContent {
+                KVSelect("Maximum recording length", selection: maxDurationSelection, current: Self.maxDurationTitle(maxDurationSelection.wrappedValue)) {
+                    ForEach(RecordingOptionBindings.maxDurationChoices, id: \.title) { choice in
+                        Text(domain: choice.title).tag(choice.seconds)
+                    }
                 }
+            } label: {
+                Text("Maximum recording length", bundle: .module)
             }
             .disabled(options.maxRecordingSeconds == nil || !availability.isEnabled(.recordingLength))
             .accessibilityLabel("Maximum recording length")
             .accessibilityHint(options.maxRecordingSeconds == nil
                 ? "Not adjustable in this build. Recording stops after 10 minutes."
                 : "Recording stops on its own at this length.")
-            SettingsResetRow(.maxRecordingSeconds, host: general.host, origin: .page(.recording))
         } header: {
-            Text("Length")
+            KVHeaderRow("Length") {
+                SettingsResetRow(.maxRecordingSeconds, host: general.host, origin: .page(.recording))
+            }
         } footer: {
             SettingsFooter(note: options.refusalNote?()) {
                 Text(availability.footnote(
                     .recordingLength,
-                    base: String(localized: "Recording stops on its own at this length; the transcript is still inserted.", bundle: .module)
+                    base: String(localized: "Recording stops on its own; the transcript is still inserted.", bundle: .module)
                 ))
             }
         }
@@ -321,6 +327,19 @@ public struct RecordingSectionView: View {
             .accessibilityHint(binding == nil ? "Not adjustable in this build." : hint)
     }
 
+    static func cueSetTitle(_ set: RecordingFeedbackCueSet) -> String {
+        switch set {
+        case .kvoice: String(localized: "KVoice tones", bundle: .module)
+        case .systemClassic: String(localized: "Classic system sounds", bundle: .module)
+        case .system(let name): name
+        }
+    }
+
+    static func maxDurationTitle(_ seconds: Int?) -> String {
+        let title = RecordingOptionBindings.maxDurationChoices.first { $0.seconds == seconds }?.title ?? "10 minutes"
+        return DomainCopy.localized(title)
+    }
+
     private var maxDurationSelection: Binding<Int?> {
         options.maxRecordingSeconds ?? .constant(600)
     }
@@ -334,57 +353,71 @@ public struct RecordingSectionView: View {
 /// screen outline with the menu bar, the housing, and the panel where the
 /// chosen style puts it. Shapes only, no live state — the real HUD is a
 /// separate non-activating panel and cannot be embedded in a form.
-struct RecorderStylePreview: View {
+/// One recorder choice (Window.dc `isRecorder`): a pressable card with a
+/// 76 pt `wash` stage drawing that recorder, and its name with a one-line
+/// description. Selected: 2 pt `cursor` border.
+struct RecorderStyleCard: View {
     let style: HUDStyle
+    @Binding var selection: HUDStyle
+    @Environment(\.isEnabled) private var isEnabled
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
-        HStack(spacing: 16) {
-            sketch(.mini)
-            sketch(.notch)
+        let selected = selection == style
+        Button {
+            withAnimation(KVControlMotion.stateChange(reduceMotion: reduceMotion)) { selection = style }
+        } label: {
+            VStack(alignment: .leading, spacing: 10) {
+                stage
+                (Text(style == .mini ? "Mini" : "Notch", bundle: .module).font(.system(size: 13, weight: .semibold))
+                    + Text(verbatim: " · ").font(.system(size: 12)).foregroundColor(Color.kv.text2)
+                    + Text(style == .mini ? "floats where you’re looking" : "grows from the camera", bundle: .module)
+                        .font(.system(size: 12)).foregroundColor(Color.kv.text2))
+                    .foregroundStyle(Color.kv.text)
+                    .lineLimit(1)
+            }
+            .padding(12)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color.kv.surface, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .strokeBorder(selected ? Color.kv.cursor : Color.kv.line, lineWidth: selected ? 2 : 1)
+            }
+            .contentShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .opacity(isEnabled ? 1 : 0.45)
         }
-        .padding(.vertical, 4)
+        .buttonStyle(.plain)
+        .accessibilityLabel(Text(style == .mini ? "Mini" : "Notch", bundle: .module))
+        .accessibilityAddTraits(selected ? .isSelected : [])
+        .accessibilityValue(Text(verbatim: KVAccessibility.selectionValue(selected)))
     }
 
-    private func sketch(_ sketched: HUDStyle) -> some View {
-        let selected = sketched == style
-        return VStack(spacing: 6) {
-            ZStack(alignment: .top) {
-                RoundedRectangle(cornerRadius: 6, style: .continuous)
-                    .fill(Color.secondary.opacity(0.12))
-                    .frame(width: 160, height: 100)
-                // Menu bar with the camera housing.
-                Rectangle()
-                    .fill(Color.secondary.opacity(0.25))
-                    .frame(width: 160, height: 10)
-                    .clipShape(UnevenRoundedRectangle(topLeadingRadius: 6, topTrailingRadius: 6, style: .continuous))
-                RoundedRectangle(cornerRadius: 2, style: .continuous)
-                    .fill(Color.black.opacity(0.75))
-                    .frame(width: 34, height: 8)
-                    .offset(y: 1)
-                // The panel.
-                Group {
-                    if sketched == .notch {
-                        UnevenRoundedRectangle(bottomLeadingRadius: 6, bottomTrailingRadius: 6, style: .continuous)
-                            .fill(Color.black.opacity(0.85))
-                            .frame(width: 72, height: 16)
-                            .offset(y: 10)
-                    } else {
-                        RoundedRectangle(cornerRadius: 5, style: .continuous)
-                            .fill(.regularMaterial)
-                            .overlay(RoundedRectangle(cornerRadius: 5, style: .continuous).strokeBorder(Color.primary.opacity(0.15)))
-                            .frame(width: 72, height: 18)
-                            .offset(y: 66)
-                    }
+    private var stage: some View {
+        ZStack(alignment: style == .notch ? .top : .center) {
+            RoundedRectangle(cornerRadius: 8, style: .continuous).fill(Color.kv.wash)
+            if style == .mini {
+                HStack(spacing: 8) {
+                    Circle().fill(Color.kv.voice).frame(width: 18, height: 18)
+                    Text("Recording", bundle: .module).font(.system(size: 11, weight: .semibold)).foregroundStyle(Color.kv.text)
+                    Text(verbatim: "0:07").font(.system(size: 10, design: .monospaced)).foregroundStyle(Color.kv.text2)
                 }
+                .padding(.leading, 6).padding(.trailing, 12)
+                .frame(height: 30)
+                .background(Color.kv.surface, in: Capsule(style: .continuous))
+                .shadow(color: .black.opacity(0.15), radius: 6, y: 4)
+            } else {
+                HStack(spacing: 8) {
+                    Circle().fill(Color(red: 1, green: 0x7A / 255, blue: 0x2F / 255)).frame(width: 14, height: 14)
+                    Text("Recording", bundle: .module).font(.system(size: 10, weight: .semibold)).foregroundStyle(.white)
+                    Text(verbatim: "0:07").font(.system(size: 10)).foregroundStyle(Color(white: 0xA3 / 255))
+                }
+                .padding(.leading, 6).padding(.trailing, 12)
+                .frame(height: 26)
+                .background(Color.black, in: UnevenRoundedRectangle(bottomLeadingRadius: 12, bottomTrailingRadius: 12, style: .continuous))
             }
-            .frame(width: 160, height: 100)
-            .overlay {
-                RoundedRectangle(cornerRadius: 6, style: .continuous)
-                    .strokeBorder(selected ? Color.accentColor : Color.secondary.opacity(0.3), lineWidth: selected ? 2 : 1)
-            }
-            Text(sketched == .mini ? "Mini" : "Notch")
-                .font(.caption)
-                .foregroundStyle(selected ? .primary : .secondary)
         }
+        .frame(height: 76)
+        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .accessibilityHidden(true)
     }
 }

@@ -1,6 +1,9 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "": {
+      "shouldTranslate": false
+    },
     " (HTTP %lld)": {
       "localizations": {
         "zh-Hans": {
@@ -74,6 +77,22 @@
         }
       }
     },
+    "%@ already uses %@. Choose another shortcut.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$@ already uses %2$@. Choose another shortcut."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ 已在使用 %2$@。请换一个快捷键。"
+          }
+        }
+      }
+    },
     "%@ also runs on this Mac: ready in seconds, with nothing large to download.": {
       "localizations": {
         "zh-Hans": {
@@ -114,6 +133,16 @@
         }
       }
     },
+    "%@ didn’t answer · raw transcript used": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ 未响应 · 已使用原始转写"
+          }
+        }
+      }
+    },
     "%@ error: %@": {
       "localizations": {
         "en": {
@@ -126,22 +155,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "%@错误：%@"
-          }
-        }
-      }
-    },
-    "%@ for %@": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "new",
-            "value": "%1$@ for %2$@"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%1$@ — %2$@"
           }
         }
       }
@@ -172,18 +185,52 @@
         }
       }
     },
-    "%@ permission, %@": {
+    "%@ is at its limit · raw transcript used": {
       "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "new",
-            "value": "%1$@ permission, %2$@"
-          }
-        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "%@权限，%@"
+            "value": "%@ 已达用量上限 · 已使用原始转写"
+          }
+        }
+      }
+    },
+    "%@ is recommended but is not claimed until you confirm it.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "推荐使用 %@，但在你确认之前不会占用它。"
+          }
+        }
+      }
+    },
+    "%@ is registered with macOS.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ 已在 macOS 中注册。"
+          }
+        }
+      }
+    },
+    "%@ isn’t available · raw transcript used": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ 当前不可用 · 已使用原始转写"
+          }
+        }
+      }
+    },
+    "%@ on this Mac": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在这台 Mac 上用时 %@"
           }
         }
       }
@@ -194,6 +241,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "%@进度"
+          }
+        }
+      }
+    },
+    "%@ rejected the key · raw transcript used": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ 拒绝了密钥 · 已使用原始转写"
+          }
+        }
+      }
+    },
+    "%@ sent no usable answer · raw transcript used": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ 未返回可用结果 · 已使用原始转写"
           }
         }
       }
@@ -250,6 +317,22 @@
         }
       }
     },
+    "%@ · %@ · recommended": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$@ · %2$@ · recommended"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ · %2$@ · 推荐"
+          }
+        }
+      }
+    },
     "%@ · Built into macOS": {
       "localizations": {
         "zh-Hans": {
@@ -260,23 +343,62 @@
         }
       }
     },
-    "%@, %@": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "new",
-            "value": "%1$@, %2$@"
-          }
-        }
-      },
-      "shouldTranslate": false
-    },
-    "%@, active": {
+    "%@ · on device": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "%@，当前使用"
+            "value": "%@ · 在本机"
+          }
+        }
+      }
+    },
+    "%@ · recommended": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ · 推荐"
+          }
+        }
+      }
+    },
+    "%@ · tested": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ · 已测试"
+          }
+        }
+      }
+    },
+    "%@, current step": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@，当前步骤"
+          }
+        }
+      }
+    },
+    "%@, done": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@，已完成"
+          }
+        }
+      }
+    },
+    "%@, not started": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@，未开始"
           }
         }
       }
@@ -291,23 +413,22 @@
         }
       }
     },
+    "%@, skipped": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@，已跳过"
+          }
+        }
+      }
+    },
     "%@. %@": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "new",
             "value": "%1$@. %2$@"
-          }
-        }
-      },
-      "shouldTranslate": false
-    },
-    "%@: %@": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "new",
-            "value": "%1$@: %2$@"
           }
         }
       },
@@ -496,22 +617,6 @@
         }
       }
     },
-    "%lld percent. %@": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "new",
-            "value": "%1$lld percent. %2$@"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld%%。%@"
-          }
-        }
-      }
-    },
     "%lld recordings": {
       "localizations": {
         "zh-Hans": {
@@ -562,16 +667,61 @@
         }
       }
     },
-    "%lld.": {
+    "%lld words": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "%lld。"
+            "value": "%lld 个词"
           }
         }
-      },
-      "shouldTranslate": false
+      }
+    },
+    "%lld words → %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$lld words → %2$@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld 个词 → %@"
+          }
+        }
+      }
+    },
+    "%lldh %lldm": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld小时%lld分"
+          }
+        }
+      }
+    },
+    "%lldm": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld分"
+          }
+        }
+      }
+    },
+    "%llds": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld秒"
+          }
+        }
+      }
     },
     "(No speech was recognized.)": {
       "localizations": {
@@ -579,16 +729,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "（未识别到语音。）"
-          }
-        }
-      }
-    },
-    "0 s": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "0 秒"
           }
         }
       }
@@ -673,12 +813,82 @@
         }
       }
     },
-    "2 s": {
+    "1 word": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "2 秒"
+            "value": "1 个词"
+          }
+        }
+      }
+    },
+    "1 word → %@": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 个词 → %@"
+          }
+        }
+      }
+    },
+    "1 · Hold": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 · 按住"
+          }
+        }
+      }
+    },
+    "16 kHz WAV, never in diagnostics": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "16 kHz WAV，绝不进入诊断信息"
+          }
+        }
+      }
+    },
+    "2 · Speak": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "2 · 说话"
+          }
+        }
+      }
+    },
+    "3 short pages": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "3 个简短页面"
+          }
+        }
+      }
+    },
+    "3 · Let go": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "3 · 松开"
+          }
+        }
+      }
+    },
+    "A KVoice menu command already uses %@. Choose another shortcut.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "KVoice 的某个菜单命令已在使用 %@。请换一个快捷键。"
           }
         }
       }
@@ -713,6 +923,26 @@
         }
       }
     },
+    "A little longer": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "再久一点"
+          }
+        }
+      }
+    },
+    "A lone modifier key needs Accessibility. Allow it on the Accessibility step, or choose a key combination.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "单独的修饰键需要辅助功能权限。请在“辅助功能”步骤中允许，或选择一个组合键。"
+          }
+        }
+      }
+    },
     "A lone modifier key such as Right Option needs Accessibility permission to be detected.": {
       "localizations": {
         "zh-Hans": {
@@ -723,12 +953,12 @@
         }
       }
     },
-    "A new message in your mail app, with diagnostics attached only if you tick the box. You can read and edit everything before sending.": {
+    "A lone modifier like Right Option works, or a key with at least one modifier.": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "在邮件应用中新建一封邮件，仅当勾选时才附带诊断信息。发送前可以查看并编辑全部内容。"
+            "value": "可以用单独的修饰键（如右 Option），或带至少一个修饰键的按键。"
           }
         }
       }
@@ -743,12 +973,12 @@
         }
       }
     },
-    "AI Action Shortcuts": {
+    "AI Action": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "AI 操作快捷键"
+            "value": "AI 操作"
           }
         }
       }
@@ -759,22 +989,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "AI 操作"
-          }
-        }
-      }
-    },
-    "AI Actions is off. The default action (%@ %@) is remembered for when it is turned on.": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "new",
-            "value": "AI Actions is off. The default action (%1$@ %2$@) is remembered for when it is turned on."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "AI 操作已关闭。默认操作（%@ %@）会被记住，待开启后使用。"
           }
         }
       }
@@ -799,6 +1013,16 @@
         }
       }
     },
+    "AI Actions: %@": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AI 操作：%@"
+          }
+        }
+      }
+    },
     "AI Configuration": {
       "localizations": {
         "zh-Hans": {
@@ -815,16 +1039,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "AI 配置"
-          }
-        }
-      }
-    },
-    "AI Off": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "AI 关闭"
           }
         }
       }
@@ -855,6 +1069,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "AI 为可选功能，默认关闭。开启后，“设置 › AI 操作”中的默认操作会在每次转写后运行；只有本地转写文本会发送到你配置的端点。"
+          }
+        }
+      }
+    },
+    "AI isn’t set up · raw transcript used": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AI 尚未设置 · 已使用原始转写"
           }
         }
       }
@@ -919,6 +1143,16 @@
         }
       }
     },
+    "AI polish is optional and off": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AI 润色可选，默认关闭"
+          }
+        }
+      }
+    },
     "AI processing was cancelled. The raw transcript was used instead.": {
       "localizations": {
         "zh-Hans": {
@@ -939,12 +1173,12 @@
         }
       }
     },
-    "AI time": {
+    "AI skipped · raw transcript used": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "AI 用时"
+            "value": "已跳过 AI · 已使用原始转写"
           }
         }
       }
@@ -1009,22 +1243,22 @@
         }
       }
     },
-    "Accessibility is how KVoice writes the finished text at the cursor in another app. It is used only at that moment and does not read document content during setup.": {
+    "Accessibility access is off — press ⌘V": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "KVoice 通过辅助功能把完成的文本写入其他应用的光标处。它只在那一刻使用，设置期间不会读取文稿内容。"
+            "value": "辅助功能权限未开启 — 请按 ⌘V"
           }
         }
       }
     },
-    "Acknowledgments": {
+    "Accessibility insertion is always tried first.": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "致谢"
+            "value": "始终先尝试通过辅助功能插入。"
           }
         }
       }
@@ -1045,16 +1279,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "操作"
-          }
-        }
-      }
-    },
-    "Action Triggers": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "操作触发词"
           }
         }
       }
@@ -1109,6 +1333,26 @@
         }
       }
     },
+    "Active configuration failed": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "当前配置测试失败"
+          }
+        }
+      }
+    },
+    "Active configuration works": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "当前配置可用"
+          }
+        }
+      }
+    },
     "Add": {
       "localizations": {
         "zh-Hans": {
@@ -1149,12 +1393,22 @@
         }
       }
     },
-    "Add Device": {
+    "Add Device…": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "添加设备"
+            "value": "添加设备…"
+          }
+        }
+      }
+    },
+    "Add a name or term…": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "添加名称或术语…"
           }
         }
       }
@@ -1301,6 +1555,26 @@
         }
       }
     },
+    "Allowed": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已允许"
+          }
+        }
+      }
+    },
+    "Allowed · level test not run": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已允许 · 尚未进行电平测试"
+          }
+        }
+      }
+    },
     "Also copies the inserted text to the clipboard. Off, a successful insertion never touches the clipboard.": {
       "localizations": {
         "zh-Hans": {
@@ -1321,12 +1595,32 @@
         }
       }
     },
+    "Always on in this edition": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "此版本中始终开启"
+          }
+        }
+      }
+    },
     "An extra way to cancel a dictation in progress. Escape always cancels.": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
             "value": "取消进行中听写的另一种方式。Escape 始终可以取消。"
+          }
+        }
+      }
+    },
+    "Another app": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "其他应用"
           }
         }
       }
@@ -1361,6 +1655,16 @@
         }
       }
     },
+    "App Store edition · types the text for you": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "App Store 版 · 替你键入文字"
+          }
+        }
+      }
+    },
     "App version": {
       "localizations": {
         "zh-Hans": {
@@ -1381,16 +1685,6 @@
         }
       }
     },
-    "Appends each completed dictation to a Markdown file named for the day (YYYY-MM-DD.md) in the folder you choose.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "把每次完成的听写追加到你选择的文件夹中以日期命名的 Markdown 文件（YYYY-MM-DD.md）。"
-          }
-        }
-      }
-    },
     "Appends one space to the inserted text so the next dictation continues the sentence. History keeps the text without it.": {
       "localizations": {
         "zh-Hans": {
@@ -1407,6 +1701,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "附带与“复制诊断信息”相同的脱敏报告：版本、权限与模型状态、设置标志。绝不包含转写文本、密钥或端点路径。"
+          }
+        }
+      }
+    },
+    "Appends to YYYY-MM-DD.md": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "追加到 YYYY-MM-DD.md"
           }
         }
       }
@@ -1481,22 +1785,22 @@
         }
       }
     },
-    "Apply": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "应用"
-          }
-        }
-      }
-    },
     "Approval required in System Settings › Login Items": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
             "value": "需在“系统设置 › 登录项”中批准"
+          }
+        }
+      }
+    },
+    "Approved": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已批准"
           }
         }
       }
@@ -1541,6 +1845,46 @@
         }
       }
     },
+    "Audio is transcribed on this Mac and never uploaded. The level test below is not saved.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "音频在这台 Mac 上转写，从不上传。下面的电平测试不会被保存。"
+          }
+        }
+      }
+    },
+    "Audio never leaves this Mac": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "音频绝不离开这台 Mac"
+          }
+        }
+      }
+    },
+    "Audio or video file": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "音频或视频文件"
+          }
+        }
+      }
+    },
+    "Audio stays here": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "音频留在本机"
+          }
+        }
+      }
+    },
     "Authentication": {
       "localizations": {
         "zh-Hans": {
@@ -1561,22 +1905,22 @@
         }
       }
     },
-    "Auto Daily Export": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "每日自动导出"
-          }
-        }
-      }
-    },
     "Auto Daily Export Folder": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
             "value": "每日自动导出文件夹"
+          }
+        }
+      }
+    },
+    "Auto daily export": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "每日自动导出"
           }
         }
       }
@@ -1637,6 +1981,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "这台 Mac 可用"
+          }
+        }
+      }
+    },
+    "Avg AI": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AI 平均"
+          }
+        }
+      }
+    },
+    "Avg AI Time": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AI 平均用时"
           }
         }
       }
@@ -1781,16 +2145,6 @@
         }
       }
     },
-    "Both styles show the level, the time, and the AI controls; Notch hangs under the camera housing.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "两种样式都会显示音量、时间和 AI 控制；刘海样式悬挂于摄像头凹槽下方。"
-          }
-        }
-      }
-    },
     "Bundle": {
       "localizations": {
         "zh-Hans": {
@@ -1911,12 +2265,12 @@
         }
       }
     },
-    "Change the target language in the action's editor.": {
+    "Change Shortcut…": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "在操作编辑器中更改目标语言。"
+            "value": "更改快捷键…"
           }
         }
       }
@@ -1927,6 +2281,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "已更改默认值"
+          }
+        }
+      }
+    },
+    "Changed · Reset to Default": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已更改 · 恢复默认"
           }
         }
       }
@@ -2001,6 +2365,16 @@
         }
       }
     },
+    "Checking": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在检查"
+          }
+        }
+      }
+    },
     "Checking existing package…": {
       "localizations": {
         "zh-Hans": {
@@ -2047,6 +2421,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "正在确认哪个语音模型适合这台 Mac…"
+          }
+        }
+      }
+    },
+    "Checking…": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在检查…"
+          }
+        }
+      }
+    },
+    "Chinese": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "中文"
           }
         }
       }
@@ -2101,16 +2495,6 @@
         }
       }
     },
-    "Choose a default action below. Nothing runs until one is selected.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "请在下方选择一个默认操作。选定之前不会运行任何操作。"
-          }
-        }
-      }
-    },
     "Choose a device…": {
       "localizations": {
         "zh-Hans": {
@@ -2121,12 +2505,12 @@
         }
       }
     },
-    "Choose a different model in Settings › Speech Models.": {
+    "Choose a different model any time in Settings › Speech Models.": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "可在“设置 › 语音模型”中选择其他模型。"
+            "value": "随时可以在“设置 › 语音模型”中选择其他模型。"
           }
         }
       }
@@ -2241,16 +2625,6 @@
         }
       }
     },
-    "Choose how the shortcut controls recording, then record the keys you want. %@ is recommended but is not claimed until you confirm it.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "选择快捷键控制录音的方式，然后录制你想要的按键。推荐使用 %@，但在你确认之前不会占用它。"
-          }
-        }
-      }
-    },
     "Choose the folder where a Markdown file for each day is kept.": {
       "localizations": {
         "zh-Hans": {
@@ -2331,6 +2705,16 @@
         }
       }
     },
+    "Clear All…": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "全部清除…"
+          }
+        }
+      }
+    },
     "Clear Filters": {
       "localizations": {
         "zh-Hans": {
@@ -2341,42 +2725,12 @@
         }
       }
     },
-    "Clear Shortcut": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "清除快捷键"
-          }
-        }
-      }
-    },
-    "Clear all history": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "清除全部历史记录"
-          }
-        }
-      }
-    },
     "Clear all history?": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
             "value": "要清除全部历史记录吗？"
-          }
-        }
-      }
-    },
-    "Clear all history…": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "清除全部历史记录…"
           }
         }
       }
@@ -2411,12 +2765,22 @@
         }
       }
     },
-    "Click to set the default; double-click to edit; right-click for more. Built-in actions can be edited but not deleted. Reset anytime to restore the original text and trigger words.": {
+    "Closes the recorder without changing the shortcut.": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "点按设为默认；连按两次编辑；右键点按查看更多。内置操作可以编辑但不能删除。随时可重置以恢复原始文本和触发词。"
+            "value": "关闭录制窗口，不更改快捷键。"
+          }
+        }
+      }
+    },
+    "Cloud": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "云端"
           }
         }
       }
@@ -2447,6 +2811,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "完成的听写会显示在这里。"
+          }
+        }
+      }
+    },
+    "Completed dictations appear here. Hold your shortcut anywhere to make your first one.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "完成的听写会显示在这里。在任意位置按住快捷键，开始你的第一次听写。"
           }
         }
       }
@@ -2551,6 +2925,16 @@
         }
       }
     },
+    "Continue now — the Ready step shows its progress, and dictation unlocks the moment it finishes.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "现在就可以继续——“就绪”步骤会显示进度，下载完成后即可听写。"
+          }
+        }
+      }
+    },
     "Continue without finishing this step. It stays visible as Not Ready and can be finished later in Settings.": {
       "localizations": {
         "zh-Hans": {
@@ -2577,6 +2961,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "继续已暂停的下载。"
+          }
+        }
+      }
+    },
+    "Copied": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已复制"
           }
         }
       }
@@ -2647,6 +3041,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "复制上次听写在无法插入后保留的转写文本。"
+          }
+        }
+      }
+    },
+    "Copies this dictation's final text.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "复制这条听写的最终文本。"
           }
         }
       }
@@ -2817,6 +3221,16 @@
         }
       }
     },
+    "Could not register this shortcut": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法注册此快捷键"
+          }
+        }
+      }
+    },
     "Could not unload the model: %@": {
       "localizations": {
         "zh-Hans": {
@@ -2847,6 +3261,16 @@
         }
       }
     },
+    "Counts and timings only — never transcript text or audio": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "仅包含计数和耗时，绝不包含转写文本或音频"
+          }
+        }
+      }
+    },
     "Critical memory pressure — dictation may be slower, and the system may reclaim memory on its own.": {
       "localizations": {
         "zh-Hans": {
@@ -2863,16 +3287,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "当前"
-          }
-        }
-      }
-    },
-    "Current Model": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "当前模型"
           }
         }
       }
@@ -3003,17 +3417,17 @@
         }
       }
     },
-    "Default": {
+    "Default Action": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "默认"
+            "value": "默认操作"
           }
         }
       }
     },
-    "Default Action": {
+    "Default action": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
@@ -3223,6 +3637,16 @@
         }
       }
     },
+    "Denied in System Settings": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已在系统设置中拒绝"
+          }
+        }
+      }
+    },
     "Deployment name": {
       "localizations": {
         "zh-Hans": {
@@ -3253,32 +3677,12 @@
         }
       }
     },
-    "Detected": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "已检测到"
-          }
-        }
-      }
-    },
     "Device": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
             "value": "设备"
-          }
-        }
-      }
-    },
-    "Devices are remembered by hardware identity; a disconnected device falls back to the system default.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "设备按硬件标识记忆；未连接的设备会回退到系统默认设备。"
           }
         }
       }
@@ -3339,16 +3743,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "听写测试转写"
-          }
-        }
-      }
-    },
-    "Dictation uses the current model and is Ready only when the status above is Ready. Streaming shows live text; the inserted text comes from the full pass.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "听写使用当前模型，且只有在上方状态为“就绪”时才可用。流式模式会实时显示文字；插入的文本来自完整转写。"
           }
         }
       }
@@ -3483,22 +3877,32 @@
         }
       }
     },
-    "Double-click a term to edit it. Press Delete to remove the selected terms.": {
+    "Done. KVoice will type the text into your app.": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "连按两次词条进行编辑。按 Delete 键移除所选词条。"
+            "value": "完成。KVoice 会把文字键入到你的 App 中。"
           }
         }
       }
     },
-    "Double-press to send (press Return after inserting)": {
+    "Done. Text will go straight to your cursor.": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "连按两次发送（插入后按 Return）"
+            "value": "完成。文字会直接出现在光标处。"
+          }
+        }
+      }
+    },
+    "Double-press to send": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "双击发送"
           }
         }
       }
@@ -3533,12 +3937,42 @@
         }
       }
     },
+    "Download paused": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "下载已暂停"
+          }
+        }
+      }
+    },
+    "Download paused with %@ kept.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "下载已暂停，已保留 %@。"
+          }
+        }
+      }
+    },
     "Download paused with %@ kept. Resume to continue where it stopped.": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
             "value": "下载已暂停，已保留 %@。恢复后将从停止处继续。"
+          }
+        }
+      }
+    },
+    "Download paused.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "下载已暂停。"
           }
         }
       }
@@ -3573,16 +4007,6 @@
         }
       }
     },
-    "Download the current model, or choose a folder that already holds a verified copy. A download keeps going while you finish the remaining screens.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "下载当前模型，或选择一个已包含已验证副本的文件夹。你完成剩余屏幕时下载会继续进行。"
-          }
-        }
-      }
-    },
     "Downloaded once, verified against the manifest bundled with this release, and used only on this Mac.": {
       "localizations": {
         "zh-Hans": {
@@ -3593,12 +4017,22 @@
         }
       }
     },
-    "Downloaded once, verified against the manifest bundled with this release, and used only on this Mac. The first time it loads, it is optimized for your Mac, which can take a few minutes.": {
+    "Downloaded once, verified against the manifest bundled with this release, and used only on this Mac. The first load optimizes it for your Mac, which can take a few minutes.": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "只需下载一次，按此版本附带的清单校验，仅在这台 Mac 上使用。首次加载时会为这台 Mac 进行优化，可能需要几分钟。"
+            "value": "只下载一次，按本版本附带的清单校验，仅在这台 Mac 上使用。首次加载时会针对你的 Mac 优化，可能需要几分钟。"
+          }
+        }
+      }
+    },
+    "Downloading": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在下载"
           }
         }
       }
@@ -3701,16 +4135,6 @@
         }
       }
     },
-    "Downloads the model from the repository named in the bundled manifest and verifies it. The download keeps going on later screens.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "从随附清单中指定的仓库下载模型并进行验证。进入后续屏幕时下载会继续进行。"
-          }
-        }
-      }
-    },
     "Duplicate": {
       "localizations": {
         "zh-Hans": {
@@ -3791,6 +4215,26 @@
         }
       }
     },
+    "Edit in AI Actions": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在“AI 操作”中编辑"
+          }
+        }
+      }
+    },
+    "Edit term": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "编辑术语"
+          }
+        }
+      }
+    },
     "Edit transcript": {
       "localizations": {
         "zh-Hans": {
@@ -3817,16 +4261,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "启用 AI 操作"
-          }
-        }
-      }
-    },
-    "Enable Action Triggers": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "启用操作触发词"
           }
         }
       }
@@ -3867,6 +4301,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "端点"
+          }
+        }
+      }
+    },
+    "English": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "英语"
+          }
+        }
+      }
+    },
+    "Enhanced": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "增强"
           }
         }
       }
@@ -3921,6 +4375,26 @@
         }
       }
     },
+    "Escape always cancels.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Esc 键始终可以取消。"
+          }
+        }
+      }
+    },
+    "European": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "欧洲语言"
+          }
+        }
+      }
+    },
     "Every built-in action goes back to its shipped title, instructions, and trigger words, and any that was missing is added. Your own actions and mode settings are kept.": {
       "localizations": {
         "zh-Hans": {
@@ -3961,12 +4435,22 @@
         }
       }
     },
-    "Every model runs on this Mac and is verified against the catalog bundled with this release before it is loaded. Only the current model is kept in memory.": {
+    "Every file is checked against the manifest bundled with this release.": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "所有模型都在这台 Mac 上运行，加载前会对照此版本随附的目录进行验证。只有当前模型会保留在内存中。"
+            "value": "每个文件都会按本版本附带的清单进行校验。"
+          }
+        }
+      }
+    },
+    "Every model runs on this Mac. Pick by what you dictate.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "所有模型都在这台 Mac 上运行。按你听写的内容挑选。"
           }
         }
       }
@@ -3997,16 +4481,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "一切都留在这台 Mac 上。"
-          }
-        }
-      }
-    },
-    "Everything the dictation test needs is listed here. Fix… opens the step for anything that is not ready.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "听写测试所需的一切都列在这里。“修复…”会打开尚未就绪项目对应的步骤。"
           }
         }
       }
@@ -4077,16 +4551,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "导出设置"
-          }
-        }
-      }
-    },
-    "Export Settings…": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "导出设置…"
           }
         }
       }
@@ -4181,22 +4645,12 @@
         }
       }
     },
-    "Extras beside the recording shortcut.": {
+    "Failed": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "录音快捷键之外的附加触发方式。"
-          }
-        }
-      }
-    },
-    "Extras beside the recording shortcut. Escape always cancels.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "录音快捷键之外的附加项。Escape 始终可以取消。"
+            "value": "失败"
           }
         }
       }
@@ -4271,6 +4725,16 @@
         }
       }
     },
+    "Filter models": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "筛选模型"
+          }
+        }
+      }
+    },
     "Filters saved transcripts by raw or final text. Searching stays on this Mac.": {
       "localizations": {
         "zh-Hans": {
@@ -4287,6 +4751,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "已复制最终输出。"
+          }
+        }
+      }
+    },
+    "Finder search": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "访达搜索"
           }
         }
       }
@@ -4431,16 +4905,6 @@
         }
       }
     },
-    "For when something is stuck. Restart keeps everything; Reset Preferences keeps your data and shortcut and asks first.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "用于卡住时。“重新启动”保留一切；“重置偏好设置”保留你的数据和快捷键，并会先询问。"
-          }
-        }
-      }
-    },
     "Forget": {
       "localizations": {
         "zh-Hans": {
@@ -4511,12 +4975,12 @@
         }
       }
     },
-    "Free model memory under critical pressure automatically": {
+    "Free model memory under critical pressure": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "在内存压力严重时自动释放模型内存"
+            "value": "内存严重紧张时释放模型内存"
           }
         }
       }
@@ -4557,6 +5021,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "获取 API 密钥"
+          }
+        }
+      }
+    },
+    "Get Started": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "开始设置"
           }
         }
       }
@@ -4731,22 +5205,22 @@
         }
       }
     },
+    "Hide Sidebar": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "隐藏边栏"
+          }
+        }
+      }
+    },
     "History": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
             "value": "历史记录"
-          }
-        }
-      }
-    },
-    "History Detail": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "历史记录详情"
           }
         }
       }
@@ -4781,6 +5255,16 @@
         }
       }
     },
+    "History is off": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "历史记录已关闭"
+          }
+        }
+      }
+    },
     "History is unavailable. Dictation can continue without saving new items.": {
       "localizations": {
         "zh-Hans": {
@@ -4791,12 +5275,42 @@
         }
       }
     },
-    "Hold for %lld ms before recording starts.": {
+    "History items": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "按住 %lld 毫秒后开始录音。"
+            "value": "历史记录条目"
+          }
+        }
+      }
+    },
+    "Hold": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "按住"
+          }
+        }
+      }
+    },
+    "Hold for at least half a second.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "请至少按住半秒。"
+          }
+        }
+      }
+    },
+    "Hold or press": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "按住或按下"
           }
         }
       }
@@ -4811,12 +5325,62 @@
         }
       }
     },
-    "Hold your shortcut, speak, and let go. KVoice records while you dictate, transcribes the speech on this Mac, and places the finished text at your cursor.": {
+    "Hold this long before recording starts": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "按住快捷键，说话，然后松开。KVoice 在你听写时录音，在这台 Mac 上转写语音，并把完成的文本放到光标处。"
+            "value": "按住这么久后才开始录音"
+          }
+        }
+      }
+    },
+    "Hold to record, release to stop": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "按住录音，松开停止"
+          }
+        }
+      }
+    },
+    "Hold your shortcut and speak.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "按住快捷键开始说话。"
+          }
+        }
+      }
+    },
+    "Hold your shortcut, speak naturally, let go: the text lands at your cursor.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "按住快捷键，自然地说话，松开：文字就会出现在光标处。"
+          }
+        }
+      }
+    },
+    "Hold your shortcut, speak, and let go. KVoice transcribes on this Mac and places the text at your cursor, in any app.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "按住快捷键，说话，然后松开。KVoice 在这台 Mac 上转写，并把文字放到任意 App 的光标处。"
+          }
+        }
+      }
+    },
+    "Home": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "主页"
           }
         }
       }
@@ -4831,12 +5395,12 @@
         }
       }
     },
-    "How the finished text reaches the app. Accessibility insertion is always tried first.": {
+    "Hybrid": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "完成的文本如何进入应用。始终优先尝试通过辅助功能插入。"
+            "value": "混合"
           }
         }
       }
@@ -4847,16 +5411,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "混合（轻按切换，按住说话）"
-          }
-        }
-      }
-    },
-    "Hybrid — tap to start and stop, or hold to talk": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "混合 — 轻按开始和停止，或按住说话"
           }
         }
       }
@@ -4911,22 +5465,22 @@
         }
       }
     },
-    "Import Settings…": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "导入设置…"
-          }
-        }
-      }
-    },
     "Import These Settings?": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
             "value": "要导入这些设置吗？"
+          }
+        }
+      }
+    },
+    "Import adds to the list; duplicates are skipped.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "导入会追加到列表中；重复项会被跳过。"
           }
         }
       }
@@ -4981,6 +5535,16 @@
         }
       }
     },
+    "In use": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "使用中"
+          }
+        }
+      }
+    },
     "Include clipboard text": {
       "localizations": {
         "zh-Hans": {
@@ -5021,16 +5585,6 @@
         }
       }
     },
-    "Included in every AI Action request as a separate <USER_PROFILE> block. Stored in settings, never in the secrets file.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "作为独立的 <USER_PROFILE> 块包含在每个 AI 操作请求中。存储在设置中，绝不存入密钥文件。"
-          }
-        }
-      }
-    },
     "Incompatible — %@": {
       "localizations": {
         "zh-Hans": {
@@ -5051,6 +5605,16 @@
         }
       }
     },
+    "Input": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "输入"
+          }
+        }
+      }
+    },
     "Input Device": {
       "localizations": {
         "zh-Hans": {
@@ -5067,6 +5631,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "输入设备"
+          }
+        }
+      }
+    },
+    "Input device: %@": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "输入设备：%@"
           }
         }
       }
@@ -5147,16 +5721,6 @@
         }
       }
     },
-    "Inserted local transcript; AI unavailable": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "已插入本地转写；AI 不可用"
-          }
-        }
-      }
-    },
     "Inserted via Accessibility": {
       "localizations": {
         "zh-Hans": {
@@ -5173,6 +5737,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "通过辅助功能插入（拼接值）"
+          }
+        }
+      }
+    },
+    "Inserted without AI": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已插入，未使用 AI"
           }
         }
       }
@@ -5237,6 +5811,26 @@
         }
       }
     },
+    "Installed, verified and loaded. Dictation will use it.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已安装、验证并载入。听写将使用它。"
+          }
+        }
+      }
+    },
+    "Installing": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在安装"
+          }
+        }
+      }
+    },
     "Installing model…": {
       "localizations": {
         "zh-Hans": {
@@ -5283,6 +5877,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "界面语言"
+          }
+        }
+      }
+    },
+    "Into %@": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已输入到 %@"
           }
         }
       }
@@ -5357,12 +5961,42 @@
         }
       }
     },
-    "KVoice always lives in the menu bar; macOS may ask you to approve the login item once.": {
+    "KVoice always lives in the menu bar.": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "KVoice 始终位于菜单栏；macOS 可能会要求你批准一次登录项。"
+            "value": "KVoice 始终显示在菜单栏中。"
+          }
+        }
+      }
+    },
+    "KVoice can’t hear you. Turn KVoice on in System Settings › Privacy & Security › Microphone — this screen updates by itself.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "KVoice 听不到你的声音。请在“系统设置 › 隐私与安全性 › 麦克风”中打开 KVoice——此页面会自动更新。"
+          }
+        }
+      }
+    },
+    "KVoice can’t start a test right now. Make sure a speech model is ready and no other dictation is running.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "KVoice 现在无法开始测试。请确认语音模型已就绪，且没有其他听写正在进行。"
+          }
+        }
+      }
+    },
+    "KVoice could not register %@. Choose another shortcut.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "KVoice 无法注册 %@。请换一个快捷键。"
           }
         }
       }
@@ -5393,6 +6027,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "此版本的 KVoice 跟随系统默认输入设备。可在“系统设置 › 声音 › 输入”中更改。"
+          }
+        }
+      }
+    },
+    "KVoice is not saving dictations, so there are no figures or recent dictations to show. Turn on Save dictation history in Data & Privacy.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "KVoice 没有保存听写，因此没有可显示的数据和最近听写。请在“数据与隐私”中打开“保存听写历史记录”。"
+          }
+        }
+      }
+    },
+    "KVoice lives in the menu bar. Click its icon for status, recording, modes, history, and Settings.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "KVoice 位于菜单栏。点按其图标可查看状态、录音、模式、历史记录和设置。"
           }
         }
       }
@@ -5472,7 +6126,17 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "KVoice 会把完成的文本键入到你正在听写的应用中。macOS 在“辅助功能”下请求此权限；此版本只向该应用发送按键，从不读取其中的文本。"
+            "value": "KVoice 会把完成的文字键入你正在听写的 App。macOS 在“辅助功能”中请求此权限；此版本只向该 App 发送按键，从不读取其中的文字。"
+          }
+        }
+      }
+    },
+    "KVoice types the text into your app": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "KVoice 把文字键入到你的 App 中"
           }
         }
       }
@@ -5497,12 +6161,22 @@
         }
       }
     },
-    "Keep the transcript on the clipboard after inserting": {
+    "Keep holding… then let go.": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "插入后在剪贴板中保留转写文本"
+            "value": "继续按住…然后松开。"
+          }
+        }
+      }
+    },
+    "Keep the transcript on the clipboard": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在剪贴板中保留转写文本"
           }
         }
       }
@@ -5513,6 +6187,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "键盘快捷键"
+          }
+        }
+      }
+    },
+    "Keystrokes": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "按键"
+          }
+        }
+      }
+    },
+    "Keystrokes Saved": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "节省的按键"
           }
         }
       }
@@ -5563,6 +6257,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "上次实时系数"
+          }
+        }
+      }
+    },
+    "Last transcription": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "上次转写"
           }
         }
       }
@@ -5687,6 +6391,16 @@
         }
       }
     },
+    "Level test complete (peak %@ dBFS). Sounds good.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "电平测试完成（峰值 %@ dBFS）。声音正常。"
+          }
+        }
+      }
+    },
     "Level test skipped.": {
       "localizations": {
         "zh-Hans": {
@@ -5707,6 +6421,16 @@
         }
       }
     },
+    "Licenses": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "许可"
+          }
+        }
+      }
+    },
     "Listening…": {
       "localizations": {
         "zh-Hans": {
@@ -5717,12 +6441,32 @@
         }
       }
     },
+    "Listening… say a few words.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在聆听……请说几句话。"
+          }
+        }
+      }
+    },
     "Lists automatic snapshots taken before an import, newest first.": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
             "value": "列出导入前自动生成的快照，最新的排在最前。"
+          }
+        }
+      }
+    },
+    "Live text": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "实时文字"
           }
         }
       }
@@ -5743,6 +6487,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "加载时间"
+          }
+        }
+      }
+    },
+    "Loading": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在载入"
           }
         }
       }
@@ -5847,32 +6601,22 @@
         }
       }
     },
-    "Long dictation — KVoice works best with shorter input.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "听写较长 — KVoice 更适合较短的输入。"
-          }
-        }
-      }
-    },
-    "Long dictation — recording stops automatically at %@.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "听写较长 — 录音将在 %@ 自动停止。"
-          }
-        }
-      }
-    },
     "Make it yours": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
             "value": "打造属于你的设置"
+          }
+        }
+      }
+    },
+    "Makes this the configuration every action uses.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "将此配置设为所有操作使用的配置。"
           }
         }
       }
@@ -5947,6 +6691,16 @@
         }
       }
     },
+    "Memory pressure — dictation may be slower": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "内存紧张 — 听写可能变慢"
+          }
+        }
+      }
+    },
     "Memory pressure — dictation may be slower.": {
       "localizations": {
         "zh-Hans": {
@@ -5973,6 +6727,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "麦克风"
+          }
+        }
+      }
+    },
+    "Microphone access is off": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "麦克风权限未开启"
           }
         }
       }
@@ -6047,16 +6811,6 @@
         }
       }
     },
-    "Mode Settings · %@": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "模式设置 · %@"
-          }
-        }
-      }
-    },
     "Model": {
       "localizations": {
         "zh-Hans": {
@@ -6103,6 +6857,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "模型下载"
+          }
+        }
+      }
+    },
+    "Model downloads, and AI if you turn it on.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "仅下载模型，以及你开启的 AI。"
           }
         }
       }
@@ -6167,12 +6931,12 @@
         }
       }
     },
-    "Models": {
+    "More": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "模型"
+            "value": "更多"
           }
         }
       }
@@ -6183,6 +6947,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "更多触发方式"
+          }
+        }
+      }
+    },
+    "More history actions": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "更多历史记录操作"
+          }
+        }
+      }
+    },
+    "More models": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "更多模型"
           }
         }
       }
@@ -6207,6 +6991,16 @@
         }
       }
     },
+    "Mute restores the volume on every exit.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "静音会在每次结束时恢复音量。"
+          }
+        }
+      }
+    },
     "Mute system audio while recording": {
       "localizations": {
         "zh-Hans": {
@@ -6227,22 +7021,42 @@
         }
       }
     },
-    "Names and jargon the model should spell your way. Sent as a hint with every dictation.": {
+    "Names and jargon the model should spell your way.": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "希望模型按你的写法拼写的名称和术语。随每次听写作为提示发送。"
+            "value": "希望模型按你的写法拼写的名字和术语。"
           }
         }
       }
     },
-    "Names and jargon the model tends to misspell. They are sent to the speech model as a hint with every dictation, streaming pass, and transcribed file — it nudges the spelling, it cannot guarantee it. One list for every language.": {
+    "Needed to place text in other apps": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "模型容易拼错的名称和术语。它们会随每次听写、每轮流式转写和每个转写文件作为提示发送给语音模型 — 只能引导拼写，不能保证。所有语言共用一个列表。"
+            "value": "用于把文字放入其他 App"
+          }
+        }
+      }
+    },
+    "Needs approval": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "需要批准"
+          }
+        }
+      }
+    },
+    "Needs attention on the Model step": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "需要在“模型”步骤中处理"
           }
         }
       }
@@ -6253,6 +7067,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "网络行为"
+          }
+        }
+      }
+    },
+    "Network only when asked": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "仅在需要时联网"
           }
         }
       }
@@ -6273,6 +7097,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "新建 AI 配置"
+          }
+        }
+      }
+    },
+    "New dictations are not kept. Turn it on in Data & Privacy to see them here.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "新的听写不会被保存。在“数据与隐私”中打开后，它们会显示在这里。"
           }
         }
       }
@@ -6357,12 +7191,22 @@
         }
       }
     },
-    "No action has trigger words yet. Add them in an action's editor.": {
+    "No account": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "还没有操作设置触发词。请在操作编辑器中添加。"
+            "value": "无需账户"
+          }
+        }
+      }
+    },
+    "No account, no analytics": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无需账户，没有分析统计"
           }
         }
       }
@@ -6383,6 +7227,36 @@
           "stringUnit": {
             "state": "translated",
             "value": "还没有操作。请添加一个，或重置内置操作。"
+          }
+        }
+      }
+    },
+    "No analytics, no background recording.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "没有分析统计，没有后台录音。"
+          }
+        }
+      }
+    },
+    "No app in front": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "前台没有应用"
+          }
+        }
+      }
+    },
+    "No app was in front — press ⌘V": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "前台没有应用 — 请按 ⌘V"
           }
         }
       }
@@ -6467,6 +7341,16 @@
         }
       }
     },
+    "No punctuation": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无标点"
+          }
+        }
+      }
+    },
     "No shortcut": {
       "localizations": {
         "zh-Hans": {
@@ -6497,12 +7381,32 @@
         }
       }
     },
+    "No shortcut yet": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "尚未设置快捷键"
+          }
+        }
+      }
+    },
     "No signal yet": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
             "value": "尚无信号"
+          }
+        }
+      }
+    },
+    "No speech detected": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "未检测到语音"
           }
         }
       }
@@ -6533,6 +7437,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "文件中没有词条能放入剩余的 token 预算。"
+          }
+        }
+      }
+    },
+    "No text field was selected — press ⌘V": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "未选中文本框 — 请按 ⌘V"
           }
         }
       }
@@ -6573,16 +7487,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "未配置"
-          }
-        }
-      }
-    },
-    "Not Enabled": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "未启用"
           }
         }
       }
@@ -6677,6 +7581,16 @@
         }
       }
     },
+    "Not compatible": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "不兼容"
+          }
+        }
+      }
+    },
     "Not connected": {
       "localizations": {
         "zh-Hans": {
@@ -6687,12 +7601,48 @@
         }
       }
     },
+    "Not enabled yet": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "尚未启用"
+          }
+        }
+      }
+    },
+    "Not enough free space for the download (needs about %@, %@ free). Free some space, then retry.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Not enough free space for the download (needs about %1$@, %2$@ free). Free some space, then retry."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "可用空间不足以下载（约需 %1$@，可用 %2$@）。请释放一些空间后重试。"
+          }
+        }
+      }
+    },
     "Not enough free space for the download. Free some space, then retry.": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
             "value": "可用空间不足，无法下载。请释放一些空间后重试。"
+          }
+        }
+      }
+    },
+    "Not enough space": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "空间不足"
           }
         }
       }
@@ -6747,12 +7697,52 @@
         }
       }
     },
+    "Not registered": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "未注册"
+          }
+        }
+      }
+    },
+    "Not requested": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "未请求"
+          }
+        }
+      }
+    },
+    "Not set": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "未设置"
+          }
+        }
+      }
+    },
     "Notch": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
             "value": "刘海"
+          }
+        }
+      }
+    },
+    "Nothing dictated yet. Your newest dictations appear here.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "还没有听写。最新的听写会显示在这里。"
           }
         }
       }
@@ -6777,6 +7767,16 @@
         }
       }
     },
+    "Nothing was heard. Check the microphone and try again.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "没有听到声音。请检查麦克风后重试。"
+          }
+        }
+      }
+    },
     "Nothing was recorded in this range.": {
       "localizations": {
         "zh-Hans": {
@@ -6797,12 +7797,12 @@
         }
       }
     },
-    "Off by default. When off, no audio is written; recordings already saved stay until their retention passes or you clear history.": {
+    "Off by default.": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "默认关闭。关闭时不写入任何音频；已保存的录音会保留到保留期结束或你清除历史记录。"
+            "value": "默认关闭。"
           }
         }
       }
@@ -6817,12 +7817,12 @@
         }
       }
     },
-    "Off: transcripts are kept until you delete them. The picker sets what Run Cleanup Now removes.": {
+    "Off unless you turn it on": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "关闭：转写会保留到你删除为止。选择器决定“立即运行清理”移除哪些内容。"
+            "value": "除非你打开，否则保持关闭"
           }
         }
       }
@@ -6853,6 +7853,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "在 Apple 的服务器上"
+          }
+        }
+      }
+    },
+    "On disk": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "占用空间"
           }
         }
       }
@@ -6897,22 +7907,6 @@
         }
       }
     },
-    "Only one action is active at a time. It auto-applies after each transcription while AI Actions is on. Current: %@ %@.": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "new",
-            "value": "Only one action is active at a time. It auto-applies after each transcription while AI Actions is on. Current: %1$@ %2$@."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "一次只有一个操作处于活跃状态。AI 操作开启时，它会在每次转写后自动应用。当前：%@ %@。"
-          }
-        }
-      }
-    },
     "Only the first %lld terms are sent; the rest are kept for another model.": {
       "localizations": {
         "zh-Hans": {
@@ -6923,12 +7917,12 @@
         }
       }
     },
-    "Only under critical system memory pressure and only while idle; the next dictation reloads the model.": {
+    "Only while idle; the next dictation reloads the model": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "仅在系统内存压力严重且处于空闲时才会执行；下一次听写会重新加载模型。"
+            "value": "仅在空闲时；下次听写会重新载入模型"
           }
         }
       }
@@ -6963,12 +7957,32 @@
         }
       }
     },
+    "Open Data & Privacy": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "打开“数据与隐私”"
+          }
+        }
+      }
+    },
     "Open Data Folder": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
             "value": "打开数据文件夹"
+          }
+        }
+      }
+    },
+    "Open History ›": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "打开历史记录 ›"
           }
         }
       }
@@ -7009,6 +8023,36 @@
           "stringUnit": {
             "state": "translated",
             "value": "打开模型设置"
+          }
+        }
+      }
+    },
+    "Open Setup Guide…": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "打开设置向导…"
+          }
+        }
+      }
+    },
+    "Open Shortcuts": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "打开“快捷键”"
+          }
+        }
+      }
+    },
+    "Open Speech Models to reinstall": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "打开“语音模型”重新安装"
           }
         }
       }
@@ -7083,6 +8127,26 @@
         }
       }
     },
+    "Opens AI Actions.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "打开“AI 操作”。"
+          }
+        }
+      }
+    },
+    "Opens Data & Privacy in the main window. Setup stays open.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在主窗口中打开“数据与隐私”。设置窗口保持打开。"
+          }
+        }
+      }
+    },
     "Opens Data & Privacy, where Save dictation history is turned on.": {
       "localizations": {
         "zh-Hans": {
@@ -7093,22 +8157,42 @@
         }
       }
     },
+    "Opens Microphone.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "打开“麦克风”。"
+          }
+        }
+      }
+    },
+    "Opens Speech Models in the KVoice window.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在 KVoice 窗口中打开“语音模型”。"
+          }
+        }
+      }
+    },
+    "Opens Speech Models.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "打开“语音模型”。"
+          }
+        }
+      }
+    },
     "Opens System Settings, General, Login Items, where the registration must be approved once.": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
             "value": "打开“系统设置 › 通用 › 登录项”，需要在那里批准一次注册。"
-          }
-        }
-      }
-    },
-    "Opens in your browser.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "在浏览器中打开。"
           }
         }
       }
@@ -7173,12 +8257,22 @@
         }
       }
     },
-    "Optimizing for your Mac — first time only, this can take a few minutes. You can continue setup meanwhile.": {
+    "Optimizing": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "正在为这台 Mac 优化——仅首次，可能需要几分钟。你可以同时继续设置。"
+            "value": "正在优化"
+          }
+        }
+      }
+    },
+    "Optimizing for your Mac — first time only, this can take a few minutes.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在针对你的 Mac 优化——仅首次需要，可能需要几分钟。"
           }
         }
       }
@@ -7203,16 +8297,6 @@
         }
       }
     },
-    "Optional": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "可选"
-          }
-        }
-      }
-    },
     "Optional AI API key": {
       "localizations": {
         "zh-Hans": {
@@ -7233,22 +8317,22 @@
         }
       }
     },
-    "Optional polish and translation, and the endpoint that runs them. Off by default.": {
+    "Optional polish and translation. Off by default; only transcript text is ever sent.": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "可选的润色与翻译，以及运行它们的端点。默认关闭。"
+            "value": "可选的润色和翻译。默认关闭；只会发送转写文本。"
           }
         }
       }
     },
-    "Optional. Name, role, industry, tech stack, communication style, languages.": {
+    "Original": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "可选。姓名、职位、行业、技术栈、沟通风格、语言。"
+            "value": "原文"
           }
         }
       }
@@ -7365,6 +8449,16 @@
         }
       }
     },
+    "Pause Download": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "暂停下载"
+          }
+        }
+      }
+    },
     "Paused": {
       "localizations": {
         "zh-Hans": {
@@ -7381,6 +8475,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "已暂停 — 已下载 %@"
+          }
+        }
+      }
+    },
+    "Pauses the download; resume it in Speech Models.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "暂停下载；可在“语音模型”中继续。"
           }
         }
       }
@@ -7495,12 +8599,12 @@
         }
       }
     },
-    "Plain text, one term per line. Import adds to the list — duplicates are skipped and anything past the budget is left out and reported.": {
+    "Plain text, one term per line": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "纯文本，每行一个词条。导入会添加到列表 — 重复项会跳过，超出预算的部分会被排除并报告。"
+            "value": "纯文本，每行一个术语"
           }
         }
       }
@@ -7565,16 +8669,6 @@
         }
       }
     },
-    "Polish and translation are off and stay off unless you turn them on. Only transcript text is ever sent, and only to the endpoint you configure.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "润色和翻译默认关闭，除非您主动开启。只会发送转写文本，且只发送到您配置的端点。"
-          }
-        }
-      }
-    },
     "Polish or Translate": {
       "localizations": {
         "zh-Hans": {
@@ -7595,18 +8689,28 @@
         }
       }
     },
-    "Prefer %@? It downloads %@ once, and the first time it loads it is optimized for your Mac, which can take a few minutes.": {
+    "Polishing with %@…": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在用“%@”润色…"
+          }
+        }
+      }
+    },
+    "Prefer %@? It downloads %@ once and is optimized for your Mac on first load.": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "new",
-            "value": "Prefer %1$@? It downloads %2$@ once, and the first time it loads it is optimized for your Mac, which can take a few minutes."
+            "value": "Prefer %1$@? It downloads %2$@ once and is optimized for your Mac on first load."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "更想用 %1$@？它需要下载一次 %2$@，首次加载时会为这台 Mac 进行优化，可能需要几分钟。"
+            "value": "更想用 %1$@？它只需下载一次 %2$@，首次加载时会针对你的 Mac 优化。"
           }
         }
       }
@@ -7631,12 +8735,32 @@
         }
       }
     },
+    "Press": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "按下"
+          }
+        }
+      }
+    },
     "Press Run Level Test and speak for a moment to confirm the right input is selected.": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "点按“运行电平测试”并说几句话，以确认选择了正确的输入设备。"
+            "value": "点按“运行电平测试”并说几句话，确认选中了正确的输入设备。"
+          }
+        }
+      }
+    },
+    "Press Start Recording, speak, then press Stop.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "点按“开始录音”，说话，然后点按“停止”。"
           }
         }
       }
@@ -7651,12 +8775,32 @@
         }
       }
     },
+    "Press again to finish the check.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "再按一次以完成检查。"
+          }
+        }
+      }
+    },
     "Press again to stop": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
             "value": "再按一次停止"
+          }
+        }
+      }
+    },
+    "Press and hold your shortcut now — anywhere, this window doesn’t need focus.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "现在按住你的快捷键——在任何地方都可以，无需聚焦此窗口。"
           }
         }
       }
@@ -7691,6 +8835,16 @@
         }
       }
     },
+    "Press the keys you want…": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "请按下你想要的按键……"
+          }
+        }
+      }
+    },
     "Press the recording shortcut twice quickly while recording to have KVoice press Return once the text is inserted. Never used when the text went to the clipboard.": {
       "localizations": {
         "zh-Hans": {
@@ -7701,12 +8855,22 @@
         }
       }
     },
-    "Press your shortcut now, anywhere — this window does not need to be focused.": {
+    "Press to start, press again to stop": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "现在在任意位置按下您的快捷键 — 此窗口无需处于前台。"
+            "value": "按一下开始，再按一下停止"
+          }
+        }
+      }
+    },
+    "Press your shortcut now — anywhere, this window doesn’t need focus.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "现在按下你的快捷键——在任何地方都可以，无需聚焦此窗口。"
           }
         }
       }
@@ -7731,6 +8895,26 @@
         }
       }
     },
+    "Press ⌘V to paste": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "按 ⌘V 粘贴"
+          }
+        }
+      }
+    },
+    "Presses Return after inserting": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "插入后按下回车键"
+          }
+        }
+      }
+    },
     "Preview": {
       "localizations": {
         "zh-Hans": {
@@ -7751,6 +8935,16 @@
         }
       }
     },
+    "Priority": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "优先级"
+          }
+        }
+      }
+    },
     "Privacy & About": {
       "localizations": {
         "zh-Hans": {
@@ -7761,12 +8955,22 @@
         }
       }
     },
-    "Privacy boundary": {
+    "Privacy boundary: %@": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "隐私边界"
+            "value": "隐私边界：%@"
+          }
+        }
+      }
+    },
+    "Privacy details": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "隐私详情"
           }
         }
       }
@@ -7811,16 +9015,6 @@
         }
       }
     },
-    "Private voice input": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "私密的语音输入"
-          }
-        }
-      }
-    },
     "Processing": {
       "localizations": {
         "zh-Hans": {
@@ -7861,6 +9055,26 @@
         }
       }
     },
+    "Punctuation": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "标点"
+          }
+        }
+      }
+    },
+    "Push-to-Talk": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "按住说话"
+          }
+        }
+      }
+    },
     "Push-to-Talk (hold)": {
       "localizations": {
         "zh-Hans": {
@@ -7871,22 +9085,12 @@
         }
       }
     },
-    "Push-to-Talk — hold to record, release to stop": {
+    "Push-to-Talk is the safe default.": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "按住说话 — 按住录音，松开停止"
-          }
-        }
-      }
-    },
-    "Push-to-talk is selected by default.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "默认选择按住说话。"
+            "value": "按住说话是稳妥的默认方式。"
           }
         }
       }
@@ -7961,16 +9165,6 @@
         }
       }
     },
-    "Reading material, opened in your browser. The setup guide itself, Reset Preferences, and Restart are in General.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "在浏览器中打开的阅读材料。设置向导本身、重置偏好设置和重新启动在“通用”中。"
-          }
-        }
-      }
-    },
     "Reads the permission again after you change it in System Settings. It is also re-read automatically while this screen is open.": {
       "localizations": {
         "zh-Hans": {
@@ -8011,6 +9205,26 @@
         }
       }
     },
+    "Ready in seconds, with nothing large to download. macOS provides the speech model, and transcription stays on this Mac.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "几秒即可就绪，无需下载大文件。语音模型由 macOS 提供，转写留在这台 Mac 上。"
+          }
+        }
+      }
+    },
+    "Recent": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "最近"
+          }
+        }
+      }
+    },
     "Recommended": {
       "localizations": {
         "zh-Hans": {
@@ -8021,12 +9235,12 @@
         }
       }
     },
-    "Recommended for this Mac: ready in seconds, with nothing large to download. macOS provides the speech model, and transcription stays on this Mac.": {
+    "Recommended for this Mac": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "推荐用于这台 Mac：几秒即可就绪，无需下载大文件。语音模型由 macOS 提供，转写始终在这台 Mac 上完成。"
+            "value": "推荐用于这台 Mac"
           }
         }
       }
@@ -8047,6 +9261,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "录制%@"
+          }
+        }
+      }
+    },
+    "Record Again…": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "重新录制…"
           }
         }
       }
@@ -8141,16 +9365,6 @@
         }
       }
     },
-    "Recording mode": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "录音模式"
-          }
-        }
-      }
-    },
     "Recording shortcut": {
       "localizations": {
         "zh-Hans": {
@@ -8171,22 +9385,32 @@
         }
       }
     },
-    "Recording stops on its own at this length; the transcript is still inserted.": {
+    "Recording stops on its own; the transcript is still inserted.": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "录音达到此时长会自行停止；转写文本仍会插入。"
+            "value": "录音会自动停止，转写文本仍会插入。"
           }
         }
       }
     },
-    "Recording. Press Stop Recording, use your shortcut, or press Escape to cancel.": {
+    "Recording. Press Stop, use your shortcut, or Escape to cancel.": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "正在录音。点按“停止录音”、使用快捷键，或按 Escape 取消。"
+            "value": "正在录音。点按“停止”、使用快捷键，或按 Esc 取消。"
+          }
+        }
+      }
+    },
+    "Records a short dictation and shows the text here, without typing it into any app.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "录一段简短的听写并在这里显示文字，不会输入到任何 App。"
           }
         }
       }
@@ -8241,16 +9465,6 @@
         }
       }
     },
-    "Refresh history (⌘R)": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "刷新历史记录（⌘R）"
-          }
-        }
-      }
-    },
     "Refreshing history": {
       "localizations": {
         "zh-Hans": {
@@ -8297,6 +9511,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "立即重新启动"
+          }
+        }
+      }
+    },
+    "Release to finish the check.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "松开以完成检查。"
           }
         }
       }
@@ -8411,6 +9635,16 @@
         }
       }
     },
+    "Remove “%@”": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "移除“%@”"
+          }
+        }
+      }
+    },
     "Removed %@ and %@.": {
       "localizations": {
         "en": {
@@ -8427,6 +9661,16 @@
         }
       }
     },
+    "Removes every term after you confirm.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "确认后移除所有术语。"
+          }
+        }
+      }
+    },
     "Removes the downloaded package from disk after confirmation.": {
       "localizations": {
         "zh-Hans": {
@@ -8437,12 +9681,12 @@
         }
       }
     },
-    "Removes the selected terms.": {
+    "Removing": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "移除所选词条。"
+            "value": "正在移除"
           }
         }
       }
@@ -8527,6 +9771,26 @@
         }
       }
     },
+    "Requests leave this Mac: the transcript is sent over the network.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "请求会离开这台 Mac：转写文本会通过网络发送。"
+          }
+        }
+      }
+    },
+    "Requests stay on this Mac.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "请求留在这台 Mac 上。"
+          }
+        }
+      }
+    },
     "Reset Built-in Actions": {
       "localizations": {
         "zh-Hans": {
@@ -8563,16 +9827,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "要重置设置向导吗？"
-          }
-        }
-      }
-    },
-    "Reset Onboarding…": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "重置设置向导…"
           }
         }
       }
@@ -8687,22 +9941,22 @@
         }
       }
     },
+    "Restart or reset": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "重启或重置"
+          }
+        }
+      }
+    },
     "Restore": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
             "value": "还原"
-          }
-        }
-      }
-    },
-    "Restore Previous Settings…": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "还原以前的设置…"
           }
         }
       }
@@ -8733,6 +9987,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "恢复每个出厂操作的文本和触发词，并补回缺失的操作。"
+          }
+        }
+      }
+    },
+    "Restore…": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "恢复…"
           }
         }
       }
@@ -8773,6 +10037,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "恢复下载"
+          }
+        }
+      }
+    },
+    "Resume to continue where it stopped.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "继续即可从中断处接着下载。"
           }
         }
       }
@@ -8907,6 +10181,16 @@
         }
       }
     },
+    "Run Cleanup Now…": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "立即清理…"
+          }
+        }
+      }
+    },
     "Run Level Test": {
       "localizations": {
         "zh-Hans": {
@@ -8933,16 +10217,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "运行测试"
-          }
-        }
-      }
-    },
-    "Run Transcript Cleanup Now…": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "立即运行转写清理…"
           }
         }
       }
@@ -8993,12 +10267,12 @@
         }
       }
     },
-    "Runs when KVoice launches and once a day. Transcripts older than %@ are removed with their recordings.": {
+    "Runs automatically": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "在 KVoice 启动时以及每天运行一次。早于 %@ 的转写及其录音会被移除。"
+            "value": "自动运行"
           }
         }
       }
@@ -9013,12 +10287,32 @@
         }
       }
     },
-    "Runtime and download size: %@": {
+    "Runtime details": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "运行时与下载大小：%@"
+            "value": "运行时详情"
+          }
+        }
+      }
+    },
+    "Runtime details ›": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "运行时详情 ›"
+          }
+        }
+      }
+    },
+    "Runtime…": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "运行时…"
           }
         }
       }
@@ -9059,6 +10353,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "将编辑保存到所选配置"
+          }
+        }
+      }
+    },
+    "Save History is off": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "“保存历史记录”已关闭"
           }
         }
       }
@@ -9223,12 +10527,32 @@
         }
       }
     },
-    "Select": {
+    "Secure fields can’t take dictation — press ⌘V": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "选择"
+            "value": "安全输入框无法听写 — 请按 ⌘V"
+          }
+        }
+      }
+    },
+    "Secure text field": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "安全文本栏"
+          }
+        }
+      }
+    },
+    "See you Thursday": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "周四见"
           }
         }
       }
@@ -9269,6 +10593,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "在任意应用中选中文本，按下某个槽位的快捷键，KVoice 会对所选文本运行该操作，并通过辅助功能把结果插入原位 — 绝不模拟粘贴。实验性功能。"
+          }
+        }
+      }
+    },
+    "Selected": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已选择"
           }
         }
       }
@@ -9373,12 +10707,62 @@
         }
       }
     },
+    "Sent as a spelling hint with every dictation. It nudges the spelling; it can’t guarantee it.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "每次听写都会作为拼写提示发送。它会引导拼写，但无法保证。"
+          }
+        }
+      }
+    },
+    "Sessions": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "次数"
+          }
+        }
+      }
+    },
+    "Sessions Recorded": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "录制次数"
+          }
+        }
+      }
+    },
     "Set %@ as active": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
             "value": "将%@设为当前使用"
+          }
+        }
+      }
+    },
+    "Set Shortcut…": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "设置快捷键…"
+          }
+        }
+      }
+    },
+    "Set a recording shortcut to start dictating.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "设置录音快捷键即可开始听写。"
           }
         }
       }
@@ -9413,22 +10797,22 @@
         }
       }
     },
+    "Settings": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "设置"
+          }
+        }
+      }
+    },
     "Settings applied.": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
             "value": "设置已应用。"
-          }
-        }
-      }
-    },
-    "Settings for the default action. Each one appends a shipped instruction block; the action's own text is untouched.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "默认操作的设置。每一项都会追加一个内置指令块；操作本身的文本不会改动。"
           }
         }
       }
@@ -9463,6 +10847,16 @@
         }
       }
     },
+    "Setup and Troubleshooting": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "设置与故障排除"
+          }
+        }
+      }
+    },
     "Setup complete": {
       "localizations": {
         "zh-Hans": {
@@ -9479,6 +10873,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "快捷键"
+          }
+        }
+      }
+    },
+    "Shortcut changes are available when KVoice is idle.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "KVoice 空闲时才能更改快捷键。"
+          }
+        }
+      }
+    },
+    "Shortcut detected": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已检测到快捷键"
           }
         }
       }
@@ -9503,16 +10917,6 @@
         }
       }
     },
-    "Shortcut problem: %@": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "快捷键问题：%@"
-          }
-        }
-      }
-    },
     "Shortcut recorder unavailable": {
       "localizations": {
         "zh-Hans": {
@@ -9533,12 +10937,32 @@
         }
       }
     },
+    "Shortcut, %@": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "快捷键，%@"
+          }
+        }
+      }
+    },
     "Shortcuts": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
             "value": "快捷键"
+          }
+        }
+      }
+    },
+    "Shorter input works best": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "较短的输入效果更好"
           }
         }
       }
@@ -9563,6 +10987,16 @@
         }
       }
     },
+    "Show Menu": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "显示菜单"
+          }
+        }
+      }
+    },
     "Show Options…": {
       "localizations": {
         "zh-Hans": {
@@ -9579,6 +11013,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "在访达中显示录音"
+          }
+        }
+      }
+    },
+    "Show Sidebar": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "显示边栏"
           }
         }
       }
@@ -9613,22 +11057,22 @@
         }
       }
     },
-    "Show recommended or all models": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "显示推荐模型或全部模型"
-          }
-        }
-      }
-    },
     "Show the prompt that will be sent": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
             "value": "显示将要发送的提示词"
+          }
+        }
+      }
+    },
+    "Show the speech runtime, its memory and the model package.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "查看语音运行时、其内存占用和模型包。"
           }
         }
       }
@@ -9673,6 +11117,16 @@
         }
       }
     },
+    "Shows only dictations an AI action changed.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "只显示经过 AI 操作修改的听写。"
+          }
+        }
+      }
+    },
     "Shows the macOS permission prompt. Nothing is requested until you press this.": {
       "localizations": {
         "zh-Hans": {
@@ -9699,6 +11153,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "显示开源许可证。"
+          }
+        }
+      }
+    },
+    "Shows the runtime, memory, the performance test and the package details.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "显示运行时、内存、性能测试和模型包详情。"
           }
         }
       }
@@ -9733,6 +11197,26 @@
         }
       }
     },
+    "Skip Check": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "跳过检查"
+          }
+        }
+      }
+    },
+    "Skip the shortcut check": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "跳过快捷键检查"
+          }
+        }
+      }
+    },
     "Skip Tutorial": {
       "localizations": {
         "zh-Hans": {
@@ -9749,6 +11233,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "已跳过"
+          }
+        }
+      }
+    },
+    "Skipped — text will be copied to the clipboard": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已跳过——文字将被拷贝到剪贴板"
           }
         }
       }
@@ -9849,6 +11343,16 @@
         }
       }
     },
+    "Speak a sentence. The text appears here and is not typed into any app.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "说一句话。文字会显示在这里，不会输入到任何 App。"
+          }
+        }
+      }
+    },
     "Speech Model": {
       "localizations": {
         "zh-Hans": {
@@ -9889,6 +11393,16 @@
         }
       }
     },
+    "Spotlight": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "聚焦搜索"
+          }
+        }
+      }
+    },
     "Start Recording": {
       "localizations": {
         "zh-Hans": {
@@ -9919,6 +11433,16 @@
         }
       }
     },
+    "Started": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已开始"
+          }
+        }
+      }
+    },
     "Starting microphone": {
       "localizations": {
         "zh-Hans": {
@@ -9945,6 +11469,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "正在开始下载…"
+          }
+        }
+      }
+    },
+    "Starting the microphone…": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在启动麦克风…"
           }
         }
       }
@@ -9985,16 +11519,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "此页面打开时状态每秒刷新；在“系统设置”中授予的权限无需重新启动即可显示在这里。"
-          }
-        }
-      }
-    },
-    "Status: %@": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "状态：%@"
           }
         }
       }
@@ -10061,6 +11585,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "正在停止…"
+          }
+        }
+      }
+    },
+    "Stops automatically at %@": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "将于 %@ 自动停止"
           }
         }
       }
@@ -10135,12 +11669,12 @@
         }
       }
     },
-    "Switch between your saved actions with ⌘1–⌘0, in the order they are saved. The shortcut works while a dictation is in progress, and on this page when the KVoice window is focused.": {
+    "Switching input sources": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "用 ⌘1–⌘0 按保存顺序在已保存的操作之间切换。该快捷键在听写进行中有效，在 KVoice 窗口获得焦点时也在此页面有效。"
+            "value": "切换输入法"
           }
         }
       }
@@ -10215,6 +11749,36 @@
         }
       }
     },
+    "Taken": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已被占用"
+          }
+        }
+      }
+    },
+    "Tap to toggle, hold to talk": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "轻按切换，按住说话"
+          }
+        }
+      }
+    },
+    "Tap to toggle, or hold to talk": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "轻点切换，或按住说话"
+          }
+        }
+      }
+    },
     "Target": {
       "localizations": {
         "zh-Hans": {
@@ -10255,6 +11819,16 @@
         }
       }
     },
+    "Terminals and some web apps": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "终端和部分网页应用"
+          }
+        }
+      }
+    },
     "Terms": {
       "localizations": {
         "zh-Hans": {
@@ -10275,7 +11849,7 @@
         }
       }
     },
-    "Test Active Configuration": {
+    "Test Active": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
@@ -10295,6 +11869,16 @@
         }
       }
     },
+    "Test Dictation": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "测试听写"
+          }
+        }
+      }
+    },
     "Test Prompt": {
       "localizations": {
         "zh-Hans": {
@@ -10305,12 +11889,32 @@
         }
       }
     },
+    "Tested": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已测试"
+          }
+        }
+      }
+    },
     "Testing…": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
             "value": "正在测试…"
+          }
+        }
+      }
+    },
+    "Text goes straight to your cursor": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "文字直接出现在光标处"
           }
         }
       }
@@ -10341,6 +11945,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "https://<resource>.openai.azure.com 中的 <resource>"
+          }
+        }
+      }
+    },
+    "The app in front changed — press ⌘V": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "前台应用已切换 — 请按 ⌘V"
           }
         }
       }
@@ -10397,6 +12011,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "词典可使用%2$@中的 %1$lld 个；其余保留。%3$@"
+          }
+        }
+      }
+    },
+    "The download keeps going while you finish the remaining steps.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在你完成其余步骤时，下载会继续进行。"
           }
         }
       }
@@ -10511,22 +12135,22 @@
         }
       }
     },
+    "The first connected device wins; a disconnected device falls back to the next one, then to the system default.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "使用列表中第一个已连接的设备；设备断开时依次改用下一个，最后改用系统默认设备。"
+          }
+        }
+      }
+    },
     "The first run after a load includes Core ML warm-up; run it again for the steady figure.": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
             "value": "加载后的首次运行包含 Core ML 预热；再运行一次可得到稳定数值。"
-          }
-        }
-      }
-    },
-    "The first-run guide, for walking through the model, permissions, and shortcut again. It deletes nothing.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "首次运行向导，用于再次完成模型、权限和快捷键的设置。不删除任何内容。"
           }
         }
       }
@@ -10571,16 +12195,6 @@
         }
       }
     },
-    "The key that starts a dictation. Push-to-Talk is the safe default.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "开始听写的按键。“按住说话”是安全的默认选项。"
-          }
-        }
-      }
-    },
     "The keys and buttons that start, stop, and cancel a dictation.": {
       "localizations": {
         "zh-Hans": {
@@ -10591,22 +12205,12 @@
         }
       }
     },
-    "The language of KVoice's own windows and menus. Speech recognition and translation languages are set in Speech Models and AI Actions.": {
+    "The level test keeps no audio. It uses the device chosen above.": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "KVoice 自身窗口和菜单的语言。语音识别和翻译的语言在“语音模型”和“AI 操作”中设置。"
-          }
-        }
-      }
-    },
-    "The level test keeps no audio; the meter shows the peak once the test finishes. It uses the device chosen above.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "电平测试不保留任何音频；测试结束后仪表显示峰值。它使用上方选择的设备。"
+            "value": "电平测试不保留任何音频，使用上面选择的设备。"
           }
         }
       }
@@ -10617,16 +12221,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "无法打开链接。请改为复制：%@"
-          }
-        }
-      }
-    },
-    "The local speech models that transcribe your voice on this Mac.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "在这台 Mac 上转写你语音的本地语音模型。"
           }
         }
       }
@@ -10651,12 +12245,12 @@
         }
       }
     },
-    "The microphone is used only while you dictate. Audio is transcribed on this Mac, and the short level test below is not saved.": {
+    "The microphone did not start. Check Microphone and Permissions, then try again.": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "麦克风只在你听写时使用。音频在这台 Mac 上转写，下方的简短电平测试不会保存。"
+            "value": "麦克风未能启动。请检查“麦克风”和“权限”后重试。"
           }
         }
       }
@@ -10861,22 +12455,32 @@
         }
       }
     },
-    "Third-party notices for the libraries and the speech model linked into KVoice.": {
+    "This Mac": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "KVoice 所链接的库和语音模型的第三方声明。"
+            "value": "这台 Mac"
           }
         }
       }
     },
-    "This action has no extra settings. Edit it to change its instructions, trigger words, or context awareness.": {
+    "This edition cannot watch a lone modifier key. Choose a key combination.": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "此操作没有额外设置。编辑它可更改指令、触发词或上下文感知。"
+            "value": "此版本无法监听单独的修饰键。请选择一个组合键。"
+          }
+        }
+      }
+    },
+    "This field doesn’t accept typing — press ⌘V": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "此输入框不接受键入 — 请按 ⌘V"
           }
         }
       }
@@ -10947,12 +12551,22 @@
         }
       }
     },
-    "Three short pages: where the text goes, the menu bar, and how to customize KVoice. Also in Help.": {
+    "This week": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "三个简短页面：文字去向、菜单栏，以及如何自定义 KVoice。“帮助”中也有。"
+            "value": "本周"
+          }
+        }
+      }
+    },
+    "Time Saved": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "节省的时间"
           }
         }
       }
@@ -10963,6 +12577,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "时间范围"
+          }
+        }
+      }
+    },
+    "Time saved": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "节省的时间"
           }
         }
       }
@@ -10997,12 +12621,42 @@
         }
       }
     },
+    "Today": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今天"
+          }
+        }
+      }
+    },
+    "Today %@": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今天 %@"
+          }
+        }
+      }
+    },
     "Today's Private Cloud Compute limit is reached.": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
             "value": "已达到今日的私密云计算使用上限。"
+          }
+        }
+      }
+    },
+    "Toggle": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "切换"
           }
         }
       }
@@ -11017,26 +12671,6 @@
         }
       }
     },
-    "Toggle (press to start, press to stop)": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "切换（按下开始，再按停止）"
-          }
-        }
-      }
-    },
-    "Toggle — press to start, press again to stop": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "切换 — 按下开始，再按一次停止"
-          }
-        }
-      }
-    },
     "Toggles this item for bulk actions": {
       "localizations": {
         "zh-Hans": {
@@ -11047,22 +12681,42 @@
         }
       }
     },
-    "Token Budget": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Token 预算"
-          }
-        }
-      }
-    },
     "Tokens used": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
             "value": "已用 token"
+          }
+        }
+      }
+    },
+    "Too long for %@ · raw transcript used": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "文本超出 %@ 的长度 · 已使用原始转写"
+          }
+        }
+      }
+    },
+    "Too long to type — press ⌘V": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "文本过长，无法键入 — 请按 ⌘V"
+          }
+        }
+      }
+    },
+    "Too short. Hold for at least half a second.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "太短了。请至少按住半秒。"
           }
         }
       }
@@ -11137,6 +12791,36 @@
         }
       }
     },
+    "Transcribed on this Mac in %@ s. Not inserted anywhere.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已在这台 Mac 上转写，用时 %@ 秒。未插入任何地方。"
+          }
+        }
+      }
+    },
+    "Transcribed on this Mac, never uploaded.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在这台 Mac 上转写，从不上传。"
+          }
+        }
+      }
+    },
+    "Transcribed on this Mac. Not inserted anywhere.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已在这台 Mac 上转写。未插入任何地方。"
+          }
+        }
+      }
+    },
     "Transcribes a bundled twelve-second speech sample and reports the real-time factor and peak CPU and GPU use.": {
       "localizations": {
         "zh-Hans": {
@@ -11187,22 +12871,12 @@
         }
       }
     },
-    "Transcript": {
+    "Transcribing…": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "转写文本"
-          }
-        }
-      }
-    },
-    "Transcript Retention": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "转写保留期"
+            "value": "正在转写…"
           }
         }
       }
@@ -11287,22 +12961,12 @@
         }
       }
     },
-    "Transcription mode for %@": {
+    "Transcription mode": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "%@ 的转写模式"
-          }
-        }
-      }
-    },
-    "Transcription time": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "转写用时"
+            "value": "转写模式"
           }
         }
       }
@@ -11387,16 +13051,6 @@
         }
       }
     },
-    "Tries the download again from where it stopped.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "从停止处再次尝试下载。"
-          }
-        }
-      }
-    },
     "Tries the failed operation again.": {
       "localizations": {
         "zh-Hans": {
@@ -11457,22 +13111,22 @@
         }
       }
     },
-    "Troubleshooting": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "故障排除"
-          }
-        }
-      }
-    },
     "Try Again": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
             "value": "再试一次"
+          }
+        }
+      }
+    },
+    "Try a Test Dictation": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "试一次听写"
           }
         }
       }
@@ -11543,16 +13197,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "在阻止直接插入的应用中键入"
-          }
-        }
-      }
-    },
-    "Type into apps that block direct insertion (terminals)": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "在阻止直接插入的应用中键入（终端）"
           }
         }
       }
@@ -11647,12 +13291,32 @@
         }
       }
     },
+    "Until it’s on, text is copied to the clipboard instead.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "开启之前，文本会改为复制到剪贴板。"
+          }
+        }
+      }
+    },
     "Use": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
             "value": "使用"
+          }
+        }
+      }
+    },
+    "Use %@": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "使用 %@"
           }
         }
       }
@@ -11683,16 +13347,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "使用 AI 操作"
-          }
-        }
-      }
-    },
-    "Use AI to enhance, translate, or transform your transcriptions. Only the transcript — and any context an action opts into — is sent to your configured endpoint; audio, history, and target-app data stay local.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "用 AI 增强、翻译或转换你的转写文本。只有转写文本 — 以及操作选择加入的上下文 — 会发送到你配置的端点；音频、历史记录和目标应用的数据保留在本地。"
           }
         }
       }
@@ -11757,12 +13411,22 @@
         }
       }
     },
-    "User Profile": {
+    "Used by Run Cleanup Now": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "用户档案"
+            "value": "供“立即清理”使用"
+          }
+        }
+      }
+    },
+    "Used only while you hold or toggle the shortcut": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "仅在你按住或切换快捷键时使用"
           }
         }
       }
@@ -11777,12 +13441,12 @@
         }
       }
     },
-    "Uses the real recorder and transcription. The text appears below and is not inserted anywhere.": {
+    "Uses the real recorder. The text appears here and is not inserted anywhere.": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "使用真实的录音和转写。文本显示在下方，不会插入到任何地方。"
+            "value": "使用真实的录音流程。文字显示在这里，不会插入任何地方。"
           }
         }
       }
@@ -11843,6 +13507,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "“验证并保存”会向端点发送一次简短的测试请求。"
+          }
+        }
+      }
+    },
+    "Verifying": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在验证"
           }
         }
       }
@@ -11929,6 +13603,16 @@
         }
       }
     },
+    "Waiting": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "等待中"
+          }
+        }
+      }
+    },
     "Waiting for a shortcut. Currently held: %@": {
       "localizations": {
         "zh-Hans": {
@@ -11949,22 +13633,32 @@
         }
       }
     },
-    "Waiting for you to enable KVoice in System Settings. This screen updates by itself once it is on.": {
+    "Waiting for you to turn on KVoice in System Settings › Privacy & Security › Accessibility. This screen updates by itself once it is on.": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "正在等待你在“系统设置”中启用 KVoice。开启后此屏幕会自动更新。"
+            "value": "正在等待你在“系统设置 › 隐私与安全性 › 辅助功能”中打开 KVoice。打开后此页面会自动更新。"
           }
         }
       }
     },
-    "Waiting on %@. Use Fix… above to set it up.": {
+    "Waiting on %@. Use Fix… above.": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "正在等待%@。请用上方的“修复…”进行设置。"
+            "value": "正在等待：%@。请使用上方的“修复…”。"
+          }
+        }
+      }
+    },
+    "Waiting on Model. It unlocks when the download finishes.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在等待模型。下载完成后即可使用。"
           }
         }
       }
@@ -12039,12 +13733,12 @@
         }
       }
     },
-    "What you hear while dictating. Mute restores the volume on every exit.": {
+    "What the model sees": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "听写时你会听到的内容。静音会在每次退出时恢复音量。"
+            "value": "模型看到的内容"
           }
         }
       }
@@ -12089,16 +13783,6 @@
         }
       }
     },
-    "When enabled, a transcript that begins with an action's trigger word runs that action instead of the default. The trigger phrase is removed from the text.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "启用后，以某个操作的触发词开头的转写会运行该操作而非默认操作。触发短语会从文本中移除。"
-          }
-        }
-      }
-    },
     "When off, new dictations are not saved. Existing entries stay until you clear them in History.": {
       "localizations": {
         "zh-Hans": {
@@ -12119,32 +13803,22 @@
         }
       }
     },
+    "Where AI runs": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AI 在哪里运行"
+          }
+        }
+      }
+    },
     "Where the text goes": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
             "value": "文本去向"
-          }
-        }
-      }
-    },
-    "Where the text goes, the menu bar, and how to customize KVoice.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "文本去向、菜单栏，以及如何自定义 KVoice。"
-          }
-        }
-      }
-    },
-    "Whether dictations are saved at all. History is stored only on this Mac. Turning it off stops new entries; it does not delete the ones already saved.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "是否保存听写。历史记录只存储在这台 Mac 上。关闭会停止新增条目；不会删除已保存的条目。"
           }
         }
       }
@@ -12179,12 +13853,62 @@
         }
       }
     },
-    "Works": {
+    "With AI": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "可用"
+            "value": "含 AI"
+          }
+        }
+      }
+    },
+    "Without it, KVoice copies the text to the clipboard instead and you paste it yourself.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "没有此权限时，KVoice 会改为把文字拷贝到剪贴板，由你自己粘贴。"
+          }
+        }
+      }
+    },
+    "Words": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "字数"
+          }
+        }
+      }
+    },
+    "Words / min": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "字/分钟"
+          }
+        }
+      }
+    },
+    "Words Dictated": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "听写字数"
+          }
+        }
+      }
+    },
+    "Works offline once the model is in": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "模型就绪后可离线使用"
           }
         }
       }
@@ -12209,6 +13933,46 @@
         }
       }
     },
+    "Yesterday %@": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "昨天 %@"
+          }
+        }
+      }
+    },
+    "You can continue setup meanwhile.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在此期间你可以继续设置。"
+          }
+        }
+      }
+    },
+    "You can keep going while it downloads. Other models live in Settings › Speech Models.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "下载时你可以继续。其他模型在“设置 › 语音模型”中。"
+          }
+        }
+      }
+    },
+    "You can still finish. Anything open stays visible in the menu bar and in Permissions.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "你仍然可以完成设置。未完成的项目会继续显示在菜单栏和“权限”中。"
+          }
+        }
+      }
+    },
     "Your instructions are combined with a general-purpose template that keeps the transcript as data, forbids commentary, and names the input tags.": {
       "localizations": {
         "zh-Hans": {
@@ -12229,6 +13993,16 @@
         }
       }
     },
+    "Your pace": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "你的语速"
+          }
+        }
+      }
+    },
     "Your settings, history, and models are kept. Export first if you want a copy.": {
       "localizations": {
         "zh-Hans": {
@@ -12239,12 +14013,32 @@
         }
       }
     },
-    "Your setup": {
+    "Your shortcut, your setup, and what you dictated this week.": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "您的设置"
+            "value": "你的快捷键、你的设置，以及本周的听写。"
+          }
+        }
+      }
+    },
+    "Your voice, typed — on this Mac.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "你的声音，变成文字——就在这台 Mac 上。"
+          }
+        }
+      }
+    },
+    "You’re set.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "一切就绪。"
           }
         }
       }
@@ -12255,6 +14049,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "约 %@"
+          }
+        }
+      }
+    },
+    "active": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "当前使用"
+          }
+        }
+      }
+    },
+    "and speak.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "开始说话。"
           }
         }
       }
@@ -12285,6 +14099,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "音频 %@"
+          }
+        }
+      }
+    },
+    "by macOS": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "由 macOS 管理"
           }
         }
       }
@@ -12339,6 +14163,36 @@
         }
       }
     },
+    "floats where you’re looking": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "浮在你目光所及之处"
+          }
+        }
+      }
+    },
+    "grows from the camera": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "从摄像头处展开"
+          }
+        }
+      }
+    },
+    "hold": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "按住"
+          }
+        }
+      }
+    },
     "incomplete": {
       "localizations": {
         "zh-Hans": {
@@ -12369,6 +14223,26 @@
         }
       }
     },
+    "into %@": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "到 %@"
+          }
+        }
+      }
+    },
+    "macOS already uses %@. Choose another shortcut.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "macOS 已在使用 %@。请换一个快捷键。"
+          }
+        }
+      }
+    },
     "macOS is asking for permission. Choose Allow in the dialog.": {
       "localizations": {
         "zh-Hans": {
@@ -12389,6 +14263,26 @@
         }
       }
     },
+    "macOS will ask once. Choose Allow in the dialog.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "macOS 只会询问一次。请在对话框中选择“允许”。"
+          }
+        }
+      }
+    },
+    "naturally": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "自然地"
+          }
+        }
+      }
+    },
     "no focused field": {
       "localizations": {
         "zh-Hans": {
@@ -12405,6 +14299,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "前台没有应用"
+          }
+        }
+      }
+    },
+    "on the Neural Engine ·": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在神经网络引擎上 ·"
           }
         }
       }
@@ -12439,6 +14343,16 @@
         }
       }
     },
+    "press to start and stop": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "按下开始，再按停止"
+          }
+        }
+      }
+    },
     "run the performance test": {
       "localizations": {
         "zh-Hans": {
@@ -12459,12 +14373,32 @@
         }
       }
     },
+    "tap or hold": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "轻按或按住"
+          }
+        }
+      }
+    },
     "target language": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
             "value": "目标语言"
+          }
+        }
+      }
+    },
+    "text lands at your cursor": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "文字出现在光标处"
           }
         }
       }
@@ -12519,6 +14453,66 @@
         }
       }
     },
+    "via %@ · Edit": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "通过 %@ · 编辑"
+          }
+        }
+      }
+    },
+    "vs. typing at %lld wpm": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "对比每分钟 %lld 词的打字速度"
+          }
+        }
+      }
+    },
+    "words across %lld dictations": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "个词，共 %lld 次听写"
+          }
+        }
+      }
+    },
+    "words dictated": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "个词已听写"
+          }
+        }
+      }
+    },
+    "words per minute spoken": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "每分钟说出的词数"
+          }
+        }
+      }
+    },
+    "your shortcut": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "你的快捷键"
+          }
+        }
+      }
+    },
     "·": {
       "shouldTranslate": false
     },
@@ -12531,6 +14525,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "“%@”已在词典中。"
+          }
+        }
+      }
+    },
+    "‹ Back": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "‹ 返回"
           }
         }
       }
@@ -12551,12 +14555,518 @@
         }
       }
     },
+    "≈ %lld of %lld": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "≈ %1$lld of %2$lld"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "≈ %1$lld / %2$lld"
+          }
+        }
+      }
+    },
     "≈ is an estimate (about one token per four letters, more for Chinese, Japanese, and Korean) until the model is loaded.": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
             "value": "模型加载前，≈ 为估算值（约每四个字母一个 token，中文、日文和韩文更多）。"
+          }
+        }
+      }
+    },
+    "Remove Selected (%lld)": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "移除所选 (%lld)"
+          }
+        }
+      }
+    },
+    "Removes the selected terms.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "移除所选词条。"
+          }
+        }
+      }
+    },
+    "Select": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "选择"
+          }
+        }
+      }
+    },
+    "Deselect": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "取消选择"
+          }
+        }
+      }
+    },
+    "Press Return or double-click to edit. Press Delete to remove. Command-click or Shift-click to select several.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "按 Return 键或连按以编辑。按 Delete 键移除。按住 Command 或 Shift 点按可选择多个。"
+          }
+        }
+      }
+    },
+    "%@ · dictation inserts the raw transcript": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ · 听写会插入原始转写文本"
+          }
+        }
+      }
+    },
+    "%@ · dictation inserts the raw transcript · default action kept: %@": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ · 听写会插入原始转写文本 · 默认操作保留为：%2$@"
+          }
+        }
+      }
+    },
+    "A new action gets the next free ⌘1–⌘0 number, by its place in the grid.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "新操作会按其在网格中的位置获得下一个空闲的 ⌘1–⌘0 编号。"
+          }
+        }
+      }
+    },
+    "Action shortcuts ⌘1–⌘0": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "操作快捷键 ⌘1–⌘0"
+          }
+        }
+      }
+    },
+    "Adds an editable copy without trigger words and opens it.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "添加一个不含触发词的可编辑副本并将其打开。"
+          }
+        }
+      }
+    },
+    "Click an action to make it the default. Double-click it, or press Edit…, to open everything it does.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "点按一个操作即可将其设为默认操作。连按它或点按“编辑…”可打开它的全部设置。"
+          }
+        }
+      }
+    },
+    "Each setting appends a shipped instruction block; the instructions below are untouched.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "每项设置都会附加一段内置指令；下方的指令保持不变。"
+          }
+        }
+      }
+    },
+    "Edits the transcript": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "编辑转写文本"
+          }
+        }
+      }
+    },
+    "Give the second translation a language and a code.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "请为第二翻译填写语言和代码。"
+          }
+        }
+      }
+    },
+    "Makes this the action that runs after each transcription. Saved at once.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "将其设为每次转写后运行的操作。立即保存。"
+          }
+        }
+      }
+    },
+    "Mode Settings": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "模式设置"
+          }
+        }
+      }
+    },
+    "New Action": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "新操作"
+          }
+        }
+      }
+    },
+    "New action — saved when you press Save": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "新操作——点按“保存”后才会保存"
+          }
+        }
+      }
+    },
+    "No action has trigger words yet. Add them in an action's details.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "还没有操作设置触发词。请在操作的详细信息中添加。"
+          }
+        }
+      }
+    },
+    "No actions. Add one, or reset the built-in actions.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "没有操作。请添加一个，或重置内置操作。"
+          }
+        }
+      }
+    },
+    "No default action. Click an action above to choose what runs after each transcription.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "没有默认操作。点按上方的一个操作，选择每次转写后运行的内容。"
+          }
+        }
+      }
+    },
+    "Not on a slot": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "未分配到槽位"
+          }
+        }
+      }
+    },
+    "On · %@": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已开启 · %@"
+          }
+        }
+      }
+    },
+    "On, but no configuration is set: dictation inserts the raw transcript. Add one below.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已开启，但尚未设置配置：听写会插入原始转写文本。请在下方添加一个。"
+          }
+        }
+      }
+    },
+    "On, but no default action is chosen: click an action below.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已开启，但尚未选择默认操作：请点按下方的一个操作。"
+          }
+        }
+      }
+    },
+    "Opens the action's details: instructions, mode settings, trigger words and shortcut.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "打开该操作的详细信息：指令、模式设置、触发词和快捷键。"
+          }
+        }
+      }
+    },
+    "Optional. Name, role, industry, tech stack, communication style, languages. Sent with every AI Action request as a separate <USER_PROFILE> block; stored in settings, never in the secrets file.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "可选。姓名、职位、行业、技术栈、沟通风格、语言。作为独立的 <USER_PROFILE> 块随每个 AI 操作请求发送；存储在设置中，绝不存入密钥文件。"
+          }
+        }
+      }
+    },
+    "Restores the shipped title, instructions and trigger words. Saved at once.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "恢复出厂标题、指令和触发词。立即保存。"
+          }
+        }
+      }
+    },
+    "Runs after each transcription while AI Actions are on": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AI 操作开启时，在每次转写后运行"
+          }
+        }
+      }
+    },
+    "Runs when chosen: click it on the page, pick it in the menu bar, say a trigger word, or press its shortcut": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "被选中时运行：在此页面点按它、在菜单栏中选择它、说出触发词，或按下它的快捷键"
+          }
+        }
+      }
+    },
+    "Save or cancel your changes first.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "请先保存或取消你的更改。"
+          }
+        }
+      }
+    },
+    "Selection Action slots and their shortcuts are set under More on the AI Actions page.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "选中文本操作的槽位及其快捷键在 AI 操作页面的“更多”中设置。"
+          }
+        }
+      }
+    },
+    "Set by the action's place in the grid (⌘1–⌘0). Switches to this action while you dictate, and on the AI Actions page.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "由操作在网格中的位置决定（⌘1–⌘0）。在听写时以及在 AI 操作页面中切换到此操作。"
+          }
+        }
+      }
+    },
+    "Slot %lld · %@": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "槽位 %1$lld · %2$@"
+          }
+        }
+      }
+    },
+    "Slot %lld · no shortcut": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "槽位 %lld · 无快捷键"
+          }
+        }
+      }
+    },
+    "Switch between your actions by their place in the grid. Works while a dictation is in progress, and on this page when the KVoice window is focused.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "按操作在网格中的位置在它们之间切换。在听写进行中有效，在 KVoice 窗口获得焦点时也在此页面有效。"
+          }
+        }
+      }
+    },
+    "Switch shortcut": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "切换快捷键"
+          }
+        }
+      }
+    },
+    "Translates to %@": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "翻译为%@"
+          }
+        }
+      }
+    },
+    "Trigger words": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "触发词"
+          }
+        }
+      }
+    },
+    "When on, a dictation that begins with an action's trigger word runs that action instead of the default; the trigger word is removed from the text.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "开启后，以某个操作的触发词开头的听写会运行该操作而非默认操作；触发词会从文本中移除。"
+          }
+        }
+      }
+    },
+    "also %@": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "另译为%@"
+          }
+        }
+      }
+    },
+    "formal writing": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正式书面"
+          }
+        }
+      }
+    },
+    "keeps the original": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "保留原文"
+          }
+        }
+      }
+    },
+    "professional tone": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "专业语气"
+          }
+        }
+      }
+    },
+    "question first": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "先列问题"
+          }
+        }
+      }
+    },
+    "test failed": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "测试失败"
+          }
+        }
+      }
+    },
+    "tested OK": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "测试通过"
+          }
+        }
+      }
+    },
+    "trigger words (off): %@": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "触发词（已关闭）：%@"
+          }
+        }
+      }
+    },
+    "trigger words: %@": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "触发词：%@"
           }
         }
       }

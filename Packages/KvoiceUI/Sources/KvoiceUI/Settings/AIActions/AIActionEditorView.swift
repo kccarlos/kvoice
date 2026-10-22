@@ -1,9 +1,45 @@
 import KvoiceDomain
 import SwiftUI
 
-/// The action editor sheet: title, description, icon, instructions, the
-/// system-instructions template toggle, trigger words, context awareness, and
-/// a collapsible Test Prompt box that runs a sample through the live endpoint.
+/// What the action detail knows about the saved action it edits (Q3). The
+/// default value describes a new action: no default badge, no shortcut, no
+/// Set as Default / Duplicate / Reset / Delete.
+struct AIActionDetailContext {
+    /// The action as saved; nil while adding a new one.
+    var saved: PromptMode?
+    var isDefault = false
+    /// "⌘2", by the action's place in the grid; nil past the tenth.
+    var shortcutBadge: String?
+    /// The Selection Action slots (0-based) this action is bound to, each
+    /// with its shortcut's description when one is recorded.
+    var selectionSlots: [SelectionSlotBinding] = []
+
+    struct SelectionSlotBinding: Hashable {
+        let slot: Int
+        let shortcut: String?
+    }
+
+    var isNew: Bool { saved == nil }
+    var canSetDefault: Bool { saved?.isUsable == true && !isDefault }
+    var canReset: Bool { saved?.isRevisedBuiltIn == true }
+    var canDelete: Bool { saved.map { !$0.isBuiltIn } ?? false }
+
+    /// The detail's buttons that act on the saved action at once rather
+    /// than through Save. Duplicate is offered only without unsaved edits,
+    /// so a copy never silently drops them.
+    func canDuplicate(draft: PromptModeDraft) -> Bool {
+        guard let saved else { return false }
+        return draft == PromptModeDraft(mode: saved)
+    }
+}
+
+/// The action detail sheet (Q3): everything that belongs to one action in
+/// one place — name, icon and description, behaviour and target language,
+/// its mode settings, instructions, trigger words, its shortcut, context
+/// awareness, and a collapsible Test Prompt box that runs a sample through
+/// the live endpoint. A draft: Save commits it, Cancel abandons it. Set as
+/// Default, Duplicate, Reset to Shipped Text and Delete act on the saved action
+/// at once and say so by being buttons, not fields.
 @MainActor
 struct AIActionEditorView: View {
     @Bindable var viewModel: PromptModeSettingsViewModel
@@ -13,18 +49,27 @@ struct AIActionEditorView: View {
     /// pointer to the full edition. The default (everything enabled) is what
     /// the Actions tab, previews and the gallery see.
     var availability: SettingsAvailabilityModel = .init()
+    var context = AIActionDetailContext()
+    var onSetDefault: () -> Void = {}
+    var onDuplicate: () -> Void = {}
+    var onReset: () -> Void = {}
+    var onDelete: () -> Void = {}
     let onSave: () -> Void
     let onCancel: () -> Void
 
+    @State private var isConfirmingDelete = false
     @State private var isTestExpanded = false
     @State private var isTemplatePreviewExpanded = false
     @State private var newTriggerWord = ""
 
     var body: some View {
         Form {
+            headerSection
             identitySection
+            modeSettingsSection
             instructionsSection
             triggerSection
+            shortcutSection
             contextSection
             testSection
         }
@@ -35,16 +80,152 @@ struct AIActionEditorView: View {
             SheetButtonBar(
                 confirmTitle: "Save",
                 isConfirmEnabled: draft.isComplete,
-                disabledReason: String(localized: "Give the action a title and instructions.", bundle: .module),
+                disabledReason: draft.hasCompleteSecondLanguage
+                    ? String(localized: "Give the action a title and instructions.", bundle: .module)
+                    : String(localized: "Give the second translation a language and a code.", bundle: .module),
                 onCancel: onCancel,
                 onConfirm: onSave
-            )
+            ) {
+                if !context.isNew { savedActionButtons }
+            }
+        }
+        .confirmationDialog(
+            "Delete “\(context.saved?.menuTitle ?? "")”?",
+            isPresented: $isConfirmingDelete,
+            titleVisibility: .visible
+        ) {
+            Button("Delete Action", role: .destructive) { onDelete() }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Its instructions are removed and cannot be restored. Built-in actions, your other actions, and your AI configurations are kept.")
         }
         // The ideal is the old fixed minimum; the minimum is what fits over
         // the main window at its 820×540 floor. The grouped form scrolls, so
         // a shorter sheet loses nothing.
         .frame(minWidth: 560, idealWidth: 640, minHeight: 520, idealHeight: 680)
     }
+
+    // MARK: Header
+
+    /// The action's emoji and title as the grid shows them, and whether it
+    /// is the default — the one state the page marks in blue.
+    private var headerSection: some View {
+        Section {
+            HStack(spacing: 10) {
+                RoundedRectangle(cornerRadius: 7, style: .continuous)
+                    .fill(context.isDefault ? Color.kv.cursor : Color.kv.grey)
+                    .frame(width: 28, height: 28)
+                    .overlay {
+                        Text(verbatim: draft.icon.isEmpty ? "✨" : draft.icon).font(.system(size: 15))
+                    }
+                    .accessibilityHidden(true)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(verbatim: draft.name.isEmpty ? String(localized: "New Action", bundle: .module) : draft.name)
+                        .font(.system(size: 15, weight: .semibold))
+                        .lineLimit(1)
+                    Text(statusLine)
+                        .font(.system(size: 11))
+                        .foregroundStyle(Color.kv.text2)
+                }
+                Spacer(minLength: 8)
+                if context.isDefault {
+                    Text("Default action", bundle: .module)
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(Color.kv.cursorInk)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(Color.kv.cursorSoft, in: Capsule())
+                } else if !context.isNew {
+                    Button("Set as Default", action: onSetDefault)
+                        .disabled(!context.canSetDefault)
+                        .help(Text("Makes this the action that runs after each transcription. Saved at once.", bundle: .module))
+                }
+            }
+            .accessibilityElement(children: .contain)
+        }
+    }
+
+    private var statusLine: String {
+        if context.isNew { return String(localized: "New action — saved when you press Save", bundle: .module) }
+        if context.isDefault {
+            return String(localized: "Runs after each transcription while AI Actions are on", bundle: .module)
+        }
+        return String(localized: "Runs when chosen: click it on the page, pick it in the menu bar, say a trigger word, or press its shortcut", bundle: .module)
+    }
+
+    @ViewBuilder
+    private var savedActionButtons: some View {
+        Button("Duplicate", action: onDuplicate)
+            .disabled(!context.canDuplicate(draft: draft))
+            .help(context.canDuplicate(draft: draft)
+                ? Text("Adds an editable copy without trigger words and opens it.", bundle: .module)
+                : Text("Save or cancel your changes first.", bundle: .module))
+        if context.saved?.isBuiltIn == true {
+            Button("Reset to Shipped Text", action: onReset)
+                .disabled(!context.canReset)
+                .help(Text("Restores the shipped title, instructions and trigger words. Saved at once.", bundle: .module))
+        }
+        if context.canDelete {
+            Button("Delete…", role: .destructive) { isConfirmingDelete = true }
+        }
+    }
+
+    // MARK: Mode settings
+
+    @ViewBuilder
+    private var modeSettingsSection: some View {
+        let family = draft.settingsFamily
+        if family != .none {
+            Section {
+                AIActionModeSettingsView(
+                    family: family,
+                    translationLanguage: draft.behavior == .translate ? draft.translationLanguage : nil,
+                    options: $draft.options
+                )
+            } header: {
+                Text("Mode Settings")
+            } footer: {
+                Text("Each setting appends a shipped instruction block; the instructions below are untouched.")
+            }
+        }
+    }
+
+    // MARK: Shortcut
+
+    private var shortcutSection: some View {
+        Section {
+            LabeledContent("Switch shortcut") {
+                Text(verbatim: context.shortcutBadge ?? "—")
+                    .monospaced()
+                    .foregroundStyle(.secondary)
+            }
+            Text(context.isNew
+                ? "A new action gets the next free ⌘1–⌘0 number, by its place in the grid."
+                : "Set by the action's place in the grid (⌘1–⌘0). Switches to this action while you dictate, and on the AI Actions page.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            if context.selectionSlots.isEmpty {
+                LabeledContent("Selection Action") {
+                    Text("Not on a slot", bundle: .module).foregroundStyle(.secondary)
+                }
+            } else {
+                ForEach(context.selectionSlots, id: \.slot) { binding in
+                    LabeledContent("Selection Action") {
+                        Text(verbatim: binding.shortcut.map {
+                            String(localized: "Slot \(binding.slot + 1) · \($0)", bundle: .module)
+                        } ?? String(localized: "Slot \(binding.slot + 1) · no shortcut", bundle: .module))
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+        } header: {
+            Text("Shortcut")
+        } footer: {
+            Text("Selection Action slots and their shortcuts are set under More on the AI Actions page.")
+        }
+    }
+
+    // MARK: Action
 
     private var identitySection: some View {
         Section {

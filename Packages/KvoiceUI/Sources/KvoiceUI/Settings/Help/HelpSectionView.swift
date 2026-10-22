@@ -22,7 +22,7 @@ public struct HelpSectionView: View {
     }
 
     public var body: some View {
-        Form {
+        KVCardPage {
             guidesSection
             feedbackSection
             acknowledgmentsSection
@@ -30,7 +30,6 @@ public struct HelpSectionView: View {
                 isShowingLicenses = true
             }
         }
-        .formStyle(.grouped)
         .sheet(isPresented: $isShowingLicenses) {
             LicensesSheet(viewModel: privacy, isPresented: $isShowingLicenses)
         }
@@ -39,11 +38,11 @@ public struct HelpSectionView: View {
     // MARK: Guides
 
     private var guidesSection: some View {
-        Section {
+        KVCardSection {
             linkRow("User Guide", detail: "Setup, dictation, and every setting, in the project documentation.", symbol: "book") {
                 viewModel.openUserGuide()
             }
-            linkRow("Setup AI & API Key", detail: "How to point KVoice at an OpenAI-compatible endpoint and store its key.", symbol: "sparkles") {
+            linkRow("Set up AI and an API key", detail: "How to point KVoice at an OpenAI-compatible endpoint and store its key.", symbol: "sparkles") {
                 viewModel.openSetupAI()
             }
             linkRow("Official Website", detail: "The KVoice project page.", symbol: "globe") {
@@ -56,11 +55,7 @@ public struct HelpSectionView: View {
                 .fixedSize()
                 .accessibilityHint("Reopens the three-page quick tour from setup, without redoing the rest of setup.")
             } label: {
-                Label("Quick Tour", systemImage: "sparkles")
-                Text("Where the text goes, the menu bar, and how to customize KVoice.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
+                Text("Quick Tour")
             }
             if let failed = viewModel.lastOpenFailed {
                 StatusLabel(
@@ -75,8 +70,6 @@ public struct HelpSectionView: View {
             }
         } header: {
             Text("Guides")
-        } footer: {
-            Text("Reading material, opened in your browser. The setup guide itself, Reset Preferences, and Restart are in General.")
         }
     }
 
@@ -89,22 +82,20 @@ public struct HelpSectionView: View {
             }
             .fixedSize()
             .accessibilityLabel("Open \(title)")
-            .accessibilityHint("Opens in your browser.")
+            .accessibilityHint(Text(detail))
         } label: {
-            Label(title, systemImage: symbol)
-            Text(detail)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
+            Text(title)
         }
     }
 
     // MARK: Feedback
 
     private var feedbackSection: some View {
-        Section {
-            Toggle("Include diagnostics", isOn: $viewModel.includeDiagnosticsInFeedback)
-                .controlSize(.mini)
+        KVCardSection {
+            Toggle(isOn: $viewModel.includeDiagnosticsInFeedback) {
+                Text("Include diagnostics")
+                Text("Counts and timings only — never transcript text or audio")
+            }
                 .accessibilityHint("Appends the same redacted report as Copy Diagnostics: versions, permission and model status, and settings flags. Never a transcript, key, or endpoint path.")
 
             LabeledContent {
@@ -123,29 +114,40 @@ public struct HelpSectionView: View {
             }
         } header: {
             Text("Feedback")
-        } footer: {
-            Text("A new message in your mail app, with diagnostics attached only if you tick the box. You can read and edit everything before sending.")
         }
     }
 
     // MARK: Acknowledgments
 
     private var acknowledgmentsSection: some View {
-        Section {
+        KVCardSection {
+            // UI v2 fidelity F3 (Window.dc `help` › About): version, runtime
+            // and the licences in one card.
+            LabeledContent {
+                Text(verbatim: "\(privacy.appVersion) (\(privacy.buildNumber))")
+                    .font(.system(size: 12, design: .monospaced))
+                    .foregroundStyle(Color.kv.text2)
+                    .textSelection(.enabled)
+            } label: {
+                Text("Version")
+            }
+            LabeledContent {
+                Text(verbatim: PrivacyAboutViewModel.runtimeDescription)
+                    .font(.system(size: 12))
+                    .foregroundStyle(Color.kv.text2)
+            } label: {
+                Text("Runtime")
+            }
             LabeledContent {
                 Button("Acknowledgments…") {
                     isShowingLicenses = true
                 }
-                .fixedSize()
                 .accessibilityHint("Shows the open-source licenses.")
             } label: {
-                Text("Third-party notices for the libraries and the speech model linked into KVoice.")
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
+                Text("Licenses")
             }
         } header: {
-            Text("Acknowledgments")
+            Text("About")
         }
     }
 }

@@ -50,7 +50,7 @@ public struct HUDRecordingFeedbackFilter: Sendable {
                 // Same reason: the start cue and the title flip together.
                 captureStarted: incoming.captureStarted
             )
-            return HUDViewState(phase: .recording(held), partialTranscript: state.partialTranscript)
+            return state.replacingRecording(held)
         }
 
         let target = incoming.inputLevel
@@ -76,9 +76,10 @@ public struct HUDRecordingFeedbackFilter: Sendable {
         )
         lastMeterUpdate = now
         lastOutput = output
-        // The partial transcript rides along unchanged (ADR-017); it is
-        // rate-limited by the streaming session, not by the meter budget.
-        return HUDViewState(phase: .recording(output), partialTranscript: state.partialTranscript)
+        // Everything but the meter and the clock rides along unchanged: the
+        // partial transcript (ADR-017, rate-limited by the streaming
+        // session), the "1 finishing" count, the subtitle facts.
+        return state.replacingRecording(output)
     }
 
     public mutating func reset() {

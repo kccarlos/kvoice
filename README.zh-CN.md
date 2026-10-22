@@ -24,7 +24,7 @@
 <p align="center">
   <img src="Docs/assets/kvoice-demo-zh.gif" alt="20 秒看懂 KVoice：按住快捷键说话，文字打进 TextEdit；同一段随口说的话，变成整理好的文字、待办清单或英文；口述的需求直接打进终端里的 Codex" width="720">
   <br>
-  <a href="Docs/assets/kvoice-demo-zh.mp4">▶ 带声音观看（23 秒）</a>
+  <a href="Docs/assets/kvoice-demo-zh.mp4">▶ 带声音观看（22 秒）</a>
 </p>
 
 **语音输入和 AI 操作，一步完成。** 按住快捷键，说话，松开，KVoice

@@ -59,6 +59,47 @@ final class AIActionsClientTests: XCTestCase {
         XCTAssertEqual(sent.url?.absoluteString, "https://provider.example/v1/models?api-version=v9")
     }
 
+    func testGeminiModelListDropsTheResourcePrefix() async throws {
+        let transport = RecordingTransport(response: Self.json(
+            status: 200,
+            object: ["data": [["id": "models/gemini-b"], ["id": "gemini-a"], ["id": "models/gemini-b"]]]
+        ))
+        let client = OpenAICompatibleAIProcessingClient(transport: transport)
+        let settings = Self.settings(baseURL: AIProviderKind.gemini.defaultBaseURL!)
+
+        let models = try await client.availableModels(settings, credentials: AICredentialSnapshot(apiKey: "k"))
+
+        XCTAssertEqual(models, ["gemini-a", "gemini-b"], "bare names, as chat completions take them; deduplicated, sorted")
+        let sent = try await transport.onlyRequest()
+        XCTAssertEqual(sent.url?.absoluteString, "https://generativelanguage.googleapis.com/v1beta/openai/models")
+        XCTAssertEqual(sent.value(forHTTPHeaderField: "Authorization"), "Bearer k")
+    }
+
+    func testOtherEndpointsKeepAModelsPrefix() async throws {
+        let transport = RecordingTransport(response: Self.json(status: 200, object: ["data": [["id": "models/x"]]]))
+        let client = OpenAICompatibleAIProcessingClient(transport: transport)
+
+        let models = try await client.availableModels(Self.settings(), credentials: nil)
+
+        XCTAssertEqual(models, ["models/x"])
+        let sent = try await transport.onlyRequest()
+        XCTAssertNil(sent.value(forHTTPHeaderField: "Authorization"), "no key, no credential header")
+    }
+
+    func testModelListFailureCarriesOnlyTheStatus() async throws {
+        let transport = RecordingTransport(response: Self.json(status: 404, object: ["error": "fixture-secret path"]))
+        let client = OpenAICompatibleAIProcessingClient(transport: transport)
+
+        do {
+            _ = try await client.availableModels(Self.settings(), credentials: AICredentialSnapshot(apiKey: "fixture-secret"))
+            XCTFail("expected a failure")
+        } catch let error as KVoiceError {
+            XCTAssertEqual(error.code, .aiHTTPError)
+            XCTAssertEqual(error.metadata.httpStatus, 404)
+            XCTAssertFalse(String(describing: error).contains("fixture-secret"))
+        }
+    }
+
     func testUserTypedQueryIsStillRefusedEvenWithAProfile() {
         XCTAssertThrowsError(
             try OpenAICompatibleAIProcessingClient.normalizedCompletionURL(

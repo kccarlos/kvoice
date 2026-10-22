@@ -120,32 +120,60 @@ public enum AIProviderKind: String, Codable, Sendable, Equatable, CaseIterable, 
         self == .azureOpenAI
     }
 
-    /// A model to prefill so a new configuration is not empty. Discovery replaces it.
+    /// Whether the configuration sheet offers Fetch Models: the endpoint
+    /// answers the OpenAI-compatible `GET /models` with the credential the
+    /// client sends. Not Azure (a deployment is named in the portal, not
+    /// listed), not Anthropic (its model list is the native API, which takes
+    /// an `x-api-key` header this client never sends; the compatibility
+    /// layer it does use documents no `/models`), and not the two Apple
+    /// kinds (no endpoint, no model id).
+    public var supportsModelListing: Bool {
+        switch self {
+        case .ollama, .openAI, .gemini, .openRouter, .groq, .cerebras, .custom:
+            return true
+        case .anthropic, .azureOpenAI, .appleIntelligence, .privateCloudCompute:
+            return false
+        }
+    }
+
+    /// A model to prefill so a new configuration is not empty.
     public var suggestedModelID: String {
         recommendedModels.first ?? ""
     }
 
-    /// Models worth suggesting for the preset, best first. Discovery can
-    /// replace them; they exist so a new configuration is usable without
-    /// looking up a model name.
+    /// Models worth suggesting for the preset, cheapest and fastest first —
+    /// the job is short-text cleanup and translation, and the first entry is
+    /// the prefill. Fetch Models in the configuration sheet lists what the
+    /// endpoint actually serves; these exist so a new configuration is usable
+    /// without looking up a model name.
+    ///
+    /// Generally available IDs as of October 2026, from each provider's own
+    /// list (no preview models):
+    /// - OpenAI: https://developers.openai.com/api/docs/models
+    /// - Gemini: https://ai.google.dev/gemini-api/docs/models (stable only)
+    /// - Anthropic: https://platform.claude.com/docs/en/about-claude/models/overview
+    /// - Groq: https://console.groq.com/docs/models (production only)
+    /// - Cerebras: https://inference-docs.cerebras.ai/models/overview
+    /// - OpenRouter: https://openrouter.ai/api/v1/models (its IDs use dots,
+    ///   `anthropic/claude-haiku-5.5`, where Anthropic's own use hyphens)
     public var recommendedModels: [String] {
         switch self {
         case .ollama:
             return []
         case .openAI:
-            return ["gpt-4o-mini", "gpt-4o", "gpt-4.1-mini"]
+            return ["gpt-6-luna", "gpt-6.1-sol", "gpt-6-astra"]
         case .gemini:
-            return ["gemini-2.0-flash", "gemini-2.5-flash", "gemini-2.5-flash-lite"]
+            return ["gemini-3.5-flash-lite", "gemini-3.8-flash", "gemini-3.6-flash"]
         case .openRouter:
-            // OpenRouter namespaces models by vendor; discovery returns hundreds,
-            // so a concrete default is more useful than an empty field.
-            return ["openai/gpt-4o-mini", "anthropic/claude-sonnet-4", "google/gemini-2.5-flash"]
+            // OpenRouter namespaces models by vendor; Fetch Models returns
+            // hundreds, so a concrete default is more useful than an empty field.
+            return ["openai/gpt-6-luna", "google/gemini-3.5-flash-lite", "anthropic/claude-haiku-5.5"]
         case .anthropic:
-            return ["claude-haiku-4-5", "claude-sonnet-5", "claude-opus-5"]
+            return ["claude-haiku-5-5", "claude-sonnet-5-5", "claude-opus-5-5"]
         case .groq:
-            return ["llama-3.3-70b-versatile", "llama-3.1-8b-instant", "openai/gpt-oss-120b"]
+            return ["openai/gpt-oss-20b", "openai/gpt-oss-120b", "llama-3.3-70b-versatile"]
         case .cerebras:
-            return ["llama-3.3-70b", "gpt-oss-120b", "qwen-3-32b"]
+            return ["gpt-oss-120b", "qwen-3.8-27b"]
         case .azureOpenAI:
             // Azure addresses a deployment, not a model; the deployment name
             // is whatever the user chose in the portal.

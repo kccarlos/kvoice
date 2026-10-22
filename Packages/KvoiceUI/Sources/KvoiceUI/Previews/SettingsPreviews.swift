@@ -107,16 +107,6 @@ import SwiftUI
     .frame(width: 720, height: 720)
 }
 
-#Preview("AI: off, nothing configured") {
-    AISettingsView(viewModel: AISettingsViewModel())
-        .frame(width: 720, height: 620)
-}
-
-#Preview("AI: configured with saved endpoints") {
-    AISettingsView(viewModel: .previewConfigured())
-        .frame(width: 720, height: 620)
-}
-
 #Preview("Actions: built-ins seeded") {
     PromptModeSettingsView(viewModel: .previewSeeded())
         .frame(width: 720, height: 620)

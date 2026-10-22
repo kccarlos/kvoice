@@ -284,7 +284,7 @@ public actor OpenAICompatibleAIProcessingClient: CredentialInjectingAIProcessing
                 defer { group.cancelAll() }
                 return try await group.next()!
             }
-            return try Self.parseModelList(transportResponse)
+            return try Self.parseModelList(transportResponse, modelsURL: url)
         } catch let error as KVoiceError {
             throw error
         } catch is CancellationError {
@@ -298,7 +298,7 @@ public actor OpenAICompatibleAIProcessingClient: CredentialInjectingAIProcessing
         }
     }
 
-    static func parseModelList(_ response: AITransportResponse) throws -> [String] {
+    static func parseModelList(_ response: AITransportResponse, modelsURL: URL? = nil) throws -> [String] {
         if let http = response.response as? HTTPURLResponse,
            !(200..<300).contains(http.statusCode) {
             throw Self.httpFailure(status: http.statusCode, body: response.data)
@@ -312,10 +312,20 @@ public actor OpenAICompatibleAIProcessingClient: CredentialInjectingAIProcessing
         guard let list = try? JSONDecoder().decode(ModelList.self, from: response.data) else {
             throw KVoiceError(code: .aiMalformedResponse, retryable: false)
         }
+        // Gemini's OpenAI-compatible list may name models by resource path
+        // (`models/gemini-…`) while chat completions take the bare name, so
+        // the prefix is dropped there and nowhere else.
+        let stripsResourcePrefix = modelsURL?.host?.lowercased() == "generativelanguage.googleapis.com"
         // Stable order, no blanks, no duplicates.
         var seen = Set<String>()
         return list.data
-            .map { $0.id.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .map { entry -> String in
+                let id = entry.id.trimmingCharacters(in: .whitespacesAndNewlines)
+                if stripsResourcePrefix, id.hasPrefix("models/") {
+                    return String(id.dropFirst("models/".count))
+                }
+                return id
+            }
             .filter { !$0.isEmpty && seen.insert($0).inserted }
             .sorted()
     }

@@ -283,6 +283,34 @@ final class AIActionsSettingsTests: XCTestCase {
 
     // MARK: Providers
 
+    func testHostedPresetsSuggestModelsAndPrefillTheFirst() {
+        for kind in [AIProviderKind.openAI, .gemini, .openRouter, .anthropic, .groq, .cerebras] {
+            XCTAssertFalse(kind.recommendedModels.isEmpty, "\(kind)")
+            XCTAssertEqual(kind.suggestedModelID, kind.recommendedModels[0], "\(kind)")
+            XCTAssertEqual(Set(kind.recommendedModels).count, kind.recommendedModels.count, "\(kind) lists a model twice")
+            XCTAssertFalse(
+                kind.recommendedModels.contains { $0.contains("preview") || $0.hasSuffix(":batch") },
+                "\(kind) suggests only generally available models"
+            )
+        }
+        for kind in [AIProviderKind.ollama, .azureOpenAI, .custom, .appleIntelligence, .privateCloudCompute] {
+            XCTAssertTrue(kind.recommendedModels.isEmpty, "\(kind) has no fixed model list")
+        }
+        // OpenRouter's Anthropic IDs use dots, Anthropic's own use hyphens.
+        XCTAssertTrue(AIProviderKind.openRouter.recommendedModels.allSatisfy { $0.contains("/") })
+        XCTAssertTrue(AIProviderKind.anthropic.recommendedModels.allSatisfy { !$0.contains(".") })
+    }
+
+    func testOnlyEndpointsThatAnswerModelsOfferModelListing() {
+        for kind in [AIProviderKind.ollama, .openAI, .gemini, .openRouter, .groq, .cerebras, .custom] {
+            XCTAssertTrue(kind.supportsModelListing, "\(kind)")
+            XCTAssertEqual(kind.transport, .openAICompatible)
+        }
+        for kind in [AIProviderKind.anthropic, .azureOpenAI, .appleIntelligence, .privateCloudCompute] {
+            XCTAssertFalse(kind.supportsModelListing, "\(kind)")
+        }
+    }
+
     func testProviderPresetsCarryEndpointsKeysAndAuthProfiles() {
         XCTAssertEqual(AIProviderKind.anthropic.defaultBaseURL?.absoluteString, "https://api.anthropic.com/v1")
         XCTAssertEqual(AIProviderKind.groq.defaultBaseURL?.absoluteString, "https://api.groq.com/openai/v1")

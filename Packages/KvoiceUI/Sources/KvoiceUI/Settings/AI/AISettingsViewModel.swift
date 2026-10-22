@@ -121,10 +121,17 @@ public final class AISettingsViewModel {
         return ai.configurations.first { $0.id == id }?.name
     }
 
-    /// Model identifiers reported by the endpoint, so the user can pick instead
-    /// of typing one exactly.
-    public private(set) var discoveredModels: [String] = []
-    public private(set) var discoveryState: DiscoveryState = .idle
+    /// Fetch Models in the configuration sheet: the identifiers the drafted
+    /// endpoint listed, so the user can pick instead of typing one exactly.
+    /// Read through `discoveredModels(for:)` / `discoveryState(for:)`, which
+    /// show them only while the draft still names the endpoint they came
+    /// from (`discoveryOrigin`). The key is never part of that record.
+    private var discoveredModels: [String] = []
+    private var discoveryState: DiscoveryState = .idle
+    private var discoveryOrigin: DiscoveryOrigin?
+    /// Bumped by every fetch and reset, so a reply that lands after the user
+    /// changed provider, URL or key is dropped instead of shown.
+    private var discoveryGeneration = 0
 
     /// Keys held per configuration so switching providers does not require retyping a
     /// credential. Never included in `AppSettings`.
@@ -151,7 +158,23 @@ public final class AISettingsViewModel {
         case idle
         case loading
         case loaded(count: Int)
-        case failed
+        /// The failure class in plain words, never the endpoint, key, or
+        /// response body — as `TestState.failed`.
+        case failed(String)
+    }
+
+    /// Which endpoint a fetched list belongs to: everything in the draft
+    /// that decides the `/models` request except the key.
+    private struct DiscoveryOrigin: Equatable {
+        let kind: AIProviderKind
+        let baseURL: URL?
+        let requestProfile: AIRequestProfile
+
+        init(_ draft: Draft) {
+            kind = draft.kind
+            baseURL = draft.resolvedBaseURL
+            requestProfile = draft.requestProfile
+        }
     }
 
     private let configurationTester: @MainActor (
@@ -423,6 +446,19 @@ public final class AISettingsViewModel {
             }
         }
 
+        /// The key a request for this draft carries: the one typed in the
+        /// sheet (an edit draft is seeded with the stored key), trimmed, or
+        /// none. Shared by Verify & Save and Fetch Models.
+        public var credentials: AICredentialSnapshot? {
+            let key = apiKey.trimmingCharacters(in: .whitespacesAndNewlines)
+            return key.isEmpty ? nil : AICredentialSnapshot(apiKey: key)
+        }
+
+        /// Picking a fetched model fills the Model ID field.
+        public mutating func chooseModel(_ id: String) {
+            modelID = id
+        }
+
         /// The endpoint settings a connection test of this draft would use.
         public var endpointSettings: AIEndpointSettings {
             var settings = AIEndpointSettings(baseURL: resolvedBaseURL, modelID: resolvedModelID)
@@ -513,8 +549,6 @@ public final class AISettingsViewModel {
 
         baseURLText = configuration.baseURL?.absoluteString ?? ""
         modelID = configuration.modelID
-        discoveredModels = []
-        discoveryState = .idle
         testState = .idle
         var next = aiSettings
         next.configurations.append(configuration)
@@ -560,8 +594,6 @@ public final class AISettingsViewModel {
         if isActive {
             baseURLText = updated[index].baseURL?.absoluteString ?? ""
             modelID = updated[index].modelID
-            discoveredModels = []
-            discoveryState = .idle
             testState = .idle
         }
         var next = aiSettings
@@ -596,11 +628,7 @@ public final class AISettingsViewModel {
         }
         verificationState = .testing
         do {
-            let key = draft.apiKey.trimmingCharacters(in: .whitespacesAndNewlines)
-            try await configurationTester(
-                draft.endpointSettings,
-                key.isEmpty ? nil : AICredentialSnapshot(apiKey: key)
-            )
+            try await configurationTester(draft.endpointSettings, draft.credentials)
         } catch {
             verificationState = .failed(Self.failureDescription(for: error))
             return nil
@@ -717,8 +745,6 @@ public final class AISettingsViewModel {
         guard let configuration = configurations.first(where: { $0.id == id }) else { return }
         baseURLText = configuration.baseURL?.absoluteString ?? ""
         modelID = configuration.modelID
-        discoveredModels = []
-        discoveryState = .idle
         testState = .idle
         var next = aiSettings
         next.requestProfile = configuration.requestProfile
@@ -775,42 +801,89 @@ public final class AISettingsViewModel {
         configurationAPIKeys[configurationID.uuidString] ?? ""
     }
 
-    public func renameActiveConfiguration(_ name: String) {
-        guard let activeConfigurationID,
-              let index = configurations.firstIndex(where: { $0.id == activeConfigurationID })
-        else {
-            return
-        }
-        configurations[index].name = name
+    // MARK: Fetch Models (configuration sheet)
+
+    /// Whether the sheet can ask the drafted endpoint for its model list:
+    /// a provider that serves one (`supportsModelListing`) and a URL the
+    /// client accepts.
+    public func canDiscoverModels(for draft: Draft) -> Bool {
+        draft.kind.supportsModelListing && draft.resolvedBaseURL != nil
     }
 
-    public var canDiscoverModels: Bool {
-        baseURL != nil
-    }
-
-    /// Asks the endpoint which models it serves. User-triggered only.
-    public func discoverModels() async {
-        guard canDiscoverModels else {
-            discoveryState = .failed
+    /// Asks the drafted endpoint which models it serves, with the key typed
+    /// in the sheet — for an existing configuration that is its stored key
+    /// unless the user changed it, because the edit draft is seeded with it.
+    /// The same endpoint and credential `verifyAndSave` would test.
+    /// User-triggered only; nothing is saved, and `draft.modelID` is left
+    /// alone (it already holds the suggestion or the user's choice).
+    public func discoverModels(for draft: Draft) async {
+        discoveryGeneration += 1
+        let generation = discoveryGeneration
+        discoveryOrigin = DiscoveryOrigin(draft)
+        discoveredModels = []
+        guard canDiscoverModels(for: draft) else {
+            discoveryState = .failed(String(localized: "Fill in the endpoint first.", bundle: .module))
             return
         }
         discoveryState = .loading
         do {
-            let models = try await modelLister(
-                aiSettings,
-                apiKey.isEmpty ? nil : AICredentialSnapshot(apiKey: apiKey)
-            )
+            let models = try await modelLister(draft.endpointSettings, draft.credentials)
+            guard generation == discoveryGeneration else { return }
             discoveredModels = models
             discoveryState = .loaded(count: models.count)
-            // Selecting the only sensible option saves a click.
-            if modelID.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
-               let first = models.first {
-                modelID = first
-            }
         } catch {
+            guard generation == discoveryGeneration else { return }
             // As with testing, never surface a raw transport error.
-            discoveredModels = []
-            discoveryState = .failed
+            discoveryState = .failed(Self.discoveryFailureDescription(for: error))
+        }
+    }
+
+    /// The fetched list, or empty when the draft no longer names the
+    /// endpoint it came from (the provider, URL or auth changed since).
+    public func discoveredModels(for draft: Draft) -> [String] {
+        discoveryOrigin == DiscoveryOrigin(draft) ? discoveredModels : []
+    }
+
+    /// `.idle` unless the last fetch was for the endpoint the draft names.
+    public func discoveryState(for draft: Draft) -> DiscoveryState {
+        discoveryOrigin == DiscoveryOrigin(draft) ? discoveryState : .idle
+    }
+
+    /// Forgets the fetched list and drops any reply still in flight: the
+    /// sheet calls it when it opens and when the key changes.
+    public func resetModelDiscovery() {
+        discoveryGeneration += 1
+        discoveryOrigin = nil
+        discoveredModels = []
+        discoveryState = .idle
+    }
+
+    /// The fetched models whose identifier contains every word of `query`,
+    /// ignoring case and diacritics, in the list's (sorted) order. An empty
+    /// query keeps them all.
+    public static func filterModels(_ models: [String], matching query: String) -> [String] {
+        let words = query.split(whereSeparator: \.isWhitespace).map(String.init)
+        guard !words.isEmpty else { return models }
+        return models.filter { model in
+            words.allSatisfy { model.range(of: $0, options: [.caseInsensitive, .diacriticInsensitive]) != nil }
+        }
+    }
+
+    /// Plain words for a failed Fetch Models. An endpoint that answers but
+    /// has no usable list is told apart from the connection-test wording,
+    /// which points at the model name.
+    static func discoveryFailureDescription(for error: any Error) -> String {
+        guard let failure = error as? KVoiceError else {
+            return failureDescription(for: error)
+        }
+        let status = failure.metadata.httpStatus.map { String(localized: " (HTTP \($0))", bundle: .module) } ?? ""
+        switch failure.code {
+        case .aiHTTPError:
+            return String(localized: "The endpoint did not list its models\(status). Type the model ID instead.", bundle: .module)
+        case .aiMalformedResponse, .aiEmptyResponse, .aiOversizedResponse:
+            return String(localized: "The endpoint's model list could not be read. Type the model ID instead.", bundle: .module)
+        default:
+            return failureDescription(for: error)
         }
     }
 

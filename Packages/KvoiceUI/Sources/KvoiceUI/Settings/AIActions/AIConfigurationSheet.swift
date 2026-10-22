@@ -8,7 +8,8 @@ import SwiftUI
 /// Private Cloud Compute), then the provider for an endpoint, then
 /// only the fields that provider needs: a preset already knows its endpoint,
 /// Azure wants a resource and a deployment, and `custom` must be given a
-/// URL. The two Apple types have nothing to fill in but a name. "Verify &
+/// URL. Fetch Models lists what the drafted endpoint serves, to pick from
+/// (never saved by itself). The two Apple types have nothing to fill in but a name. "Verify &
 /// Save" runs the connection test against the draft and stores it only on
 /// success; "Save" stores it unverified for offline setups.
 @MainActor
@@ -24,6 +25,8 @@ struct AIConfigurationSheet: View {
 
     /// Once the user types a name, changing provider must not overwrite it.
     @State private var nameWasEdited = false
+    /// The Fetch Models filter; cleared with every fetch.
+    @State private var modelFilter = ""
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
@@ -40,7 +43,13 @@ struct AIConfigurationSheet: View {
             verificationSection
         }
         .formStyle(.grouped)
-        .onAppear { viewModel.clearVerification() }
+        .onAppear {
+            viewModel.clearVerification()
+            viewModel.resetModelDiscovery()
+        }
+        // A list fetched with another key is not this key's answer (and a
+        // failure may be what the new key fixes).
+        .onChange(of: draft.apiKey) { _, _ in viewModel.resetModelDiscovery() }
         .safeAreaInset(edge: .bottom) {
             // An explicit button bar, not `.toolbar`: a sheet has no window
             // toolbar of its own, and Return/Escape need explicit shortcuts.
@@ -228,18 +237,26 @@ struct AIConfigurationSheet: View {
                         .textFieldStyle(.roundedBorder)
                         .accessibilityLabel("Model identifier")
                 } else {
-                    Picker("Recommended model", selection: $draft.modelID) {
-                        if !draft.kind.recommendedModels.contains(draft.modelID) {
-                            Text(draft.modelID.isEmpty ? "Custom…" : draft.modelID).tag(draft.modelID)
-                        }
-                        ForEach(draft.kind.recommendedModels, id: \.self) { model in
-                            Text(model).tag(model)
+                    // Once the endpoint's own list is fetched, it replaces
+                    // the suggestions.
+                    if fetchedModels.isEmpty {
+                        Picker("Recommended model", selection: $draft.modelID) {
+                            if !draft.kind.recommendedModels.contains(draft.modelID) {
+                                Text(draft.modelID.isEmpty ? "Custom…" : draft.modelID).tag(draft.modelID)
+                            }
+                            ForEach(draft.kind.recommendedModels, id: \.self) { model in
+                                Text(model).tag(model)
+                            }
                         }
                     }
                     TextField("Model ID", text: $draft.modelID)
                         .textFieldStyle(.roundedBorder)
                         .accessibilityLabel("Model identifier")
-                        .help("Any model the provider serves; the picker above only suggests.")
+                        .help("Any model the provider serves; the lists only suggest.")
+                }
+                modelDiscoveryRow
+                if !fetchedModels.isEmpty {
+                    fetchedModelList
                 }
             }
 
@@ -268,6 +285,106 @@ struct AIConfigurationSheet: View {
             Text(draft.kind.requiresManualBaseURL || draft.kind.usesAzureAddressing ? "Endpoint" : "Details")
         } footer: {
             Text("HTTPS is required for remote hosts. The key is stored separately from settings.json and sent only in the provider's credential header.")
+        }
+    }
+
+    // MARK: Fetch Models
+
+    private var fetchedModels: [String] { viewModel.discoveredModels(for: draft) }
+
+    /// Fetch Models and what came of it. Providers that cannot list their
+    /// models (`supportsModelListing`) get no button; Anthropic, the one a
+    /// user might look for it on, says why.
+    @ViewBuilder
+    private var modelDiscoveryRow: some View {
+        if draft.kind.supportsModelListing {
+            let state = viewModel.discoveryState(for: draft)
+            HStack(spacing: 8) {
+                Button("Fetch Models") {
+                    modelFilter = ""
+                    let snapshot = draft
+                    Task { await viewModel.discoverModels(for: snapshot) }
+                }
+                .disabled(!viewModel.canDiscoverModels(for: draft) || state == .loading)
+                .help("Asks the endpoint which models it serves. Nothing is saved.")
+                switch state {
+                case .idle:
+                    Text("Lists the models this endpoint serves.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                case .loading:
+                    ProgressView().controlSize(.small).accessibilityHidden(true)
+                    Text("Fetching models…")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                case .loaded(let count) where count == 0:
+                    Text("The endpoint listed no models.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                case .loaded(let count):
+                    Text("Models listed: \(count)")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                case .failed(let message):
+                    StatusLabel(message, symbol: "exclamationmark.triangle.fill", tone: .attention)
+                        .labelStyle(.titleAndIcon)
+                        .font(.caption)
+                }
+                Spacer(minLength: 0)
+            }
+            .animation(reduceMotion ? nil : .default, value: state)
+        } else if draft.kind == .anthropic {
+            Text("Anthropic's model list isn't available through this endpoint. Pick a recommended model or type its ID.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+    }
+
+    /// The fetched list, filterable: OpenRouter alone lists hundreds, far
+    /// too many for a pop-up menu. Clicking a row fills Model ID.
+    private var fetchedModelList: some View {
+        let matches = AISettingsViewModel.filterModels(fetchedModels, matching: modelFilter)
+        return VStack(alignment: .leading, spacing: 6) {
+            TextField("Filter models", text: $modelFilter)
+                .textFieldStyle(.roundedBorder)
+                .accessibilityLabel("Filter fetched models")
+            ScrollView {
+                LazyVStack(alignment: .leading, spacing: 0) {
+                    ForEach(matches, id: \.self) { model in
+                        let isChosen = model == draft.modelID
+                        Button {
+                            draft.chooseModel(model)
+                        } label: {
+                            HStack(spacing: 6) {
+                                Text(verbatim: model)
+                                    .lineLimit(1)
+                                    .truncationMode(.middle)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                if isChosen {
+                                    Image(systemName: "checkmark")
+                                        .foregroundStyle(.tint)
+                                        .accessibilityHidden(true)
+                                }
+                            }
+                            .padding(.vertical, 4)
+                            .padding(.horizontal, 8)
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityAddTraits(isChosen ? .isSelected : [])
+                        .accessibilityValue(Text(verbatim: KVAccessibility.selectionValue(isChosen)))
+                    }
+                    if matches.isEmpty {
+                        Text("No fetched model matches.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .padding(8)
+                    }
+                }
+            }
+            .frame(height: 160)
+            .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(.separator))
+            .accessibilityLabel("Fetched models")
         }
     }
 

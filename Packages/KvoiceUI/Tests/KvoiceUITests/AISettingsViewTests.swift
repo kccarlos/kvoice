@@ -111,7 +111,6 @@ final class AISettingsViewTests: XCTestCase {
             XCTAssertNotNil(model.baseURLValidationError, rejected)
             XCTAssertNil(model.baseURL, rejected)
             XCTAssertNil(model.appSettings.ai.baseURL, rejected)
-            XCTAssertFalse(model.canDiscoverModels, rejected)
             XCTAssertFalse(model.canTestConfiguration, rejected)
             // Nothing handed to the coordinator carries the secret.
             let encoded = String(decoding: try! JSONEncoder().encode(harness.settings), as: UTF8.self)
@@ -165,11 +164,6 @@ final class AISettingsViewTests: XCTestCase {
             model.configurations.first?.baseURL?.absoluteString,
             "https://provider.example/v1"
         )
-    }
-
-    func testViewCanBeConstructedForSettingsScene() {
-        let view = AISettingsView(viewModel: AISettingsViewModel())
-        XCTAssertNotNil(view)
     }
 
     // MARK: Prompt modes survive AI-tab edits

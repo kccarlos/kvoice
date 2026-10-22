@@ -28,6 +28,10 @@ A new look for the whole app, in light and dark.
   (which action, where it runs), then where AI runs, then your actions.
   Click an action to make it the default; double-click it (or Edit…) to
   change its name, prompt, trigger words and shortcut in one sheet.
+- When you set up an OpenAI-compatible provider, Fetch Models asks it
+  which models it serves; filter the list and click one to use it. The
+  recommended models are updated to each provider's current ones (for
+  example GPT-6 Luna, Gemini 3.5 Flash-Lite, Claude Haiku 5.5).
 - History has a stats strip, a "With AI" filter, and shows which model
   transcribed each entry.
 - Dictionary terms are chips you can edit in place; select several to

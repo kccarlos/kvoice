@@ -403,16 +403,6 @@
         }
       }
     },
-    "%@, selected": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%@，已选中"
-          }
-        }
-      }
-    },
     "%@, skipped": {
       "localizations": {
         "zh-Hans": {
@@ -913,16 +903,6 @@
         }
       }
     },
-    "A failed AI request never blocks local dictation; KVoice inserts the raw transcript instead.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "AI 请求失败不会阻碍本地听写；KVoice 会改为插入原始转写文本。"
-          }
-        }
-      }
-    },
     "A little longer": {
       "localizations": {
         "zh-Hans": {
@@ -1033,26 +1013,6 @@
         }
       }
     },
-    "AI Configurations": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "AI 配置"
-          }
-        }
-      }
-    },
-    "AI base URL": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "AI 基础 URL"
-          }
-        }
-      }
-    },
     "AI did not respond. The raw transcript was used instead.": {
       "localizations": {
         "zh-Hans": {
@@ -1063,32 +1023,12 @@
         }
       }
     },
-    "AI is optional and off by default. When enabled, the default action from Settings › AI Actions runs after each transcription; only the local transcript is sent to your configured endpoint.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "AI 为可选功能，默认关闭。开启后，“设置 › AI 操作”中的默认操作会在每次转写后运行；只有本地转写文本会发送到你配置的端点。"
-          }
-        }
-      }
-    },
     "AI isn’t set up · raw transcript used": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
             "value": "AI 尚未设置 · 已使用原始转写"
-          }
-        }
-      }
-    },
-    "AI model ID": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "AI 模型 ID"
           }
         }
       }
@@ -1625,6 +1565,16 @@
         }
       }
     },
+    "Anthropic's model list isn't available through this endpoint. Pick a recommended model or type its ID.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法通过此端点获取 Anthropic 的模型列表。请选择推荐的模型或输入模型 ID。"
+          }
+        }
+      }
+    },
     "Any length": {
       "localizations": {
         "zh-Hans": {
@@ -1635,12 +1585,12 @@
         }
       }
     },
-    "Any model the provider serves; the picker above only suggests.": {
+    "Any model the provider serves; the lists only suggest.": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "服务商提供的任何模型；上方的选择器仅作建议。"
+            "value": "可使用提供商提供的任何模型；列表仅供参考。"
           }
         }
       }
@@ -1805,22 +1755,12 @@
         }
       }
     },
-    "Ask the endpoint which models it serves.": {
+    "Asks the endpoint which models it serves. Nothing is saved.": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "向端点查询它提供哪些模型。"
-          }
-        }
-      }
-    },
-    "Asking the endpoint for its models…": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "正在向端点查询模型…"
+            "value": "向端点查询其提供的模型。不会保存任何内容。"
           }
         }
       }
@@ -1965,16 +1905,6 @@
         }
       }
     },
-    "Available models": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "可用模型"
-          }
-        }
-      }
-    },
     "Available on this Mac": {
       "localizations": {
         "zh-Hans": {
@@ -2081,16 +2011,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "基础 URL"
-          }
-        }
-      }
-    },
-    "Base URL error: %@": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "基础 URL 错误：%@"
           }
         }
       }
@@ -2885,16 +2805,6 @@
         }
       }
     },
-    "Configuration works": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "配置可用"
-          }
-        }
-      }
-    },
     "Confirms the recommended shortcut. It is not active until it is confirmed.": {
       "localizations": {
         "zh-Hans": {
@@ -3011,16 +2921,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "已复制到剪贴板"
-          }
-        }
-      }
-    },
-    "Copies the endpoint fields below into the selected configuration.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "把下方的端点字段复制到所选配置中。"
           }
         }
       }
@@ -3177,16 +3077,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "无法%@：%@"
-          }
-        }
-      }
-    },
-    "Could not list models. Check the base URL and key, then try again.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "无法列出模型。请检查基础 URL 和密钥后重试。"
           }
         }
       }
@@ -3817,26 +3707,6 @@
         }
       }
     },
-    "Discover": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "发现"
-          }
-        }
-      }
-    },
-    "Discovered models": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "发现的模型"
-          }
-        }
-      }
-    },
     "Dismiss": {
       "localizations": {
         "zh-Hans": {
@@ -4165,16 +4035,6 @@
         }
       }
     },
-    "Each configuration stores a provider, endpoint, model, and its own key. Pick one by name from the menu bar to switch.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "每个配置保存服务商、端点、模型和它自己的密钥。可在菜单栏按名称选择以切换。"
-          }
-        }
-      }
-    },
     "Each dictation's audio is saved as a 16 kHz WAV in the KVoice data folder, readable only by your account, and removed after %@. Recordings enable playback and Retranscribe in History. They are never included in diagnostics.": {
       "localizations": {
         "zh-Hans": {
@@ -4251,16 +4111,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "编辑…"
-          }
-        }
-      }
-    },
-    "Enable AI Actions": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "启用 AI 操作"
           }
         }
       }
@@ -4685,6 +4535,36 @@
         }
       }
     },
+    "Fetch Models": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "获取模型"
+          }
+        }
+      }
+    },
+    "Fetched models": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已获取的模型"
+          }
+        }
+      }
+    },
+    "Fetching models…": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在获取模型…"
+          }
+        }
+      }
+    },
     "Figures cover the current filters. Time saved assumes typing at %lld words per minute.": {
       "localizations": {
         "zh-Hans": {
@@ -4721,6 +4601,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "请先填写端点和模型。"
+          }
+        }
+      }
+    },
+    "Fill in the endpoint first.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "请先填写端点。"
+          }
+        }
+      }
+    },
+    "Filter fetched models": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "筛选已获取的模型"
           }
         }
       }
@@ -4885,16 +4785,6 @@
         }
       }
     },
-    "For example, http://localhost:11434/v1 or https://api.openai.com/v1": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "例如 http://localhost:11434/v1 或 https://api.openai.com/v1"
-          }
-        }
-      }
-    },
     "For example, http://localhost:8080/v1": {
       "localizations": {
         "zh-Hans": {
@@ -4951,26 +4841,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "正式书面模式"
-          }
-        }
-      }
-    },
-    "Found %lld models.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "找到 %lld 个模型。"
-          }
-        }
-      }
-    },
-    "Found 1 model.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "找到 1 个模型。"
           }
         }
       }
@@ -5161,16 +5031,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "指南、反馈与致谢。"
-          }
-        }
-      }
-    },
-    "HTTPS is required for remote hosts. HTTP is permitted only for localhost, 127.0.0.1, or ::1. The key is stored separately from settings.json and is sent only in the provider's credential header.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "远程主机必须使用 HTTPS。仅 localhost、127.0.0.1 或 ::1 允许使用 HTTP。密钥与 settings.json 分开存储，只在服务商的凭据请求头中发送。"
           }
         }
       }
@@ -5921,16 +5781,6 @@
         }
       }
     },
-    "Its saved API key is removed with it. The endpoint fields below, your other configurations, and your actions are kept.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "保存的 API 密钥会随之移除。下方的端点字段、你的其他配置和操作会保留。"
-          }
-        }
-      }
-    },
     "Its saved API key is removed with it. Your other configurations and your actions are kept.": {
       "localizations": {
         "zh-Hans": {
@@ -6461,6 +6311,16 @@
         }
       }
     },
+    "Lists the models this endpoint serves.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "列出此端点提供的模型。"
+          }
+        }
+      }
+    },
     "Live text": {
       "localizations": {
         "zh-Hans": {
@@ -6657,16 +6517,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "清单架构"
-          }
-        }
-      }
-    },
-    "Manual Test": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "手动测试"
           }
         }
       }
@@ -6931,6 +6781,16 @@
         }
       }
     },
+    "Models listed: %lld": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "列出的模型：%lld"
+          }
+        }
+      }
+    },
     "More": {
       "localizations": {
         "zh-Hans": {
@@ -7161,16 +7021,6 @@
         }
       }
     },
-    "No AI configurations yet. Add one to switch quickly from the menu bar.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "还没有 AI 配置。添加一个即可从菜单栏快速切换。"
-          }
-        }
-      }
-    },
     "No History Yet": {
       "localizations": {
         "zh-Hans": {
@@ -7277,6 +7127,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "列表中还没有设备。"
+          }
+        }
+      }
+    },
+    "No fetched model matches.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "没有匹配的已获取模型。"
           }
         }
       }
@@ -8097,16 +7957,6 @@
         }
       }
     },
-    "OpenAI-Compatible Endpoint": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "OpenAI 兼容端点"
-          }
-        }
-      }
-    },
     "OpenAI-compatible endpoint": {
       "localizations": {
         "zh-Hans": {
@@ -8293,26 +8143,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "正在为这台 Mac 优化模型。仅首次需要，可能需要几分钟；完成后即可更改模型。"
-          }
-        }
-      }
-    },
-    "Optional AI API key": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "可选的 AI API 密钥"
-          }
-        }
-      }
-    },
-    "Optional API key": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "可选的 API 密钥"
           }
         }
       }
@@ -9011,16 +8841,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "私密云计算目前不可用。"
-          }
-        }
-      }
-    },
-    "Processing": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "正在处理"
           }
         }
       }
@@ -10347,16 +10167,6 @@
         }
       }
     },
-    "Save Edits to Selected Configuration": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "将编辑保存到所选配置"
-          }
-        }
-      }
-    },
     "Save History is off": {
       "localizations": {
         "zh-Hans": {
@@ -10643,16 +10453,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "发送反馈"
-          }
-        }
-      }
-    },
-    "Sends one harmless manual Chat Completions test request. It is never sent automatically during dictation.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "手动发送一次无害的 Chat Completions 测试请求。听写期间绝不会自动发送。"
           }
         }
       }
@@ -11859,16 +11659,6 @@
         }
       }
     },
-    "Test Configuration": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "测试配置"
-          }
-        }
-      }
-    },
     "Test Dictation": {
       "localizations": {
         "zh-Hans": {
@@ -12065,6 +11855,16 @@
         }
       }
     },
+    "The endpoint did not list its models%@. Type the model ID instead.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "端点未列出其模型%@。请直接输入模型 ID。"
+          }
+        }
+      }
+    },
     "The endpoint is rate-limited%@. Try again shortly.": {
       "localizations": {
         "zh-Hans": {
@@ -12075,12 +11875,12 @@
         }
       }
     },
-    "The endpoint reported no models.": {
+    "The endpoint listed no models.": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "端点未报告任何模型。"
+            "value": "端点未列出任何模型。"
           }
         }
       }
@@ -12091,6 +11891,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "端点返回了错误%@。请检查模型名称和 URL 路径。"
+          }
+        }
+      }
+    },
+    "The endpoint's model list could not be read. Type the model ID instead.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法读取端点的模型列表。请直接输入模型 ID。"
           }
         }
       }

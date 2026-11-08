@@ -47,6 +47,19 @@ jobs:
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: ./Scripts/check_commit_message.sh --range "$BASE_SHA..$HEAD_SHA"
 
+  site:
+    name: Website
+    # The same check the Pages workflow runs before it publishes, so a pull
+    # request that leaves the generated pages stale fails here first.
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Generated pages are up to date
+        run: python3 Scripts/render_site.py --check
+
   scripts:
     name: Script tests
     # The release scripts run on macOS in the release workflow, so their

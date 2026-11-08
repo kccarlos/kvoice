@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en" data-zh-lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title data-zh="KVoice iPhone 版：私密的语音输入法键盘，操作按钮一键听写">KVoice for iPhone: voice keyboard and Action Button dictation</title>
+<meta name="description" content="Free voice keyboard for iPhone. Dictate into any app from the keyboard, the Action Button or Control Center. On-device speech to text, optional AI modes." data-zh-content="免费的 iPhone 语音输入键盘。用键盘、操作按钮或控制中心在任何应用里听写；本机语音识别，可选 AI 模式。">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#f2f2f7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+<!-- seo:begin -->
+<link rel="canonical" href="https://kccarlos.github.io/kvoice/ios/" data-zh-href="https://kccarlos.github.io/kvoice/zh/ios/">
+<link rel="alternate" hreflang="en" href="https://kccarlos.github.io/kvoice/ios/">
+<link rel="alternate" hreflang="zh-Hans" href="https://kccarlos.github.io/kvoice/zh/ios/">
+<link rel="alternate" hreflang="x-default" href="https://kccarlos.github.io/kvoice/ios/">
+<meta property="og:url" content="https://kccarlos.github.io/kvoice/ios/" data-zh-content="https://kccarlos.github.io/kvoice/zh/ios/">
+<meta property="og:locale" content="en_US" data-zh-content="zh_CN">
+<meta property="og:locale:alternate" content="zh_CN" data-zh-content="en_US">
+<meta property="og:image" content="https://kccarlos.github.io/kvoice/assets/og-ios-en.jpg" data-zh-content="https://kccarlos.github.io/kvoice/assets/og-ios-zh.jpg">
+<meta name="twitter:image" content="https://kccarlos.github.io/kvoice/assets/og-ios-en.jpg" data-zh-content="https://kccarlos.github.io/kvoice/assets/og-ios-zh.jpg">
+<!-- seo:end -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="KVoice">
+<meta property="og:title" content="KVoice for iPhone: dictate into any app" data-zh-content="KVoice iPhone 版：在任何应用里语音输入">
+<meta property="og:description" content="A private voice keyboard. Start dictating from the keyboard, the Action Button, Control Center or Siri." data-zh-content="私密的语音输入键盘。从键盘、操作按钮、控制中心或 Siri 开始听写。">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="KVoice for iPhone: dictating into a note, with the KVoice keyboard showing Listening in KVoice and the Dynamic Island recording with a timer." data-zh-content="KVoice iPhone 版：在备忘录里听写，KVoice 键盘显示 Listening in KVoice，灵动岛正在录音并显示计时。">
+<meta name="twitter:card" content="summary_large_image">
+<!-- jsonld:begin -->
+<script type="application/ld+json">
+{
+ "@context": "https://schema.org",
+ "@graph": [
+  {
+   "@type": "MobileApplication",
+   "name": "KVoice Dictation",
+   "alternateName": "KVoice for iPhone",
+   "url": "https://kccarlos.github.io/kvoice/ios/",
+   "description": "A private voice-to-text keyboard for iPhone: dictate into any app from the KVoice keyboard, the Action Button, Control Center or Siri. On-device speech recognition and optional AI modes.",
+   "applicationCategory": "ProductivityApplication",
+   "applicationSubCategory": "Dictation keyboard",
+   "operatingSystem": "iOS 26 or later",
+   "image": "https://kccarlos.github.io/kvoice/assets/kvoice-ios-256.png",
+   "author": {
+    "@type": "Person",
+    "name": "kccarlos",
+    "url": "https://github.com/kccarlos"
+   },
+   "inLanguage": "en",
+   "isAccessibleForFree": true,
+   "license": "https://opensource.org/licenses/MIT",
+   "codeRepository": "https://github.com/kccarlos/kvoice-ios",
+   "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+   },
+   "downloadUrl": "https://testflight.apple.com/join/WzN5CnG6"
+  },
+  {
+   "@type": "BreadcrumbList",
+   "itemListElement": [
+    {
+     "@type": "ListItem",
+     "position": 1,
+     "name": "Home",
+     "item": "https://kccarlos.github.io/kvoice/"
+    },
+    {
+     "@type": "ListItem",
+     "position": 2,
+     "name": "KVoice for iPhone",
+     "item": "https://kccarlos.github.io/kvoice/ios/"
+    }
+   ]
+  },
+  {
+   "@type": "FAQPage",
+   "mainEntity": [
+    {
+     "@type": "Question",
+     "name": "Why does the keyboard open KVoice?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "iOS keyboards cannot use the microphone, so the KVoice app records for them. Tap the mic in the keyboard, KVoice opens and listens, swipe back to your app, and the text is typed where you left off. For a few minutes afterwards the keyboard can start the next dictation without switching apps (Settings › Keep listening for the keyboard; choose Off to turn this off)."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "Why is the microphone indicator on?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "KVoice is recording, or it is keeping the microphone ready for the keyboard after a keyboard dictation. Nothing is recorded or saved during that wait until you start a dictation. End it from the Live Activity, or set Keep listening for the keyboard to Off."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "Do I need an account or an API key?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "No. KVoice works on device with Apple Speech or Whisper, and Apple Intelligence where your iPhone supports it. API keys are only for cloud providers you choose yourself."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "Does it work without Full Access?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "Typing works, but dictating from the keyboard does not; the keyboard shows Allow Full Access to dictate. The Action Button, Control Center and Siri do not need it, and their result is copied to the clipboard."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "Does it run on iPad?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "KVoice is currently built for iPhone, running iOS 26 or later."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "How do I delete my data?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "Settings › History › Delete All History, or delete the app. Remove API keys in Settings first: iOS keeps Keychain items after an app is deleted. Nothing is stored anywhere else."
+     }
+    }
+   ]
+  }
+ ]
+}
+</script>
+<!-- jsonld:end -->
+<script>if (!matchMedia('(prefers-reduced-motion: reduce)').matches && 'IntersectionObserver' in window) document.documentElement.classList.add('anim');</script>
+<link rel="icon" href="../favicon.ico" sizes="48x48">
+<link rel="icon" href="../assets/kvoice-mac.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+<link rel="manifest" href="../site.webmanifest">
+<link rel="stylesheet" href="../styles.css">
+<script src="../app.js" defer></script>
+</head>
+<body class="ios-zone">
+<a class="skip" href="#main" data-zh="跳到正文">Skip to content</a>
+<!-- header:begin -->
+<header class="bar"><div class="bar-in">
+<a class="brand" href="../"><img src="../assets/kvoice-mac.svg" alt="" width="30" height="30"><span>KVoice</span></a>
+<nav class="nav" aria-label="Main" data-zh-aria-label="主导航"><a href="../mac/">Mac</a><a href="../ios/" aria-current="page">iPhone</a><a href="../privacy/" data-zh="隐私">Privacy</a><a href="../support/" data-zh="支持">Support</a></nav>
+<a class="lang" href="../zh/ios/" hreflang="zh-Hans" lang="zh-Hans" data-zh="English" data-zh-href="../../ios/" data-zh-hreflang="en" data-zh-lang="en">中文</a>
+<a class="gh" href="https://github.com/kccarlos/kvoice"><svg class="i" aria-hidden="true"><use href="../assets/icons.svg#github"/></svg><span>GitHub</span></a>
+</div></header>
+<!-- header:end -->
+
+<main id="main">
+
+<section class="page-hero ios-hero" aria-labelledby="ios-title">
+  <div class="wrap ph-grid">
+    <div>
+      <p class="crumbs"><a href="../" data-zh="首页">Home</a> › <span data-zh="KVoice iPhone 版">KVoice for iPhone</span></p>
+      <div class="app-id"><img src="../assets/kvoice-ios-256.png" alt="KVoice for iPhone app icon" data-zh-alt="KVoice iPhone 版应用图标" width="64" height="64"><div><b>KVoice Dictation</b><span data-zh="私密的语音转文字键盘 · iOS 26 或更高版本">Private voice-to-text keyboard · iOS 26 or later</span></div></div>
+      <h1 id="ios-title" data-zh="KVoice iPhone 版：在任何应用里说话打字">KVoice for iPhone: talk instead of typing, in any app</h1>
+      <p class="lead" data-zh="KVoice 是一个 iPhone 语音输入键盘。点键盘上的麦克风，或按一下操作按钮，说完后文字就打在你正在写的地方。语音默认在 iPhone 上识别，不需要账号，也不需要 API 密钥。">KVoice is a voice keyboard for iPhone. Tap the mic on the keyboard, or press the Action Button, and when you finish speaking the text is typed where you were writing. Speech is recognized on the iPhone by default, with no account and no API key.</p>
+      <div class="cta">
+        <a class="btn btn-ios" href="https://testflight.apple.com/join/WzN5CnG6" data-testflight><svg class="i" aria-hidden="true"><use href="../assets/icons.svg#download"/></svg><span><span data-zh="通过 TestFlight 加入测试">Join the beta on TestFlight</span><small data-zh="免费 · iPhone · iOS 26+">Free · iPhone · iOS 26+</small></span></a>
+        <a class="btn btn-ghost" href="https://github.com/kccarlos/kvoice-ios"><svg class="i" aria-hidden="true"><use href="../assets/icons.svg#github"/></svg><span data-zh="GitHub 源代码">Source on GitHub</span></a>
+      </div>
+      <p class="fine muted" style="font-size:14px;margin-top:16px" data-zh="KVoice iPhone 版目前处于早期开发阶段，通过 TestFlight 公开测试发布。应用界面是英文的，下面的截图和说明保留了你会在手机上看到的英文名称。">KVoice for iPhone is in early development and ships as a public TestFlight beta. Its interface is in English.</p>
+    </div>
+    <div><div class="phone-frame sm"><div class="iphone"><div class="scr" role="img" aria-label="The Lock Screen with Toggle Dictation as the bottom-left control and the KVoice Live Activity: Clean up, Recording 0:04, and a red Stop button." data-zh-aria-label="锁定屏幕：左下角的控制换成了 Toggle Dictation，上方是 KVoice 实时活动：Clean up、Recording 0:04 和红色 Stop 按钮。"><div class="lock"><div class="date"><span data-zh="6月8日 星期一">Monday, June 8</span><b>9:41</b></div><div class="la"><span class="la-ic"><svg aria-hidden="true"><use href="../assets/icons.svg#mic-fill"/></svg></span><span class="lt"><small><svg aria-hidden="true"><use href="../assets/icons.svg#sparkles"/></svg><span>Clean up</span></small><b>Recording<em>0:04</em></b></span><span class="la-btn"><svg aria-hidden="true"><use href="../assets/icons.svg#stop"/></svg><span>Stop</span></span></div><span class="ctl l hl"><svg aria-hidden="true"><use href="../assets/icons.svg#waveform"/></svg></span><span class="ctl rr"><svg aria-hidden="true"><use href="../assets/icons.svg#camera"/></svg></span></div><div class="island"></div><div class="status light"><b>9:41</b><span class="r"><svg aria-hidden="true"><use href="../assets/icons.svg#signal"/></svg><svg aria-hidden="true"><use href="../assets/icons.svg#wifi"/></svg><svg class="bt" aria-hidden="true"><use href="../assets/icons.svg#battery"/></svg></span></div><div class="homebar"></div></div></div></div></div>
+  </div>
+</section>
+
+<section class="sec" id="ways" aria-labelledby="ways-title">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <p class="kicker" data-zh="四种开始方式">Four ways to start</p>
+      <h2 id="ways-title" data-zh="在 iPhone 上，从哪儿都能开始听写">Start a dictation from anywhere on your iPhone</h2>
+      <p data-zh="iOS 只允许键盘把文字打进别的应用，而键盘又不能用麦克风。所以 KVoice 分两部分：KVoice 应用负责听和转写，KVoice 键盘负责把文字打出来。下面的设置都只需做一次。">On iOS only a keyboard can type into other apps, and keyboards cannot use the microphone. So KVoice comes in two parts: the KVoice app listens and transcribes, and the KVoice keyboard types the result. Each setup below is done once.</p>
+    </div>
+    <div class="ways">
+      <a class="way rv" href="#keyboard"><span class="tile i-blue" aria-hidden="true"><svg class="i"><use href="../assets/icons.svg#keyboard"/></svg></span><b data-zh="KVoice 键盘">The KVoice keyboard</b><span data-zh="点按键上方的麦克风，文字打在你离开的位置。">Tap the mic above the keys; the text is typed where you left off.</span></a>
+      <a class="way rv" href="#action-button"><span class="tile" style="background:var(--i-orange)" aria-hidden="true"><svg class="i"><use href="../assets/icons.svg#action-button"/></svg></span><b data-zh="操作按钮">The Action Button</b><span data-zh="按一下开始，再按一下结束，通常不用离开当前应用。">Press to start, press again to stop, usually without leaving your app.</span></a>
+      <a class="way rv" href="#control-center"><span class="tile grey" aria-hidden="true"><svg class="i"><use href="../assets/icons.svg#control"/></svg></span><b data-zh="控制中心和锁定屏幕">Control Center and Lock Screen</b><span data-zh="没有操作按钮的 iPhone 也能一键听写，还可以用“轻点背面”。">One tap on iPhones without an Action Button, or Back Tap.</span></a>
+      <a class="way rv" href="#siri"><span class="tile i-grad" aria-hidden="true"><svg class="i"><use href="../assets/icons.svg#shortcuts"/></svg></span><b data-zh="Siri 和快捷指令">Siri and Shortcuts</b><span data-zh="说“Toggle KVoice dictation”，或在快捷指令里使用 KVoice 的操作。">Say “Toggle KVoice dictation”, or use KVoice actions in Shortcuts.</span></a>
+    </div>
+  </div>
+</section>
+
+<section class="sec alt" id="setup" aria-labelledby="setup-title">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <p class="kicker" data-zh="分步设置">Step by step</p>
+      <h2 id="setup-title" data-zh="怎么设置 KVoice iPhone 版">How to set up KVoice on iPhone</h2>
+      <p data-zh="系统菜单写成中文路径，KVoice 自己的界面保留英文名称（比如 Toggle Dictation），和你在手机上看到的一致。">Menu paths below are the ones iOS shows; KVoice's own controls keep their exact names, such as Toggle Dictation.</p>
+    </div>
+    <ol class="steps">
+
+      <li class="step" id="install">
+        <div class="txt rv">
+          <span class="num">1</span>
+          <h3 data-zh="通过 TestFlight 安装">Install with TestFlight</h3>
+          <ol>
+            <li data-zh="在 iPhone 上从 App Store 安装 Apple 的 <b>TestFlight</b> 应用。">On your iPhone, install Apple's <b>TestFlight</b> app from the App Store.</li>
+            <li data-zh="打开 <a href='https://testflight.apple.com/join/WzN5CnG6' data-testflight>KVoice 的 TestFlight 邀请链接</a>，点<b>接受</b>，再点<b>安装</b>。">Open the <a href="https://testflight.apple.com/join/WzN5CnG6" data-testflight>KVoice TestFlight invitation</a>, tap <b>Accept</b>, then <b>Install</b>.</li>
+            <li data-zh="打开 KVoice。欢迎页之后，点 <b>Allow Microphone</b> 允许麦克风，然后选择语音识别方式：<b>Apple Speech</b>（内置，快，不用大下载）或 <b>Whisper Base</b>（在设备上运行，支持 100 多种语言）。">Open KVoice. After the welcome page, tap <b>Allow Microphone</b>, then choose how speech becomes text: <b>Apple Speech</b> (built in, fast, no large download) or <b>Whisper Base</b> (on device, 100+ languages).</li>
+            <li data-zh="AI 整理是可选的：用设备上的 Apple 智能，或者以后在设置里填你自己的密钥。<b>Dictation</b> 模式永远不用 AI。">AI formatting is optional: Apple Intelligence on the device, or your own key later in Settings. <b>Dictation</b> mode never uses AI.</li>
+          </ol>
+          <p data-zh="KVoice 只在你听写时使用麦克风，麦克风开启时系统会显示指示灯。在应用里，按住大麦克风说话，或者轻点开始、再点结束，结果可以复制或分享。">KVoice listens only while you dictate, and the microphone indicator shows whenever it is on. In the app itself, hold the big mic to talk, or tap to start and tap again to stop; the result is ready to copy or share.</p>
+        </div>
+        <div class="vis"><div class="phone-frame"><div class="iphone"><div class="scr" role="img" aria-label="The KVoice app: mode chips, a large microphone button with “Hold to talk, or tap to start and stop.”, and the last result." data-zh-aria-label="KVoice 应用：模式标签、大麦克风按钮（Hold to talk, or tap to start and stop.）以及上一次的结果。"><div class="island"></div><div class="status"><b>9:41</b><span class="r"><svg aria-hidden="true"><use href="../assets/icons.svg#signal"/></svg><svg aria-hidden="true"><use href="../assets/icons.svg#wifi"/></svg><svg class="bt" aria-hidden="true"><use href="../assets/icons.svg#battery"/></svg></span></div><div class="app"><div class="kv-home"><span class="nt">KVoice</span><div class="mchips"><span class="mchip"><svg aria-hidden="true"><use href="../assets/icons.svg#mic"/></svg><span>Dictation</span></span><span class="mchip act"><svg aria-hidden="true"><use href="../assets/icons.svg#sparkles"/></svg><span>Clean up</span></span><span class="mchip"><svg aria-hidden="true"><use href="../assets/icons.svg#message"/></svg><span>Message</span></span><span class="mchip"><svg aria-hidden="true"><use href="../assets/icons.svg#envelope"/></svg><span>Email</span></span><span class="mchip"><svg aria-hidden="true"><use href="../assets/icons.svg#list"/></svg><span>Notes</span></span><span class="mchip"><svg aria-hidden="true"><use href="../assets/icons.svg#text-append"/></svg><span>Summary</span></span><span class="mchip"><svg aria-hidden="true"><use href="../assets/icons.svg#globe"/></svg><span>Translate to English</span></span></div><div class="recbtn"><svg aria-hidden="true"><use href="../assets/icons.svg#mic-fill"/></svg></div><span class="hint">Hold to talk, or tap to start and stop.</span><div class="result"><small>Clean up</small><p data-zh="周六上午九点去农贸市场，记得带上环保袋。">Farmers market at nine on Saturday. Bring the tote bags.</p></div></div><div class="tabbar"><span class="cur"><svg aria-hidden="true"><use href="../assets/icons.svg#waveform"/></svg><em>Dictate</em></span><span><svg aria-hidden="true"><use href="../assets/icons.svg#stack"/></svg><em>Modes</em></span><span><svg aria-hidden="true"><use href="../assets/icons.svg#clock"/></svg><em>History</em></span><span><svg aria-hidden="true"><use href="../assets/icons.svg#gear"/></svg><em>Settings</em></span></div></div><div class="homebar"></div></div></div></div></div>
+      </li>
+
+      <li class="step" id="keyboard">
+        <div class="txt rv">
+          <span class="num">2</span>
+          <h3 data-zh="添加 KVoice 键盘，并允许完全访问">Add the KVoice keyboard and allow Full Access</h3>
+          <ol>
+            <li data-zh="打开<b>设置</b>应用。">Open the <b>Settings</b> app.</li>
+            <li data-zh="前往 <span class='path'>通用<span class='sep'>›</span>键盘<span class='sep'>›</span>键盘</span>。">Go to <span class="path">General<span class="sep">›</span>Keyboard<span class="sep">›</span>Keyboards</span>.</li>
+            <li data-zh="点<b>添加新键盘…</b>，选择 <b>KVoice</b>。">Tap <b>Add New Keyboard…</b> and choose <b>KVoice</b>.</li>
+            <li data-zh="要用键盘听写，点 <b>KVoice</b>，打开<b>允许完全访问</b>，在确认框里点<b>允许</b>。">For dictation, tap <b>KVoice</b> and turn on <b>Allow Full Access</b>, then tap <b>Allow</b>.</li>
+            <li data-zh="在任何应用里，按住地球仪键切换到 KVoice。">In any app, hold the globe key to switch to KVoice.</li>
+          </ol>
+          <p class="note" data-zh="<b>为什么要完全访问？</b>只有听写需要它：它让键盘可以和这台 iPhone 上的 KVoice 应用通信。不打开也能正常打字。KVoice 看不到你用其他键盘输入的内容，KVoice 键盘也不会把任何东西发出这台设备。"><b>Why Full Access?</b> Only dictation needs it: it lets the keyboard talk to the KVoice app on this iPhone. Typing works without it. KVoice never sees what you type with other keyboards, and the KVoice keyboard sends nothing off the device.</p>
+          <p data-zh="也可以在 KVoice 应用的 <span class='path'>Settings<span class='sep'>›</span>Set up the KVoice keyboard</span> 里看到同样的步骤。">The same steps are in the KVoice app under <span class="path">Settings<span class="sep">›</span>Set up the KVoice keyboard</span>.</p>
+        </div>
+        <div class="vis"><div class="phone-frame crop"><div class="iphone"><div class="scr stage" data-steps="1500,1300,1300,1400,1400,1400,1400,1400,3000" role="img" aria-label="iPhone Settings: General, Keyboard, Keyboards, Add New Keyboard, KVoice; then KVoice, Allow Full Access, and the Allow button in the confirmation." data-zh-aria-label="iPhone 设置：通用、键盘、键盘、添加新键盘、KVoice；再进入 KVoice，打开“允许完全访问”，并在确认框里点“允许”。"><div class="island"></div><div class="status"><b>9:41</b><span class="r"><svg aria-hidden="true"><use href="../assets/icons.svg#signal"/></svg><svg aria-hidden="true"><use href="../assets/icons.svg#wifi"/></svg><svg class="bt" aria-hidden="true"><use href="../assets/icons.svg#battery"/></svg></span></div><div class="sheet-layer slide-l" data-show="0"><div class="nav-i"><div class="big" data-zh="设置">Settings</div><div class="search"><svg aria-hidden="true"><use href="../assets/icons.svg#search"/></svg><span data-zh="搜索">Search</span></div><div class="group"><div class="cell" data-cls="tap@0"><span class="ic grey"><svg aria-hidden="true"><use href="../assets/icons.svg#gear"/></svg></span><span class="lb" data-zh="通用">General</span><svg class="chev" aria-hidden="true"><use href="../assets/icons.svg#chevron"/></svg></div><div class="cell"><span class="ic blue"><svg aria-hidden="true"><use href="../assets/icons.svg#shield"/></svg></span><span class="lb" data-zh="辅助功能">Accessibility</span><svg class="chev" aria-hidden="true"><use href="../assets/icons.svg#chevron"/></svg></div><div class="cell"><span class="ic blue"><svg aria-hidden="true"><use href="../assets/icons.svg#action-button"/></svg></span><span class="lb" data-zh="操作按钮">Action Button</span><svg class="chev" aria-hidden="true"><use href="../assets/icons.svg#chevron"/></svg></div><div class="cell"><span class="ic grey"><svg aria-hidden="true"><use href="../assets/icons.svg#control"/></svg></span><span class="lb" data-zh="控制中心">Control Center</span><svg class="chev" aria-hidden="true"><use href="../assets/icons.svg#chevron"/></svg></div></div></div></div><div class="sheet-layer slide-r past" data-show="1" data-cls="past@2-8"><div class="nav-i"><div class="navbar"><svg aria-hidden="true"><use href="../assets/icons.svg#chevron-left"/></svg><span data-zh="设置">Settings</span><b data-zh="通用">General</b></div><div class="group"><div class="cell noicon"><span class="lb" data-zh="关于">About</span><svg class="chev" aria-hidden="true"><use href="../assets/icons.svg#chevron"/></svg></div><div class="cell noicon"><span class="lb" data-zh="软件更新">Software Update</span><svg class="chev" aria-hidden="true"><use href="../assets/icons.svg#chevron"/></svg></div></div><div class="group"><div class="cell noicon"><span class="lb" data-zh="隔空投送">AirDrop</span><svg class="chev" aria-hidden="true"><use href="../assets/icons.svg#chevron"/></svg></div><div class="cell noicon" data-cls="tap@1"><span class="lb" data-zh="键盘">Keyboard</span><svg class="chev" aria-hidden="true"><use href="../assets/icons.svg#chevron"/></svg></div><div class="cell noicon"><span class="lb" data-zh="字体">Fonts</span><svg class="chev" aria-hidden="true"><use href="../assets/icons.svg#chevron"/></svg></div><div class="cell noicon"><span class="lb" data-zh="语言与地区">Language & Region</span><svg class="chev" aria-hidden="true"><use href="../assets/icons.svg#chevron"/></svg></div></div></div></div><div class="sheet-layer slide-r past" data-show="2" data-cls="past@3-8"><div class="nav-i"><div class="navbar"><svg aria-hidden="true"><use href="../assets/icons.svg#chevron-left"/></svg><span data-zh="通用">General</span><b data-zh="键盘">Keyboard</b></div><div class="group"><div class="cell noicon" data-cls="tap@2"><span class="lb" data-zh="键盘">Keyboards</span><span class="vl">2</span><svg class="chev" aria-hidden="true"><use href="../assets/icons.svg#chevron"/></svg></div></div><div class="group"><div class="cell noicon"><span class="lb" data-zh="自动大写">Auto-Capitalization</span><span class="isw on-sw"></span></div><div class="cell noicon"><span class="lb" data-zh="自动改正">Auto-Correction</span><span class="isw on-sw"></span></div><div class="cell noicon"><span class="lb" data-zh="检查拼写">Check Spelling</span><span class="isw on-sw"></span></div></div></div></div><div class="sheet-layer slide-r past" data-show="3-5" data-cls="past@6-8"><div class="nav-i"><div class="navbar"><svg aria-hidden="true"><use href="../assets/icons.svg#chevron-left"/></svg><span data-zh="键盘">Keyboard</span><b data-zh="键盘">Keyboards</b></div><div class="group"><div class="cell noicon"><span class="lb" data-zh="英语（美国）">English (US)</span></div><div class="cell noicon"><span class="lb" data-zh="表情符号">Emoji</span></div><div class="cell gone on" data-show="5-8" data-cls="tap@5"><span class="ic kv"></span><span class="lb">KVoice</span><svg class="chev" aria-hidden="true"><use href="../assets/icons.svg#chevron"/></svg></div></div><div class="group"><div class="cell noicon blue-t" data-cls="tap@3"><span class="lb" data-zh="添加新键盘…">Add New Keyboard…</span></div></div></div></div><div class="sheet-layer slide-up" data-show="4" style="z-index:5"><div class="sheet-layer" style="top:56em;border-radius:36em 36em 0 0;background:var(--i-bg);box-shadow:0 -10em 40em rgba(0,0,0,.2)"><div class="nav-i" style="padding-top:20em"><div class="navbar c"><b data-zh="添加新键盘">Add New Keyboard</b></div><span class="ghead" data-zh="第三方键盘">Third-Party Keyboards</span><div class="group"><div class="cell" data-cls="tap@4"><span class="ic kv"></span><span class="lb">KVoice</span></div></div><span class="ghead" data-zh="其他 iPhone 键盘">Other iPhone Keyboards</span><div class="group"><div class="cell noicon"><span class="lb" data-zh="简体中文">Chinese, Simplified</span></div><div class="cell noicon"><span class="lb" data-zh="法语">French</span></div><div class="cell noicon"><span class="lb" data-zh="日语">Japanese</span></div></div></div></div></div><div class="sheet-layer slide-r on" data-show="6-8"><div class="nav-i"><div class="navbar"><svg aria-hidden="true"><use href="../assets/icons.svg#chevron-left"/></svg><span data-zh="键盘">Keyboards</span><b>KVoice</b></div><div class="group"><div class="cell noicon"><span class="lb">KVoice</span><span class="isw on-sw"></span></div><div class="cell noicon" data-cls="tap@6"><span class="lb" data-zh="允许完全访问">Allow Full Access</span><span class="isw on-sw" data-cls="on-sw@8"></span></div></div></div></div><div class="dim-layer" data-show="7"></div><div class="alert" data-show="7"><div class="bd"><b data-zh="允许“KVoice”键盘完全访问吗？">Allow Full Access for “KVoice” Keyboards?</b></div><div class="btns"><span data-zh="不允许">Don’t Allow</span><span class="pri" data-zh="允许">Allow</span></div></div><i class="tap-ring" data-show="0" style="left:120em;top:193em;animation-delay:.75s"></i><i class="tap-ring" data-show="1" style="left:140em;top:280em;animation-delay:.75s"></i><i class="tap-ring" data-show="2" style="left:140em;top:128em;animation-delay:.75s"></i><i class="tap-ring" data-show="3" style="left:150em;top:254em;animation-delay:.75s"></i><i class="tap-ring" data-show="4" style="left:140em;top:160em;animation-delay:.75s"></i><i class="tap-ring" data-show="5" style="left:140em;top:232em;animation-delay:.75s"></i><i class="tap-ring" data-show="6" style="left:300em;top:180em;animation-delay:.75s"></i><i class="tap-ring" data-show="7" style="left:300em;top:470em;animation-delay:.75s"></i><div class="homebar"></div></div></div></div></div>
+      </li>
+
+      <li class="step" id="dictate">
+        <div class="txt rv">
+          <span class="num">3</span>
+          <h3 data-zh="用键盘听写">Dictate from the keyboard</h3>
+          <ol>
+            <li data-zh="在任何应用的输入框里切换到 KVoice 键盘，选一个模式标签（比如 <b>Dictation</b>）。">In any text field, switch to the KVoice keyboard and pick a mode chip, such as <b>Dictation</b>.</li>
+            <li data-zh="点按键上方的<b>麦克风</b>。KVoice 打开并开始听（键盘显示 Opening KVoice…）。">Tap the <b>mic</b> above the keys. KVoice opens and starts listening (the keyboard says Opening KVoice…).</li>
+            <li data-zh="返回你的应用：沿屏幕底部向右轻扫，或点左上角的返回链接。继续说，键盘会显示 <b>Listening…</b> 和计时。">Go back to your app: swipe right along the bottom edge, or tap the back link at the top left. Keep talking; the keyboard shows <b>Listening…</b> and a timer.</li>
+            <li data-zh="点键盘上的红色<b>停止</b>按钮。转写完成后，文字只会被打进去一次，就在你离开的位置。">Tap the red <b>stop</b> button on the keyboard. When it is transcribed, the text is typed once, where you left off.</li>
+          </ol>
+          <p data-zh="<b>之后几分钟内不用再切换应用。</b>听写结束后，KVoice 会在后台保持麦克风就绪（默认 5 分钟，可在 <span class='path'>Settings<span class='sep'>›</span>Keep listening for the keyboard</span> 里设为 Off、1、5、10 或 15 分钟），下一次点麦克风会直接录音。这期间麦克风指示灯会一直亮着；点键盘上的电源按钮（End KVoice session）随时结束。"><b>For a few minutes afterwards, no app switch.</b> After a dictation, KVoice keeps the microphone ready in the background (5 minutes by default; <span class="path">Settings<span class="sep">›</span>Keep listening for the keyboard</span> offers Off, 1, 5, 10 or 15 minutes), so the next tap on the mic records right away. The microphone indicator stays on while it waits; the keyboard's power button (End KVoice session) ends it at any time.</p>
+        </div>
+        <div class="vis"><div class="phone-frame"><div class="iphone"><div class="scr stage" data-steps="1600,2600,2800,1300,1600,3200" data-final="5" role="img" aria-label="Messages with the KVoice keyboard. The microphone is tapped, KVoice opens and records, the back link returns to Messages while the keyboard shows Listening, stop is tapped, it transcribes, and the sentence is typed into the message field." data-zh-aria-label="“信息”里打开 KVoice 键盘。点麦克风后 KVoice 打开并录音，点左上角返回“信息”，键盘显示 Listening…；点停止后转写，句子被打进输入框。"><div class="island"></div><div class="status"><b>9:41</b><span class="r"><svg aria-hidden="true"><use href="../assets/icons.svg#signal"/></svg><svg aria-hidden="true"><use href="../assets/icons.svg#wifi"/></svg><svg class="bt" aria-hidden="true"><use href="../assets/icons.svg#battery"/></svg></span></div><div class="chat"><div class="chead"><div class="av"><span>A</span></div><span class="t12">Alex</span></div><div class="bubble in"><span data-zh="快到了吗？">Are you close?</span></div><div class="field"><span class="ph gone" data-show="0-4">iMessage</span><span class="on" data-show="5-6" data-type="900" data-zh="我在路上了，十分钟后咖啡馆见。">On my way, see you at the café in ten minutes.</span><span class="caret"></span></div></div><div class="kbd"><div class="kbar"><div class="left"><div class="on" data-show="0,5-6"><div class="mchips"><span class="mchip act"><svg aria-hidden="true"><use href="../assets/icons.svg#mic"/></svg><span>Dictation</span></span><span class="mchip"><svg aria-hidden="true"><use href="../assets/icons.svg#sparkles"/></svg><span>Clean up</span></span><span class="mchip"><svg aria-hidden="true"><use href="../assets/icons.svg#message"/></svg><span>Message</span></span><span class="mchip"><svg aria-hidden="true"><use href="../assets/icons.svg#envelope"/></svg><span>Email</span></span><span class="mchip"><svg aria-hidden="true"><use href="../assets/icons.svg#list"/></svg><span>Notes</span></span><span class="mchip"><svg aria-hidden="true"><use href="../assets/icons.svg#text-append"/></svg><span>Summary</span></span><span class="mchip"><svg aria-hidden="true"><use href="../assets/icons.svg#globe"/></svg><span>Translate to English</span></span></div></div><div class="kstat" data-show="1"><i class="spin"></i><span>Opening KVoice…</span></div><div class="kstat" data-show="3"><i class="rd"></i><span>Listening… <b data-clock="3" style="font-weight:400">0:03</b></span></div><div class="kstat" data-show="4"><i class="spin"></i><span>Transcribing…</span></div></div><span class="kround on" data-show="5-6" title="End KVoice session"><svg aria-hidden="true"><use href="../assets/icons.svg#power"/></svg></span><span class="kmic"><span class="m on" data-show="0,5-6"><svg aria-hidden="true"><use href="../assets/icons.svg#mic-fill"/></svg></span><span class="s" data-show="3"><svg aria-hidden="true"><use href="../assets/icons.svg#stop"/></svg></span><span class="b" data-show="1-2,4"></span></span></div><div class="keys-i"><div class="krow"><i><span>q</span></i><i><span>w</span></i><i><span>e</span></i><i><span>r</span></i><i><span>t</span></i><i><span>y</span></i><i><span>u</span></i><i><span>i</span></i><i><span>o</span></i><i><span>p</span></i></div><div class="krow r2"><i><span>a</span></i><i><span>s</span></i><i><span>d</span></i><i><span>f</span></i><i><span>g</span></i><i><span>h</span></i><i><span>j</span></i><i><span>k</span></i><i><span>l</span></i></div><div class="krow r3"><i class="f"><svg aria-hidden="true"><use href="../assets/icons.svg#shift"/></svg></i><i><span>z</span></i><i><span>x</span></i><i><span>c</span></i><i><span>v</span></i><i><span>b</span></i><i><span>n</span></i><i><span>m</span></i><i class="f"><svg aria-hidden="true"><use href="../assets/icons.svg#delete"/></svg></i></div><div class="krow"><i class="f"><span>123</span></i><i class="sp"><span>space</span></i><i class="f ret"><span>return</span></i></div></div></div><div class="sheet-layer zoom" data-show="2" style="z-index:12"><div class="status"><b>9:41</b><span class="r"><svg aria-hidden="true"><use href="../assets/icons.svg#signal"/></svg><svg aria-hidden="true"><use href="../assets/icons.svg#wifi"/></svg><svg class="bt" aria-hidden="true"><use href="../assets/icons.svg#battery"/></svg></span><span class="back"><svg aria-hidden="true"><use href="../assets/icons.svg#chevron-left"/></svg><span data-zh="信息">Messages</span></span></div><div class="app handoff"><span class="glass-pill"><svg aria-hidden="true"><use href="../assets/icons.svg#mic"/></svg><span>Dictation</span></span><div class="hh">Recording</div><p>Swipe back to your app and keep talking. Tap stop in the keyboard or here when you’re done.</p><div class="wave"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div class="hint-i"><svg aria-hidden="true"><use href="../assets/icons.svg#chevron-left"/></svg><span>Swipe right along the bottom edge, or tap the back button at the top left</span></div><div class="stopbig"><span class="c"><svg aria-hidden="true"><use href="../assets/icons.svg#stop"/></svg></span><span class="cn"><span>Cancel</span></span></div></div></div><i class="micdot on" data-show="2-6"></i><i class="tap-ring" data-show="0" style="left:358em;top:574em;animation-delay:.9s"></i><i class="tap-ring" data-show="2" style="left:40em;top:46em;animation-delay:1.9s"></i><i class="tap-ring" data-show="3" style="left:358em;top:574em;animation-delay:2.1s"></i><div class="homebar"></div></div></div></div></div>
+      </li>
+
+      <li class="step" id="action-button">
+        <div class="txt rv">
+          <span class="num">4</span>
+          <h3 data-zh="把操作按钮设为 Toggle Dictation">Set the Action Button to Toggle Dictation</h3>
+          <p data-zh="适用于有操作按钮的 iPhone。">On iPhones with an Action Button.</p>
+          <ol>
+            <li data-zh="打开 <span class='path'>设置<span class='sep'>›</span>操作按钮</span>。">Open <span class="path">Settings<span class="sep">›</span>Action Button</span>.</li>
+            <li data-zh="滑到<b>控制</b>，选择 <b>KVoice › Toggle Dictation</b>。">Swipe to <b>Controls</b> and choose <b>KVoice › Toggle Dictation</b>.</li>
+            <li data-zh="按一下开始听写，再按一下结束。">Press once to start dictating, and again to stop.</li>
+          </ol>
+          <p data-zh="也可以滑到<b>快捷指令</b>，在 KVoice 下选择 <b>Toggle Dictation</b>，效果相同。">You can also swipe to <b>Shortcut</b> and pick <b>Toggle Dictation</b> under KVoice; it works the same way.</p>
+          <p class="note warm" data-zh="KVoice 会尽量在后台开始录音；如果 iOS 不允许，它会短暂打开一下。切回去继续说就行。">KVoice tries to start listening in the background; if iOS does not allow it, KVoice may open for a moment. Switch back and keep going.</p>
+        </div>
+        <div class="vis"><div class="phone-frame"><div class="iphone"><div class="scr stage" data-steps="1500,1500,1600,1700,3200" role="img" aria-label="iPhone Settings, Action Button: swipe from Silent Mode to Controls, choose a control, search KVoice and pick Toggle Dictation." data-zh-aria-label="iPhone 设置 › 操作按钮：从“静音模式”滑到“控制”，选择控制，搜索 KVoice 并选中 Toggle Dictation。"><div class="island"></div><div class="sheet-layer slide-l" data-show="0"><div class="status"><b>9:41</b><span class="r"><svg aria-hidden="true"><use href="../assets/icons.svg#signal"/></svg><svg aria-hidden="true"><use href="../assets/icons.svg#wifi"/></svg><svg class="bt" aria-hidden="true"><use href="../assets/icons.svg#battery"/></svg></span></div><div class="nav-i"><div class="big" data-zh="设置">Settings</div><div class="search"><svg aria-hidden="true"><use href="../assets/icons.svg#search"/></svg><span data-zh="搜索">Search</span></div><div class="group"><div class="cell"><span class="ic grey"><svg aria-hidden="true"><use href="../assets/icons.svg#gear"/></svg></span><span class="lb" data-zh="通用">General</span><svg class="chev" aria-hidden="true"><use href="../assets/icons.svg#chevron"/></svg></div><div class="cell"><span class="ic blue"><svg aria-hidden="true"><use href="../assets/icons.svg#shield"/></svg></span><span class="lb" data-zh="辅助功能">Accessibility</span><svg class="chev" aria-hidden="true"><use href="../assets/icons.svg#chevron"/></svg></div><div class="cell" data-cls="tap@0"><span class="ic blue"><svg aria-hidden="true"><use href="../assets/icons.svg#action-button"/></svg></span><span class="lb" data-zh="操作按钮">Action Button</span><svg class="chev" aria-hidden="true"><use href="../assets/icons.svg#chevron"/></svg></div><div class="cell"><span class="ic grey"><svg aria-hidden="true"><use href="../assets/icons.svg#control"/></svg></span><span class="lb" data-zh="控制中心">Control Center</span><svg class="chev" aria-hidden="true"><use href="../assets/icons.svg#chevron"/></svg></div></div></div></div><div class="sheet-layer slide-r on" data-show="1-4"><div class="status light"><b>9:41</b><span class="r"><svg aria-hidden="true"><use href="../assets/icons.svg#signal"/></svg><svg aria-hidden="true"><use href="../assets/icons.svg#wifi"/></svg><svg class="bt" aria-hidden="true"><use href="../assets/icons.svg#battery"/></svg></span></div><div class="abset"><span class="hd" data-zh="操作按钮">Action Button</span><div class="ab-ill"><span class="ab-ic swap"><span data-show="1"><svg aria-hidden="true"><use href="../assets/icons.svg#bell-slash"/></svg></span><span class="on" data-show="2-4"><svg aria-hidden="true"><use href="../assets/icons.svg#control"/></svg></span></span></div><div class="ab-name swap"><span data-show="1"><b class="nm" data-zh="静音模式">Silent Mode</b><span class="ds" data-zh="在来电和提醒的静音与响铃之间切换。">Switch between Silent and Ring for calls and alerts.</span></span><span class="on" data-show="2-4"><b class="nm" data-zh="控制">Controls</b><span class="ds" data-zh="在任何应用中快速使用一个控制。">Quickly access a control from any app.</span></span></div><div class="ab-dots"><i data-cls="cur@1"></i><i></i><i></i><i class="cur" data-cls="cur@2-4"></i><i></i></div><span class="swap" style="justify-items:center"><span class="ab-pick" data-show="2"><svg aria-hidden="true"><use href="../assets/icons.svg#plus"/></svg><span data-zh="选择控制">Choose a Control</span></span><span class="ab-pick on" data-show="4"><svg aria-hidden="true"><use href="../assets/icons.svg#waveform"/></svg><span>Toggle Dictation</span><svg aria-hidden="true"><use href="../assets/icons.svg#chevron-down"/></svg></span></span></div></div><div class="sheet-layer slide-up" data-show="3" style="z-index:5"><div class="picker"><div class="ttl"><b></b><b data-zh="控制">Controls</b><span data-zh="取消">Cancel</span></div><div class="nav-i" style="padding:0"><div class="search"><svg aria-hidden="true"><use href="../assets/icons.svg#search"/></svg><span style='color:var(--i-label)'>KVoice</span></div></div><span class="ghead">KVoice</span><div class="group"><div class="cell" data-cls="tap@3"><span class="ic indigo"><svg aria-hidden="true"><use href="../assets/icons.svg#waveform"/></svg></span><span class="lb">Toggle Dictation</span></div><div class="cell"><span class="ic indigo"><svg aria-hidden="true"><use href="../assets/icons.svg#mic-fill"/></svg></span><span class="lb">Dictate with KVoice</span></div></div></div></div><i class="tap-ring" data-show="0" style="left:160em;top:297em;animation-delay:.8s"></i><i class="tap-ring" data-show="2" style="left:196em;top:636em;animation-delay:1.1s"></i><i class="tap-ring" data-show="3" style="left:150em;top:199em;animation-delay:1s"></i><div class="homebar"></div></div></div></div></div>
+      </li>
+
+      <li class="step" id="live-activity">
+        <div class="txt rv">
+          <span class="num">5</span>
+          <h3 data-zh="按一下说话，再按一下拿到文字">Press, speak, press again</h3>
+          <p data-zh="第一次按操作按钮（或 Toggle Dictation 控制）时，KVoice 开始录音，灵动岛和锁定屏幕上会出现实时活动：">The first press of the Action Button (or the Toggle Dictation control) starts recording, and a Live Activity appears in the Dynamic Island and on the Lock Screen:</p>
+          <ul>
+            <li data-zh="<b>Recording</b> 和计时，旁边是红色 <b>Stop</b> 按钮；收起时灵动岛显示红色麦克风和计时。"><b>Recording</b> with a timer and a red <b>Stop</b> button; compact, the Dynamic Island shows a red microphone and the timer.</li>
+            <li data-zh="再按一次：<b>Transcribing…</b>，用了 AI 模式时还有 <b>Formatting…</b>。">Press again: <b>Transcribing…</b>, then <b>Formatting…</b> if the mode uses AI.</li>
+            <li data-zh="<b>Copied</b> 和两行预览：文字已复制到剪贴板、保存到历史记录；如果 KVoice 键盘正开着，还会直接打进去。"><b>Copied</b> with a two-line preview: the text is on the clipboard and in History, and typed for you if the KVoice keyboard is open.</li>
+          </ul>
+          <p data-zh="之后如果 KVoice 保持监听，实时活动显示 <b>KVoice ready</b> 和倒计时，点 <b>End</b> 结束。从键盘开始的听写不会显示实时活动。">If KVoice then keeps listening, the Live Activity shows <b>KVoice ready</b> with a countdown and an <b>End</b> button. Dictations started from the keyboard do not show a Live Activity.</p>
+        </div>
+        <div class="vis"><div class="phone-frame"><div class="iphone ab"><i class="ab-press" data-cls="on-p@1;on-p@3"></i><div class="scr stage" data-steps="1500,1600,2600,1300,1300,2200,2600" data-final="6" role="img" aria-label="An iPhone with Notes and the KVoice keyboard open. The Action Button is pressed: the Dynamic Island shows Recording with a Stop button, then a red microphone and a timer. A second press: Transcribing, Formatting, then Copied, and the cleaned-up sentence is typed into the note." data-zh-aria-label="iPhone 上打开“备忘录”和 KVoice 键盘。按下操作按钮：灵动岛显示 Recording 和 Stop 按钮，随后变成红色麦克风和计时。再按一次：Transcribing…、Formatting…，然后 Copied，整理好的句子被打进备忘录。"><div class="island" data-cls="compact@2-4"><span class="lead red" data-show="2-4"><svg aria-hidden="true"><use href="../assets/icons.svg#mic-fill"/></svg></span><span class="swap"><span class="tm" data-show="2" data-clock="1">0:04</span><span data-show="3"><svg aria-hidden="true"><use href="../assets/icons.svg#waveform"/></svg></span><span data-show="4"><svg aria-hidden="true"><use href="../assets/icons.svg#sparkles"/></svg></span></span></div><div class="status"><b>9:41</b><span class="r"><svg aria-hidden="true"><use href="../assets/icons.svg#signal"/></svg><svg aria-hidden="true"><use href="../assets/icons.svg#wifi"/></svg><svg class="bt" aria-hidden="true"><use href="../assets/icons.svg#battery"/></svg></span></div><div class="notes"><div class="nhead"><svg aria-hidden="true"><use href="../assets/icons.svg#chevron-left"/></svg><span data-zh="备忘录">Notes</span><svg aria-hidden="true"><use href="../assets/icons.svg#copy"/></svg></div><div class="nbody"><div class="nt-t" data-zh="周六">Saturday</div><p><span class="on" data-show="5-6" data-type="900" data-zh="周六上午九点去农贸市场，记得带上环保袋。">Farmers market at nine on Saturday. Bring the tote bags.</span><span class="caret"></span></p></div></div><div class="kbd"><div class="kbar"><div class="left"><div class="on" data-show="0,5-6"><div class="mchips"><span class="mchip"><svg aria-hidden="true"><use href="../assets/icons.svg#mic"/></svg><span>Dictation</span></span><span class="mchip act"><svg aria-hidden="true"><use href="../assets/icons.svg#sparkles"/></svg><span>Clean up</span></span><span class="mchip"><svg aria-hidden="true"><use href="../assets/icons.svg#message"/></svg><span>Message</span></span><span class="mchip"><svg aria-hidden="true"><use href="../assets/icons.svg#envelope"/></svg><span>Email</span></span><span class="mchip"><svg aria-hidden="true"><use href="../assets/icons.svg#list"/></svg><span>Notes</span></span><span class="mchip"><svg aria-hidden="true"><use href="../assets/icons.svg#text-append"/></svg><span>Summary</span></span><span class="mchip"><svg aria-hidden="true"><use href="../assets/icons.svg#globe"/></svg><span>Translate to English</span></span></div></div><div class="kstat" data-show="1-2"><i class="rd"></i><span class="long">Listening in KVoice</span></div><div class="kstat" data-show="3"><i class="spin"></i><span>Transcribing…</span></div><div class="kstat" data-show="4"><i class="spin"></i><span>Formatting…</span></div></div><span class="kmic"><span class="m on" data-show="0,5-6"><svg aria-hidden="true"><use href="../assets/icons.svg#mic-fill"/></svg></span><span class="s" data-show="1-2"><svg aria-hidden="true"><use href="../assets/icons.svg#stop"/></svg></span><span class="g" data-show="3-4"><svg aria-hidden="true"><use href="../assets/icons.svg#mic-fill"/></svg></span></span></div><div class="keys-i"><div class="krow"><i><span>q</span></i><i><span>w</span></i><i><span>e</span></i><i><span>r</span></i><i><span>t</span></i><i><span>y</span></i><i><span>u</span></i><i><span>i</span></i><i><span>o</span></i><i><span>p</span></i></div><div class="krow r2"><i><span>a</span></i><i><span>s</span></i><i><span>d</span></i><i><span>f</span></i><i><span>g</span></i><i><span>h</span></i><i><span>j</span></i><i><span>k</span></i><i><span>l</span></i></div><div class="krow r3"><i class="f"><svg aria-hidden="true"><use href="../assets/icons.svg#shift"/></svg></i><i><span>z</span></i><i><span>x</span></i><i><span>c</span></i><i><span>v</span></i><i><span>b</span></i><i><span>n</span></i><i><span>m</span></i><i class="f"><svg aria-hidden="true"><use href="../assets/icons.svg#delete"/></svg></i></div><div class="krow"><i class="f"><span>123</span></i><i class="sp"><span>space</span></i><i class="f ret"><span>return</span></i></div></div></div><div class="di-x" data-show="1"><div class="top"><small><svg aria-hidden="true"><use href="../assets/icons.svg#sparkles"/></svg><span>Clean up</span></small><span class="la-btn"><svg aria-hidden="true"><use href="../assets/icons.svg#stop"/></svg><span>Stop</span></span></div><div class="line"><b>Recording<em data-clock="0">0:00</em></b></div></div><div class="di-x" data-show="5"><div class="top"><small><svg aria-hidden="true"><use href="../assets/icons.svg#sparkles"/></svg><span>Clean up</span></small><svg aria-hidden="true"><use href="../assets/icons.svg#check-circle"/></svg></div><div class="line"><b>Copied</b><p style="margin:calc(4 * var(--u)) 0 0;color:rgba(235,235,245,.6)" data-zh="周六上午九点去农贸市场，记得带上环保袋。">Farmers market at nine on Saturday. Bring the tote bags.</p></div></div><div class="homebar"></div></div></div></div></div>
+      </li>
+
+      <li class="step" id="control-center">
+        <div class="txt rv">
+          <span class="num">6</span>
+          <h3 data-zh="控制中心、锁定屏幕和轻点背面">Control Center, the Lock Screen and Back Tap</h3>
+          <p data-zh="没有操作按钮？把 <b>Toggle Dictation</b> 放在这些地方，轻点一下开始，再点一下结束：">No Action Button? Put <b>Toggle Dictation</b> here instead: tap once to start, again to stop.</p>
+          <ul>
+            <li data-zh="<b>控制中心：</b>按住空白处，点<b>添加控制</b>，选择 <b>Toggle Dictation</b>。"><b>Control Center:</b> touch and hold an empty spot, tap <b>Add a Control</b> and choose <b>Toggle Dictation</b>.</li>
+            <li data-zh="<b>锁定屏幕：</b>长按锁定屏幕，点 <span class='path'>自定<span class='sep'>›</span>锁定屏幕</span>，点底部的一个控制，选择 <b>Toggle Dictation</b>。"><b>Lock Screen:</b> touch and hold it, tap <span class="path">Customize<span class="sep">›</span>Lock Screen</span>, tap a control at the bottom and choose <b>Toggle Dictation</b>.</li>
+            <li data-zh="<b>轻点背面：</b>在快捷指令里新建一个包含 <b>KVoice › Toggle Dictation</b> 的快捷指令，然后在 <span class='path'>设置<span class='sep'>›</span>辅助功能<span class='sep'>›</span>触控<span class='sep'>›</span>轻点背面</span> 里选中它。"><b>Back Tap:</b> in Shortcuts, make a shortcut with <b>KVoice › Toggle Dictation</b>, then pick it in <span class="path">Settings<span class="sep">›</span>Accessibility<span class="sep">›</span>Touch<span class="sep">›</span>Back Tap</span>.</li>
+          </ul>
+          <p data-zh="还有一个 <b>Dictate with KVoice</b> 控制：它会打开 KVoice 并开始录音。主屏幕和锁定屏幕上也可以放 <b>Dictate</b> 小组件，并指定模式。">There is also a <b>Dictate with KVoice</b> control, which opens KVoice and starts recording, and a <b>Dictate</b> widget for the Home Screen and Lock Screen, with a mode of your choice.</p>
+        </div>
+        <div class="vis"><div class="pair"><div class="phone-frame sm"><div class="iphone"><div class="scr stage" data-steps="1300,1900,2000,3000" role="img" aria-label="Control Center: touch and hold to edit, tap Add a Control, search KVoice and pick Toggle Dictation; the new control appears." data-zh-aria-label="控制中心：按住进入编辑，点“添加控制”，搜索 KVoice 并选中 Toggle Dictation，新控制出现在控制中心。"><div class="home"></div><div class="island"></div><div class="status light"><b>9:41</b><span class="r"><svg aria-hidden="true"><use href="../assets/icons.svg#signal"/></svg><svg aria-hidden="true"><use href="../assets/icons.svg#wifi"/></svg><svg class="bt" aria-hidden="true"><use href="../assets/icons.svg#battery"/></svg></span></div><div class="cc" data-cls="jiggle@1"><div class="cc-grid"><span class="cc-t w"><svg aria-hidden="true"><use href="../assets/icons.svg#speaker"/></svg></span><span class="cc-t"><svg aria-hidden="true"><use href="../assets/icons.svg#wifi"/></svg></span><span class="cc-t"><svg aria-hidden="true"><use href="../assets/icons.svg#moon"/></svg></span><span class="cc-t"><svg aria-hidden="true"><use href="../assets/icons.svg#flashlight"/></svg></span><span class="cc-t"><svg aria-hidden="true"><use href="../assets/icons.svg#camera"/></svg></span><span class="cc-t"><svg aria-hidden="true"><use href="../assets/icons.svg#lock"/></svg></span><span class="cc-t kv on" data-show="3" style="grid-column:4"><svg aria-hidden="true"><use href="../assets/icons.svg#waveform"/></svg></span></div><span class="cc-add" data-show="1"><svg aria-hidden="true"><use href="../assets/icons.svg#plus"/></svg><span data-zh="添加控制">Add a Control</span></span></div><div class="sheet-layer slide-up" data-show="2" style="z-index:12"><div class="gallery"><div class="grab"></div><div class="nav-i" style="padding:0"><div class="search"><svg aria-hidden="true"><use href="../assets/icons.svg#search"/></svg><span style='color:var(--i-label)'>KVoice</span></div></div><span class="ghead">KVoice</span><div class="gal-row"><div class="gal-ctl"><span class="cc-t" data-cls="sel@2"><svg aria-hidden="true"><use href="../assets/icons.svg#waveform"/></svg></span><span class="gl">Toggle Dictation</span></div><div class="gal-ctl"><span class="cc-t"><svg aria-hidden="true"><use href="../assets/icons.svg#mic-fill"/></svg></span><span class="gl">Dictate with KVoice</span></div></div></div></div><i class="tap-ring" data-show="1" style="left:196em;top:724em;animation-delay:1.2s"></i><i class="tap-ring" data-show="2" style="left:144em;top:290em;animation-delay:1.3s"></i><div class="homebar"></div></div></div></div><div class="phone-frame sm"><div class="iphone"><div class="scr" role="img" aria-label="The Lock Screen with Toggle Dictation as the bottom-left control and the KVoice Live Activity: Clean up, Recording 0:04, and a red Stop button." data-zh-aria-label="锁定屏幕：左下角的控制换成了 Toggle Dictation，上方是 KVoice 实时活动：Clean up、Recording 0:04 和红色 Stop 按钮。"><div class="lock"><div class="date"><span data-zh="6月8日 星期一">Monday, June 8</span><b>9:41</b></div><div class="la"><span class="la-ic"><svg aria-hidden="true"><use href="../assets/icons.svg#mic-fill"/></svg></span><span class="lt"><small><svg aria-hidden="true"><use href="../assets/icons.svg#sparkles"/></svg><span>Clean up</span></small><b>Recording<em>0:04</em></b></span><span class="la-btn"><svg aria-hidden="true"><use href="../assets/icons.svg#stop"/></svg><span>Stop</span></span></div><span class="ctl l hl"><svg aria-hidden="true"><use href="../assets/icons.svg#waveform"/></svg></span><span class="ctl rr"><svg aria-hidden="true"><use href="../assets/icons.svg#camera"/></svg></span></div><div class="island"></div><div class="status light"><b>9:41</b><span class="r"><svg aria-hidden="true"><use href="../assets/icons.svg#signal"/></svg><svg aria-hidden="true"><use href="../assets/icons.svg#wifi"/></svg><svg class="bt" aria-hidden="true"><use href="../assets/icons.svg#battery"/></svg></span></div><div class="homebar"></div></div></div></div></div></div>
+      </li>
+
+      <li class="step" id="siri">
+        <div class="txt rv">
+          <span class="num">7</span>
+          <h3 data-zh="用 Siri 和快捷指令">Use Siri and Shortcuts</h3>
+          <p data-zh="KVoice 的操作装好就能用，不用设置。对 Siri 说（英文短语）：">KVoice's actions work as soon as it is installed. Say to Siri:</p>
+          <ul>
+            <li><b>“Toggle KVoice dictation”</b> <span data-zh="：开始，再说一次结束并复制文字">: start, and say it again to stop and copy the text</span></li>
+            <li><b>“Dictate with KVoice”</b> <span data-zh="：打开 KVoice 并开始录音">: open KVoice and start recording</span></li>
+            <li><b>“Stop KVoice”</b> <span data-zh="：结束当前听写，返回文字">: stop the dictation in progress and return its text</span></li>
+          </ul>
+          <p data-zh="在快捷指令应用里，KVoice 提供 Toggle Dictation、Dictate with KVoice、Stop KVoice Dictation、Begin Dictation 和 Transcribe Audio，可以把听写结果交给其他操作继续处理。">In the Shortcuts app, KVoice offers Toggle Dictation, Dictate with KVoice, Stop KVoice Dictation, Begin Dictation and Transcribe Audio, so you can hand the text to other actions.</p>
+          <details class="adv"><summary data-zh="高级：如果 Toggle Dictation 不起作用">Advanced: if Toggle Dictation does not work</summary>
+            <div data-zh="<p>可以用快捷指令自己录音：</p><ol><li>打开快捷指令应用，点 + 新建快捷指令。</li><li>添加 <b>KVoice › Begin Dictation</b>。</li><li>添加<b>如果</b>，条件设为：Outcome 是 Record。</li><li>在“如果”里添加<b>录制音频</b>，开始设为“立即”，结束设为“轻点时”。</li><li>在它下面添加 <b>KVoice › Transcribe Audio</b>，Audio 设为“录制的音频”，Mode 可选。</li><li>再添加<b>拷贝至剪贴板</b>。“结束如果”收尾。</li><li>给快捷指令命名，然后在“设置 › 操作按钮”里选择<b>快捷指令</b>并选中它。</li></ol>"><p>Make a shortcut that records with the Shortcuts app instead:</p><ol><li>Open the Shortcuts app and tap + to create a shortcut.</li><li>Add <b>KVoice › Begin Dictation</b>.</li><li>Add <b>If</b>, and set it to: Outcome is Record.</li><li>Inside the If, add <b>Record Audio</b>. Set Start to Immediately and Finish to On Tap.</li><li>Below it, add <b>KVoice › Transcribe Audio</b> with Audio set to Recorded Audio. Mode is optional.</li><li>Below it, add <b>Copy to Clipboard</b>. End If closes the block.</li><li>Name the shortcut, then open Settings › Action Button, choose Shortcut and pick it.</li></ol></div>
+          </details>
+        </div>
+        <div class="vis"><div class="phone-frame sm"><div class="iphone"><div class="scr stage" data-steps="1200,2200,3200" data-final="2" role="img" aria-label="The Home Screen. Siri hears “Toggle KVoice dictation” and KVoice starts recording: a red microphone and a timer appear in the Dynamic Island." data-zh-aria-label="主屏幕。Siri 听到“Toggle KVoice dictation”后 KVoice 开始录音，灵动岛出现红色麦克风和计时。"><div class="home"></div><div class="island compact" data-cls="compact@2"><span class="lead red on" data-show="2"><svg aria-hidden="true"><use href="../assets/icons.svg#mic-fill"/></svg></span><span class="tm on" data-show="2" data-clock="0">0:01</span></div><div class="status light"><b>9:41</b><span class="r"><svg aria-hidden="true"><use href="../assets/icons.svg#signal"/></svg><svg aria-hidden="true"><use href="../assets/icons.svg#wifi"/></svg><svg class="bt" aria-hidden="true"><use href="../assets/icons.svg#battery"/></svg></span></div><div class="siri on" data-show="1-2"><div class="said on" data-show="1-2">“Toggle KVoice dictation”</div><div class="glow"></div></div><div class="homebar"></div></div></div></div></div>
+      </li>
+    </ol>
+  </div>
+</section>
+
+<section class="sec" id="live-activity-states" aria-labelledby="la-title">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <p class="kicker" data-zh="实时活动">Live Activity</p>
+      <h2 id="la-title" data-zh="随时知道 KVoice 在做什么">Always know what KVoice is doing</h2>
+      <p data-zh="用操作按钮、控制或在应用里录音时，锁定屏幕和灵动岛会显示每个阶段。录音时可以直接点 Stop。">When you record with the Action Button, a control or in the app, the Lock Screen and Dynamic Island show each stage. Tap Stop right there while recording.</p>
+    </div>
+    <div class="rv"><div class="mac-frame" style="max-width:420px"><div class="canvas" style="--w:400" role="img" aria-label="The KVoice Live Activity in each stage: Recording with a timer and Stop; Transcribing; Formatting; Copied with a preview; KVoice ready with a countdown and End." data-zh-aria-label="KVoice 实时活动的各个阶段：Recording（计时和 Stop）、Transcribing…、Formatting…、Copied（带预览）、KVoice ready（倒计时和 End）。"><div class="la-list"><div class="la static"><span class="la-ic"><svg aria-hidden="true"><use href="../assets/icons.svg#mic-fill"/></svg></span><span class="lt"><small><svg aria-hidden="true"><use href="../assets/icons.svg#sparkles"/></svg><span>Clean up</span></small><b>Recording<em>0:04</em></b></span><span class="la-btn"><svg aria-hidden="true"><use href="../assets/icons.svg#stop"/></svg><span>Stop</span></span></div><div class="la static"><span class="la-ic"><svg aria-hidden="true"><use href="../assets/icons.svg#waveform"/></svg></span><span class="lt"><small><svg aria-hidden="true"><use href="../assets/icons.svg#sparkles"/></svg><span>Clean up</span></small><b>Transcribing…</b></span></div><div class="la static"><span class="la-ic"><svg aria-hidden="true"><use href="../assets/icons.svg#sparkles"/></svg></span><span class="lt"><small><svg aria-hidden="true"><use href="../assets/icons.svg#sparkles"/></svg><span>Clean up</span></small><b>Formatting…</b></span></div><div class="la static"><span class="la-ic"><svg aria-hidden="true"><use href="../assets/icons.svg#check-circle"/></svg></span><span class="lt"><small><svg aria-hidden="true"><use href="../assets/icons.svg#sparkles"/></svg><span>Clean up</span></small><b>Copied</b><p data-zh="周六上午九点去农贸市场，记得带上环保袋。">Farmers market at nine on Saturday. Bring the tote bags.</p></span></div><div class="la static"><span class="la-ic"><svg aria-hidden="true"><use href="../assets/icons.svg#power"/></svg></span><span class="lt"><small><svg aria-hidden="true"><use href="../assets/icons.svg#mic"/></svg><span>Dictation</span></small><b>KVoice ready<em>4:52</em></b><p data-zh="Copied: 周六上午九点去农贸市场…">Copied: Farmers market at nine on Saturday…</p></span><span class="la-btn end"><svg aria-hidden="true"><use href="../assets/icons.svg#power"/></svg><span>End</span></span></div></div></div></div></div>
+  </div>
+</section>
+
+<section class="sec alt" id="modes" aria-labelledby="modes-title">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <p class="kicker" data-zh="模式">Modes</p>
+      <h2 id="modes-title" data-zh="一个模式，一种成稿">One mode, one kind of finished text</h2>
+      <p data-zh="在键盘上或应用里点模式标签切换。Dictation 原样打出你说的话，不用 AI，也不用联网；其他模式用 AI 把它整理好。">Switch with the chips on the keyboard or in the app. Dictation types exactly what you said, with no AI and no network; the other modes tidy it up with AI.</p>
+    </div>
+    <div class="rv" style="margin-bottom:28px"><div class="kb-wide"><div class="scr" role="img" aria-label="The KVoice keyboard: mode chips Dictation, Clean up, Message, Email, Notes, Summary and Translate to English above the keys, and the blue microphone button." data-zh-aria-label="KVoice 键盘：按键上方是模式标签 Dictation、Clean up、Message、Email、Notes、Summary、Translate to English，右侧是蓝色麦克风按钮。"><div class="kbd"><div class="kbar"><div class="left"><div><div class="mchips"><span class="mchip"><svg aria-hidden="true"><use href="../assets/icons.svg#mic"/></svg><span>Dictation</span></span><span class="mchip act"><svg aria-hidden="true"><use href="../assets/icons.svg#sparkles"/></svg><span>Clean up</span></span><span class="mchip"><svg aria-hidden="true"><use href="../assets/icons.svg#message"/></svg><span>Message</span></span><span class="mchip"><svg aria-hidden="true"><use href="../assets/icons.svg#envelope"/></svg><span>Email</span></span><span class="mchip"><svg aria-hidden="true"><use href="../assets/icons.svg#list"/></svg><span>Notes</span></span><span class="mchip"><svg aria-hidden="true"><use href="../assets/icons.svg#text-append"/></svg><span>Summary</span></span><span class="mchip"><svg aria-hidden="true"><use href="../assets/icons.svg#globe"/></svg><span>Translate to English</span></span></div></div></div><span class="kmic"><span class="m on" data-show="*"><svg aria-hidden="true"><use href="../assets/icons.svg#mic-fill"/></svg></span></span></div><div class="keys-i"><div class="krow"><i><span>q</span></i><i><span>w</span></i><i><span>e</span></i><i><span>r</span></i><i><span>t</span></i><i><span>y</span></i><i><span>u</span></i><i><span>i</span></i><i><span>o</span></i><i><span>p</span></i></div><div class="krow r2"><i><span>a</span></i><i><span>s</span></i><i><span>d</span></i><i><span>f</span></i><i><span>g</span></i><i><span>h</span></i><i><span>j</span></i><i><span>k</span></i><i><span>l</span></i></div><div class="krow r3"><i class="f"><svg aria-hidden="true"><use href="../assets/icons.svg#shift"/></svg></i><i><span>z</span></i><i><span>x</span></i><i><span>c</span></i><i><span>v</span></i><i><span>b</span></i><i><span>n</span></i><i><span>m</span></i><i class="f"><svg aria-hidden="true"><use href="../assets/icons.svg#delete"/></svg></i></div><div class="krow"><i class="f"><span>123</span></i><i class="sp"><span>space</span></i><i class="f ret"><span>return</span></i></div></div></div></div></div></div>
+    <div class="mode-grid">
+      <div class="mode rv"><span class="mi"><svg aria-hidden="true"><use href="../assets/icons.svg#mic"/></svg></span><div><b>Dictation</b><p data-zh="原样打出你说的话，不用 AI。">Types exactly what you said. No AI.</p></div></div>
+      <div class="mode rv"><span class="mi"><svg aria-hidden="true"><use href="../assets/icons.svg#sparkles"/></svg></span><div><b>Clean up</b><p data-zh="去掉口头语和重复，整理成干净的文字。">Removes fillers and repeats for clean text.</p></div></div>
+      <div class="mode rv"><span class="mi"><svg aria-hidden="true"><use href="../assets/icons.svg#message"/></svg></span><div><b>Message</b><p data-zh="一条可以直接发送的消息。">A message ready to send.</p></div></div>
+      <div class="mode rv"><span class="mi"><svg aria-hidden="true"><use href="../assets/icons.svg#envelope"/></svg></span><div><b>Email</b><p data-zh="简洁得体的邮件正文。">An email body in short, polite paragraphs.</p></div></div>
+      <div class="mode rv"><span class="mi"><svg aria-hidden="true"><use href="../assets/icons.svg#list"/></svg></span><div><b>Notes</b><p data-zh="简短、分条的笔记。">Short notes in a list.</p></div></div>
+      <div class="mode rv"><span class="mi"><svg aria-hidden="true"><use href="../assets/icons.svg#text-append"/></svg></span><div><b>Summary</b><p data-zh="几句话的摘要。">A summary in a few lines.</p></div></div>
+      <div class="mode rv"><span class="mi"><svg aria-hidden="true"><use href="../assets/icons.svg#globe"/></svg></span><div><b>Translate to English</b><p data-zh="不管你说的是什么语言，都翻译成英文。">English text, whatever language you spoke.</p></div></div>
+      <div class="mode rv"><span class="mi" style="background:var(--grey)"><svg aria-hidden="true"><use href="../assets/icons.svg#plus"/></svg></span><div><b data-zh="你自己的模式">Your own</b><p data-zh="在 Modes 标签页点 New Mode：名称、指令、语言、AI 服务和转写引擎都能自己定。">In the Modes tab, tap New Mode: set a name, instructions, language, AI provider and transcription engine.</p></div></div>
+    </div>
+    <p class="muted rv" style="margin-top:18px;font-size:15px" data-zh="如果某个 AI 模式显示 <b>Needs AI setup</b>，说明它的 AI 服务暂时不能用：Apple 智能未开启或不受支持，或者云端服务还没有密钥。到“Settings › AI formatting”里修复，或者先用 Dictation。AI 出错时，KVoice 会保留转写，说过的话不会丢。">If an AI mode says <b>Needs AI setup</b>, its provider cannot run: Apple Intelligence is off or not supported, or a cloud provider has no key. Fix it in Settings › AI formatting, or use Dictation. If an AI step fails, KVoice keeps the transcript so nothing you said is lost.</p>
+  </div>
+</section>
+
+<section class="sec" id="engines" aria-labelledby="engines-title">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <p class="kicker" data-zh="引擎与服务">Engines and providers</p>
+      <h2 id="engines-title" data-zh="默认在设备上，云端由你决定">On the device by default, the cloud only if you choose</h2>
+    </div>
+    <div class="grid">
+      <div class="card rv"><div class="tile i-blue" aria-hidden="true"><svg class="i"><use href="../assets/icons.svg#waveform"/></svg></div><h3 data-zh="语音转文字">Speech to text</h3><p data-zh="Apple Speech（设备上，每种语言第一次会下载一个小模型）；Whisper Tiny、Base、Small、Large v3 Turbo（设备上，100 多种语言，可自动识别语言、翻译成英文）；或用你自己的密钥接 OpenAI、Groq、Google AI Studio、Google Vertex AI 或兼容 OpenAI 的转写接口。">Apple Speech (on device; a small model per language the first time); Whisper Tiny, Base, Small or Large v3 Turbo (on device, 100+ languages, language detection, translation to English); or your own key for OpenAI, Groq, Google AI Studio, Google Vertex AI or any OpenAI-compatible transcription endpoint.</p></div>
+      <div class="card rv"><div class="tile i-grad" aria-hidden="true"><svg class="i"><use href="../assets/icons.svg#sparkles"/></svg></div><h3 data-zh="AI 整理">AI formatting</h3><p data-zh="Apple 智能在设备上运行，不需要密钥（需支持的 iPhone）。或者填你自己的密钥：OpenAI、Anthropic、Google AI Studio（Gemini）、Google Vertex AI、Groq、OpenRouter 或任何兼容 OpenAI 的服务。">Apple Intelligence runs on the device with no key, on supported iPhones. Or bring your own key for OpenAI, Anthropic, Google AI Studio (Gemini), Google Vertex AI, Groq, OpenRouter or any OpenAI-compatible service.</p></div>
+      <div class="card rv"><div class="tile ok" aria-hidden="true"><svg class="i"><use href="../assets/icons.svg#shield"/></svg></div><h3 data-zh="先问你">Asked first</h3><p data-zh="第一次发送到云端服务之前，KVoice 会显示服务名称和要发送的内容，并请你同意。拒绝的话就留在设备上。密钥只存在 iOS 钥匙串里。">Before anything goes to a cloud provider for the first time, KVoice shows which provider and what will be sent, and asks. Decline and it stays on the device. Keys stay in the iOS Keychain.</p></div>
+    </div>
+    <div class="step" id="history" style="border:0;margin-top:30px">
+      <div class="txt rv"><p class="kicker" data-zh="历史记录">History</p><h3 data-zh="每次听写都留在 iPhone 上">Every dictation stays on your iPhone</h3>
+        <p data-zh="历史记录保存音频、原始转写和整理后的结果。可以搜索（Search transcripts）、复制、分享、换个模式重新处理（Re-run）或删除。">History keeps the audio, the raw transcript and the formatted result. Search transcripts, copy, share, re-run with another mode, or delete.</p>
+        <p data-zh="在“Settings › History”里设置保留时间：Forever、30 days 或 7 days；关闭 Keep audio recordings 后，每段录音转写完就删除。">Set how long it is kept in Settings › History: Forever, 30 days or 7 days. Turn off Keep audio recordings to delete each recording as soon as it is transcribed.</p></div>
+      <div class="vis"><div class="phone-frame sm"><div class="iphone"><div class="scr" role="img" aria-label="KVoice History: a search field and recent dictations with their mode, time and text; the tab bar shows Dictate, Modes, History and Settings." data-zh-aria-label="KVoice 历史记录：搜索框和最近的听写，带模式、时间和文字；底部标签栏是 Dictate、Modes、History、Settings。"><div class="island"></div><div class="status"><b>9:41</b><span class="r"><svg aria-hidden="true"><use href="../assets/icons.svg#signal"/></svg><svg aria-hidden="true"><use href="../assets/icons.svg#wifi"/></svg><svg class="bt" aria-hidden="true"><use href="../assets/icons.svg#battery"/></svg></span></div><div class="app"><div class="nav-i"><div class="big">History</div><div class="search"><svg aria-hidden="true"><use href="../assets/icons.svg#search"/></svg><span>Search transcripts</span></div><div class="group hist"><div class="row"><b><span>Clean up</span><em>Today 9:12</em></b><p data-zh="周六上午九点去农贸市场，记得带上环保袋。">Farmers market at nine on Saturday. Bring the tote bags.</p></div><div class="row"><b><span>Dictation</span><em>Today 8:47</em></b><p data-zh="我在路上了，十分钟后咖啡馆见。">On my way, see you at the café in ten minutes.</p></div><div class="row"><b><span>Email</span><em>Yesterday</em></b><p data-zh="小山你好，谢谢你的意见。修改后的计划我周五发给你。">Hi Sam, thanks for the notes. I will send the revised plan on Friday.</p></div></div></div><div class="tabbar"><span><svg aria-hidden="true"><use href="../assets/icons.svg#waveform"/></svg><em>Dictate</em></span><span><svg aria-hidden="true"><use href="../assets/icons.svg#stack"/></svg><em>Modes</em></span><span class="cur"><svg aria-hidden="true"><use href="../assets/icons.svg#clock"/></svg><em>History</em></span><span><svg aria-hidden="true"><use href="../assets/icons.svg#gear"/></svg><em>Settings</em></span></div></div><div class="homebar"></div></div></div></div></div>
+    </div>
+  </div>
+</section>
+
+<section class="sec alt" id="faq" aria-labelledby="faq-title">
+  <div class="wrap">
+    <div class="sec-head center rv"><p class="kicker" data-zh="常见问题">FAQ</p><h2 id="faq-title" data-zh="iPhone 版常见问题">KVoice for iPhone: questions</h2></div>
+    <div class="faq-list">
+      <details class="faq"><summary data-zh="为什么用键盘听写时会打开 KVoice？">Why does the keyboard open KVoice?</summary><div class="a" data-zh="<p>iOS 键盘不能使用麦克风，所以由 KVoice 应用替键盘录音。点键盘上的麦克风，KVoice 打开并开始听，你返回原来的应用，文字会打在你离开的位置。之后几分钟内，键盘可以直接开始下一次听写，不用再切换应用（“Settings › Keep listening for the keyboard”，选 Off 关闭）。</p>"><p>iOS keyboards cannot use the microphone, so the KVoice app records for them. Tap the mic in the keyboard, KVoice opens and listens, swipe back to your app, and the text is typed where you left off. For a few minutes afterwards the keyboard can start the next dictation without switching apps (Settings › Keep listening for the keyboard; choose Off to turn this off).</p></div></details>
+      <details class="faq"><summary data-zh="为什么麦克风指示灯一直亮着？">Why is the microphone indicator on?</summary><div class="a" data-zh="<p>KVoice 正在录音，或者在一次键盘听写之后为键盘保持麦克风就绪。在这段时间里，开始听写之前不会录下或保存任何内容。可以在实时活动里点 End 结束，或把 Keep listening for the keyboard 设为 Off。</p>"><p>KVoice is recording, or it is keeping the microphone ready for the keyboard after a keyboard dictation. Nothing is recorded or saved during that wait until you start a dictation. End it from the Live Activity, or set Keep listening for the keyboard to Off.</p></div></details>
+      <details class="faq"><summary data-zh="需要账号或 API 密钥吗？">Do I need an account or an API key?</summary><div class="a" data-zh="<p>不需要。KVoice 用 Apple Speech 或 Whisper 在设备上工作，在支持的 iPhone 上还可以用 Apple 智能。API 密钥只用于你自己选择的云端服务。</p>"><p>No. KVoice works on device with Apple Speech or Whisper, and Apple Intelligence where your iPhone supports it. API keys are only for cloud providers you choose yourself.</p></div></details>
+      <details class="faq"><summary data-zh="不打开完全访问能用吗？">Does it work without Full Access?</summary><div class="a" data-zh="<p>能打字，但不能用键盘听写，键盘会显示 Allow Full Access to dictate。操作按钮、控制中心和 Siri 不依赖完全访问，结果会复制到剪贴板。</p>"><p>Typing works, but dictating from the keyboard does not; the keyboard shows Allow Full Access to dictate. The Action Button, Control Center and Siri do not need it, and their result is copied to the clipboard.</p></div></details>
+      <details class="faq"><summary data-zh="支持 iPad 吗？">Does it run on iPad?</summary><div class="a" data-zh="<p>KVoice iPhone 版目前只为 iPhone 构建，需要 iOS 26 或更高版本。</p>"><p>KVoice is currently built for iPhone, running iOS 26 or later.</p></div></details>
+      <details class="faq"><summary data-zh="怎么删除我的数据？">How do I delete my data?</summary><div class="a" data-zh="<p>在“Settings › History”里点 Delete All History，或者直接删除应用。请先在设置里删除 API 密钥：iOS 删除应用后仍会保留钥匙串项目。除此之外，数据不会存在别的地方。</p>"><p>Settings › History › Delete All History, or delete the app. Remove API keys in Settings first: iOS keeps Keychain items after an app is deleted. Nothing is stored anywhere else.</p></div></details>
+    </div>
+    <p class="center" style="margin-top:28px"><a href="../support/#iphone" data-zh="iPhone 版故障排查 →">Troubleshooting on iPhone →</a></p>
+  </div>
+</section>
+
+<section class="final dark-zone hero" aria-labelledby="final-title">
+  <div class="wrap">
+    <h2 id="final-title" data-zh="在 iPhone 上说话打字">Talk instead of typing on your iPhone</h2>
+    <p data-zh="免费，没有账号，语音在设备上识别。">Free, no account, and speech is recognized on the device.</p>
+    <div class="cta"><a class="btn btn-ios" href="https://testflight.apple.com/join/WzN5CnG6" data-testflight><svg class="i" aria-hidden="true"><use href="../assets/icons.svg#download"/></svg><span data-zh="通过 TestFlight 加入测试">Join the beta on TestFlight</span></a><a class="btn btn-ghost" href="../mac/"><span data-zh="也看看 Mac 版">See KVoice for Mac</span></a></div>
+  </div>
+</section>
+
+</main>
+<!-- footer:begin -->
+<footer class="foot"><div class="wrap">
+<div class="foot-grid">
+<div><a class="brand" href="../"><img src="../assets/kvoice-mac.svg" alt="" width="30" height="30"><span>KVoice</span></a>
+<p data-zh="说一次，成稿直接打在你正在用的地方。适用于 Mac 和 iPhone 的免费开源语音输入。">Speak once. Get finished text, typed where you work. Free and open source dictation for Mac and iPhone.</p></div>
+<div><p class="foot-h" data-zh="KVoice Mac 版">KVoice for Mac</p><ul><li><a href="../mac/" data-zh="介绍与教程">Overview and tutorial</a></li><li><a href="https://github.com/kccarlos/kvoice/releases/latest" data-zh="下载 DMG">Download the DMG</a></li><li><a href="https://github.com/kccarlos/kvoice" data-zh="GitHub 源代码">Source code on GitHub</a></li><li><a href="https://github.com/kccarlos/kvoice/issues" data-zh="报告 Mac 版问题">Report a Mac bug</a></li></ul></div><div><p class="foot-h" data-zh="KVoice iPhone 版">KVoice for iPhone</p><ul><li><a href="../ios/" data-zh="介绍与设置">Overview and setup</a></li><li><a href="https://testflight.apple.com/join/WzN5CnG6" data-testflight data-zh="加入 TestFlight 测试">Join the TestFlight beta</a></li><li><a href="https://github.com/kccarlos/kvoice-ios" data-zh="GitHub 源代码">Source code on GitHub</a></li><li><a href="https://github.com/kccarlos/kvoice-ios/issues" data-zh="报告 iPhone 版问题">Report an iPhone bug</a></li></ul></div><div><p class="foot-h" data-zh="帮助">Help</p><ul><li><a href="../support/" data-zh="支持与常见问题">Support and FAQ</a></li><li><a href="../privacy/" data-zh="隐私">Privacy</a></li><li><a href="https://github.com/kccarlos/kvoice/blob/main/Docs/User-Guide.md" data-zh="Mac 用户指南（英文）">Mac User Guide</a></li><li><a href="https://github.com/kccarlos/kvoice/blob/main/CHANGELOG.md" data-zh="更新记录（英文）">What's new</a></li></ul></div>
+</div>
+<p class="legal" data-zh="KVoice 是采用 MIT 许可证的自由软件，与 Apple 无关联。Apple、Mac、iPhone、macOS、iOS、Apple 智能和 TestFlight 是 Apple Inc. 的商标。">KVoice is free software under the MIT license. Not affiliated with Apple. Apple, Mac, iPhone, macOS, iOS, Apple Intelligence and TestFlight are trademarks of Apple Inc.</p>
+</div></footer>
+<!-- footer:end -->
+</body>
+</html>

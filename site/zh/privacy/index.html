@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>KVoice 隐私说明：Mac 版与 iPhone 版</title>
+<meta name="description" content="KVoice Mac 版与 iPhone 版隐私说明：语音在设备上转写，AI 可选，没有账号、统计分析或追踪。">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#161d33">
+<!-- seo:begin -->
+<link rel="canonical" href="https://kccarlos.github.io/kvoice/zh/privacy/">
+<link rel="alternate" hreflang="en" href="https://kccarlos.github.io/kvoice/privacy/">
+<link rel="alternate" hreflang="zh-Hans" href="https://kccarlos.github.io/kvoice/zh/privacy/">
+<link rel="alternate" hreflang="x-default" href="https://kccarlos.github.io/kvoice/privacy/">
+<meta property="og:url" content="https://kccarlos.github.io/kvoice/zh/privacy/">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:locale:alternate" content="en_US">
+<meta property="og:image" content="https://kccarlos.github.io/kvoice/assets/og-zh.png">
+<meta name="twitter:image" content="https://kccarlos.github.io/kvoice/assets/og-zh.png">
+<!-- seo:end -->
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="KVoice">
+<meta property="og:title" content="KVoice 隐私说明">
+<meta property="og:description" content="你的声音留在你的设备上。没有服务器、没有账号、没有统计分析。">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="KVoice：说一次，成稿直接打在你正在用的地方。">
+<meta name="twitter:card" content="summary_large_image">
+<!-- jsonld:begin -->
+<script type="application/ld+json">
+{
+ "@context": "https://schema.org",
+ "@graph": [
+  {
+   "@type": "BreadcrumbList",
+   "itemListElement": [
+    {
+     "@type": "ListItem",
+     "position": 1,
+     "name": "首页",
+     "item": "https://kccarlos.github.io/kvoice/zh/"
+    },
+    {
+     "@type": "ListItem",
+     "position": 2,
+     "name": "隐私",
+     "item": "https://kccarlos.github.io/kvoice/zh/privacy/"
+    }
+   ]
+  }
+ ]
+}
+</script>
+<!-- jsonld:end -->
+<script>if (!matchMedia('(prefers-reduced-motion: reduce)').matches && 'IntersectionObserver' in window) document.documentElement.classList.add('anim');</script>
+<link rel="icon" href="../../favicon.ico" sizes="48x48">
+<link rel="icon" href="../../assets/kvoice-mac.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../../assets/apple-touch-icon.png">
+<link rel="manifest" href="../../site.webmanifest">
+<link rel="stylesheet" href="../../styles.css">
+<script src="../../app.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">跳到正文</a>
+<!-- header:begin -->
+<header class="bar"><div class="bar-in">
+<a class="brand" href="../"><img src="../../assets/kvoice-mac.svg" alt="" width="30" height="30"><span>KVoice</span></a>
+<nav class="nav" aria-label="主导航"><a href="../mac/">Mac</a><a href="../ios/">iPhone</a><a href="../privacy/" aria-current="page">隐私</a><a href="../support/">支持</a></nav>
+<a class="lang" href="../../privacy/" hreflang="en" lang="en">English</a>
+<a class="gh" href="https://github.com/kccarlos/kvoice"><svg class="i" aria-hidden="true"><use href="../../assets/icons.svg#github" /></svg><span>GitHub</span></a>
+</div></header>
+<!-- header:end -->
+
+<main id="main">
+<section class="page-hero" aria-labelledby="privacy-title">
+  <div class="wrap">
+    <p class="crumbs"><a href="../">首页</a> › <span>隐私</span></p>
+    <h1 id="privacy-title">隐私说明</h1>
+    <p class="lead">KVoice 的设计原则是：你的声音和文字留在你的设备上，除非你自己选择发送出去。这一页概括了 Mac 版和 iPhone 版保存什么、可能发送什么，以及发往哪里。完整说明以各应用仓库中的隐私文档为准。</p>
+    <ul class="toc">
+      <li><a href="#short">简要版</a></li>
+      <li><a href="#mac">Mac 版</a></li>
+      <li><a href="#iphone">iPhone 版</a></li>
+      <li><a href="#site">本网站</a></li>
+      <li><a href="#contact">联系</a></li>
+    </ul>
+  </div>
+</section>
+
+<section class="sec" aria-labelledby="short">
+  <div class="wrap prose">
+    <h2 id="short">简要版</h2>
+    <ul>
+      <li><b>没有服务器、账号、统计分析、广告或追踪。</b>开发者收不到你的任何数据。</li>
+      <li><b>语音在你的设备上转写。</b>音频不会上传，除非你在 iPhone 上自己选择了云端转写服务。</li>
+      <li><b>AI 是可选的。</b>只有你自己选了在线服务并打开时，那一次的文字（在 iPhone 上用云端转写时还包括音频）才会直接从你的设备发给那个服务，不经过我们。</li>
+      <li><b>API 密钥留在本地：</b>Mac 版存在只有你的用户账户能读取的文件里，iPhone 版存在 iOS 钥匙串里。</li>
+      <li><b>诊断日志只留在设备上</b>，只记录状态和耗时，从不记录你说的内容。</li>
+    </ul>
+
+    <h2 id="mac">KVoice Mac 版</h2>
+    <h3>留在你的 Mac 上的</h3>
+    <ul>
+      <li><b>听写时的音频</b>只在内存里，插入文字后丢弃；除非你打开了保留录音（默认关闭）。</li>
+      <li><b>历史记录</b>（默认开启，可关闭）保存在 ~/Library/Application Support/kvoice/ 里，保留多久由你设定；“全部清除”会删除它们。</li>
+      <li><b>语音模型</b>、<b>设置</b>和<b>词典</b>都在本机。词典作为提示交给本地语音模型，不会离开 Mac。</li>
+      <li><b>API 密钥</b>保存在只有你的用户账户能读取的文件里（权限 0600），从不写进设置文件。</li>
+    </ul>
+    <h3>可能离开你的 Mac 的</h3>
+    <ul>
+      <li><b>语音模型下载：</b>从 huggingface.co 通过 HTTPS 下载，版本固定在应用里，每个文件都与内置清单核对。请求里不包含你的音频、文字、设置或任何标识。Apple Speech 的语言资源由 macOS 自己下载和管理。</li>
+      <li><b>AI 操作（默认关闭）：</b>打开后，每次听写的转写文字和操作指令发给你选的引擎。你写的用户档案、以及你为某个操作打开的剪贴板或选中文字，也会一起发送。用本机 Apple 智能时，什么都不会离开 Mac；用兼容 OpenAI 的服务时，只发到你配置的那个端点；私密云计算（仅 App Store 版）由 Apple 的服务器处理，必须你明确选择。</li>
+      <li><b>你手动发起的检查：</b>“验证并保存”和“测试当前配置”会向那个引擎发一个简短的固定测试请求（绝不是转写内容）。</li>
+    </ul>
+    <p>AI 操作关闭时，KVoice 的设计是除了下载模型和你手动发起的检查外，不发出任何网络请求。远程端点必须使用 HTTPS；明文 HTTP 只允许 localhost。</p>
+    <p>完整说明：<a href='https://github.com/kccarlos/kvoice/blob/main/PRIVACY.md'>Mac 版 PRIVACY.md（英文）</a></p>
+
+    <h2 id="iphone">KVoice iPhone 版</h2>
+    <h3>留在你的 iPhone 上的</h3>
+    <ul>
+      <li><b>录音</b>只在你听写时进行。KVoice 为键盘保持麦克风就绪时，在你开始听写之前不会录下或保存任何内容。默认录音会保存在历史记录里，关闭 Keep audio recordings 后每段录音转写完就删除。</li>
+      <li><b>转写和整理后的文字</b>保存在历史记录里，可以限制为 30 天或 7 天，Delete All History 会全部删除。删除应用会删除历史、录音、模式和设置。</li>
+      <li><b>API 密钥</b>只存在 iOS 钥匙串里，只发给它所属的服务。iOS 删除应用后仍会保留钥匙串项目，所以想彻底删除的话，请先在设置里移除密钥。</li>
+      <li><b>KVoice 键盘</b>不录音、不联网，也不保存或分享你输入的内容。不打开完全访问时它就是普通键盘；打开后它只和同一台 iPhone 上的 KVoice 应用通信。</li>
+    </ul>
+    <h3>可能离开你的 iPhone 的</h3>
+    <ul>
+      <li><b>云端转写</b>（你选择 OpenAI、Groq、Google AI Studio、Google Vertex AI 或你填写的兼容端点时）：每次听写的音频发给那个服务。</li>
+      <li><b>云端 AI 整理</b>（你选择 OpenAI、Anthropic、Google AI Studio、Google Vertex AI、Groq、OpenRouter 或兼容端点时）：转写文字和模式指令发给那个服务。</li>
+      <li><b>下载：</b>Whisper 模型来自 Hugging Face 上的 WhisperKit 模型仓库，Apple Speech 语言模型来自 Apple。这些下载不包含你的任何听写内容。</li>
+    </ul>
+    <p>第一次发送到云端服务之前，KVoice 会显示服务名称和要发送的内容，并征求你的同意；拒绝的话就留在设备上。随时可以在“Settings › Privacy › Stop Sending to（服务名）”撤回同意。</p>
+    <p>完整说明：<a href='https://github.com/kccarlos/kvoice-ios/blob/main/Docs/Privacy.md'>iPhone 版隐私政策（英文）</a></p>
+
+    <h2 id="site">本网站</h2>
+    <p>本网站是托管在 GitHub Pages 上的静态页面：没有 Cookie、没有统计分析、没有第三方脚本或字体。GitHub 作为托管方可能会出于安全和运维目的记录访问日志，详见 GitHub 的隐私声明。</p>
+
+    <h2 id="contact">联系</h2>
+    <p>对隐私有疑问？请在对应仓库开一个 issue：<a href='https://github.com/kccarlos/kvoice/issues'>Mac 版</a>，<a href='https://github.com/kccarlos/kvoice-ios/issues'>iPhone 版</a>。请不要在 issue 里贴 API 密钥或你想保密的听写内容。</p>
+    <p class="muted">最后更新：2026 年 11 月。</p>
+  </div>
+</section>
+</main>
+<!-- footer:begin -->
+<footer class="foot"><div class="wrap">
+<div class="foot-grid">
+<div><a class="brand" href="../"><img src="../../assets/kvoice-mac.svg" alt="" width="30" height="30"><span>KVoice</span></a>
+<p>说一次，成稿直接打在你正在用的地方。适用于 Mac 和 iPhone 的免费开源语音输入。</p></div>
+<div><p class="foot-h">KVoice Mac 版</p><ul><li><a href="../mac/">介绍与教程</a></li><li><a href="https://github.com/kccarlos/kvoice/releases/latest">下载 DMG</a></li><li><a href="https://github.com/kccarlos/kvoice">GitHub 源代码</a></li><li><a href="https://github.com/kccarlos/kvoice/issues">报告 Mac 版问题</a></li></ul></div><div><p class="foot-h">KVoice iPhone 版</p><ul><li><a href="../ios/">介绍与设置</a></li><li><a href="https://testflight.apple.com/join/WzN5CnG6" data-testflight>加入 TestFlight 测试</a></li><li><a href="https://github.com/kccarlos/kvoice-ios">GitHub 源代码</a></li><li><a href="https://github.com/kccarlos/kvoice-ios/issues">报告 iPhone 版问题</a></li></ul></div><div><p class="foot-h">帮助</p><ul><li><a href="../support/">支持与常见问题</a></li><li><a href="../privacy/">隐私</a></li><li><a href="https://github.com/kccarlos/kvoice/blob/main/Docs/User-Guide.md">Mac 用户指南（英文）</a></li><li><a href="https://github.com/kccarlos/kvoice/blob/main/CHANGELOG.md">更新记录（英文）</a></li></ul></div>
+</div>
+<p class="legal">KVoice 是采用 MIT 许可证的自由软件，与 Apple 无关联。Apple、Mac、iPhone、macOS、iOS、Apple 智能和 TestFlight 是 Apple Inc. 的商标。</p>
+</div></footer>
+<!-- footer:end -->
+</body>
+</html>

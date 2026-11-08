@@ -7,6 +7,7 @@
 <h3 align="center">说一次，成稿直接打在你正在用的地方。</h3>
 
 <p align="center">
+  <a href="https://kccarlos.github.io/kvoice/zh/"><img src="https://img.shields.io/badge/%E5%AE%98%E7%BD%91-kccarlos.github.io%2Fkvoice-F26B1D" alt="官网: kccarlos.github.io/kvoice"></a>
   <img src="https://img.shields.io/badge/Mac_App_Store-%E5%8D%B3%E5%B0%86%E4%B8%8A%E6%9E%B6-0D96F6?logo=appstore&logoColor=white" alt="Mac App Store：即将上架">
   <a href="https://github.com/kccarlos/kvoice/releases/latest"><img src="https://img.shields.io/github/v/release/kccarlos/kvoice?label=%E4%B8%8B%E8%BD%BD&logo=github" alt="GitHub 最新版本"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="许可证：MIT"></a>
@@ -20,6 +21,8 @@
   <a href="https://github.com/kccarlos/kvoice"><b>⭐ 在 GitHub 上点个 Star</b></a>
   ，第一时间收到新版本。免费，也能帮更多 Mac 用户找到 KVoice。
 </p>
+
+<p align="center"><a href="https://kccarlos.github.io/kvoice/zh/"><b>🌐 kccarlos.github.io/kvoice</b></a>：官网，有 Mac 和 iPhone 的分步上手教程。</p>
 
 <p align="center">
   <img src="Docs/assets/kvoice-demo-zh.gif" alt="20 秒看懂 KVoice：按住快捷键说话，文字打进 TextEdit；同一段随口说的话，变成整理好的文字、待办清单或英文；口述的需求直接打进终端里的 Codex" width="720">

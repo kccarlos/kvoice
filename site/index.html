@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en" data-zh-lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title data-zh="KVoice：Mac 和 iPhone 上的 AI 语音输入，本机语音转文字">KVoice: AI dictation and speech to text for Mac and iPhone</title>
+<meta name="description" content="Free, open-source dictation app for Mac and iPhone. On-device speech to text with Whisper; optional AI turns your voice into clean text, email or translations." data-zh-content="免费开源的 Mac 与 iPhone 语音输入应用。用 Whisper 在本机语音转文字；可选 AI 把语音整理成文字、邮件或译文。">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#161d33">
+<!-- seo:begin -->
+<link rel="canonical" href="https://kccarlos.github.io/kvoice/" data-zh-href="https://kccarlos.github.io/kvoice/zh/">
+<link rel="alternate" hreflang="en" href="https://kccarlos.github.io/kvoice/">
+<link rel="alternate" hreflang="zh-Hans" href="https://kccarlos.github.io/kvoice/zh/">
+<link rel="alternate" hreflang="x-default" href="https://kccarlos.github.io/kvoice/">
+<meta property="og:url" content="https://kccarlos.github.io/kvoice/" data-zh-content="https://kccarlos.github.io/kvoice/zh/">
+<meta property="og:locale" content="en_US" data-zh-content="zh_CN">
+<meta property="og:locale:alternate" content="zh_CN" data-zh-content="en_US">
+<meta property="og:image" content="https://kccarlos.github.io/kvoice/assets/og-en.png" data-zh-content="https://kccarlos.github.io/kvoice/assets/og-zh.png">
+<meta name="twitter:image" content="https://kccarlos.github.io/kvoice/assets/og-en.png" data-zh-content="https://kccarlos.github.io/kvoice/assets/og-zh.png">
+<!-- seo:end -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="KVoice">
+<meta property="og:title" content="KVoice: speak once, get finished text in any app" data-zh-content="KVoice：说一次，成稿直接打进任何应用">
+<meta property="og:description" content="Free, open-source dictation for Mac and iPhone. On-device speech recognition, optional AI that cleans up, writes the email or translates." data-zh-content="免费开源的 Mac 与 iPhone 语音输入。本机语音识别，可选 AI 帮你整理文字、写邮件或翻译。">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="KVoice: speak once, get finished text typed where you work, on Mac and iPhone." data-zh-content="KVoice：说一次，成稿直接打在你正在用的地方，Mac 和 iPhone 都能用。">
+<meta name="twitter:card" content="summary_large_image">
+<!-- jsonld:begin -->
+<script type="application/ld+json">
+{
+ "@context": "https://schema.org",
+ "@graph": [
+  {
+   "@type": "WebSite",
+   "name": "KVoice",
+   "url": "https://kccarlos.github.io/kvoice/",
+   "description": "KVoice: free, open-source dictation for Mac and iPhone. Speak once and get finished text, typed where you work.",
+   "inLanguage": "en"
+  },
+  {
+   "@type": "Organization",
+   "name": "KVoice",
+   "url": "https://kccarlos.github.io/kvoice/",
+   "logo": "https://kccarlos.github.io/kvoice/assets/icon-512.png",
+   "sameAs": [
+    "https://github.com/kccarlos/kvoice",
+    "https://github.com/kccarlos/kvoice-ios"
+   ]
+  },
+  {
+   "@type": "SoftwareApplication",
+   "name": "KVoice",
+   "alternateName": "KVoice for Mac",
+   "url": "https://kccarlos.github.io/kvoice/mac/",
+   "description": "A Mac dictation app: hold a shortcut, speak, and finished text is typed into any app. On-device speech to text with Whisper and other local models, plus optional AI actions that clean up, write an email, make a TODO list or translate.",
+   "applicationCategory": "UtilitiesApplication",
+   "applicationSubCategory": "Dictation",
+   "operatingSystem": "macOS 15 or later",
+   "processorRequirements": "Apple silicon",
+   "softwareRequirements": "macOS 15 or later on a Mac with Apple silicon",
+   "downloadUrl": "https://github.com/kccarlos/kvoice/releases/latest",
+   "installUrl": "https://github.com/kccarlos/kvoice/releases/latest",
+   "image": "https://kccarlos.github.io/kvoice/assets/kvoice-mac-256.png",
+   "screenshot": [
+    "https://kccarlos.github.io/kvoice/assets/kvoice-1-dictate.webp",
+    "https://kccarlos.github.io/kvoice/assets/kvoice-2-ai-actions.webp"
+   ],
+   "softwareVersion": "0.1.9",
+   "author": {
+    "@type": "Person",
+    "name": "kccarlos",
+    "url": "https://github.com/kccarlos"
+   },
+   "inLanguage": [
+    "en",
+    "zh-Hans"
+   ],
+   "isAccessibleForFree": true,
+   "license": "https://opensource.org/licenses/MIT",
+   "codeRepository": "https://github.com/kccarlos/kvoice",
+   "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+   }
+  },
+  {
+   "@type": "MobileApplication",
+   "name": "KVoice Dictation",
+   "alternateName": "KVoice for iPhone",
+   "url": "https://kccarlos.github.io/kvoice/ios/",
+   "description": "A private voice-to-text keyboard for iPhone: dictate into any app from the KVoice keyboard, the Action Button, Control Center or Siri. On-device speech recognition and optional AI modes.",
+   "applicationCategory": "ProductivityApplication",
+   "applicationSubCategory": "Dictation keyboard",
+   "operatingSystem": "iOS 26 or later",
+   "image": "https://kccarlos.github.io/kvoice/assets/kvoice-ios-256.png",
+   "author": {
+    "@type": "Person",
+    "name": "kccarlos",
+    "url": "https://github.com/kccarlos"
+   },
+   "inLanguage": "en",
+   "isAccessibleForFree": true,
+   "license": "https://opensource.org/licenses/MIT",
+   "codeRepository": "https://github.com/kccarlos/kvoice-ios",
+   "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+   },
+   "downloadUrl": "https://testflight.apple.com/join/WzN5CnG6"
+  },
+  {
+   "@type": "VideoObject",
+   "name": "KVoice on a Mac: demo",
+   "description": "Hold a key and speak, and the words are typed into TextEdit. The same messy sentence becomes a clean transcript, a TODO list or another language, and a spoken request lands in a terminal.",
+   "thumbnailUrl": "https://kccarlos.github.io/kvoice/assets/demo-en-poster.webp",
+   "contentUrl": "https://kccarlos.github.io/kvoice/assets/demo-en.mp4",
+   "uploadDate": "2026-10-20",
+   "duration": "PT24S",
+   "inLanguage": "en"
+  },
+  {
+   "@type": "FAQPage",
+   "mainEntity": [
+    {
+     "@type": "Question",
+     "name": "Is KVoice free?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "Yes, and open source (MIT), with no subscriptions or in-app purchases. A paid AI service you connect may charge you."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "Does it need the internet?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "No. Once a speech model is downloaded, dictation works offline. Only online services you choose need the network."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "Which languages does it understand?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "About a hundred with Whisper. The app interface is English and Simplified Chinese on Mac, English on iPhone for now."
+     }
+    }
+   ]
+  }
+ ]
+}
+</script>
+<!-- jsonld:end -->
+<script>if (!matchMedia('(prefers-reduced-motion: reduce)').matches && 'IntersectionObserver' in window) document.documentElement.classList.add('anim');</script>
+<link rel="icon" href="favicon.ico" sizes="48x48">
+<link rel="icon" href="assets/kvoice-mac.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<link rel="manifest" href="site.webmanifest">
+<link rel="stylesheet" href="styles.css">
+<script src="app.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main" data-zh="跳到正文">Skip to content</a>
+<!-- header:begin -->
+<header class="bar"><div class="bar-in">
+<a class="brand" href="./"><img src="assets/kvoice-mac.svg" alt="" width="30" height="30"><span>KVoice</span></a>
+<nav class="nav" aria-label="Main" data-zh-aria-label="主导航"><a href="mac/">Mac</a><a href="ios/">iPhone</a><a href="privacy/" data-zh="隐私">Privacy</a><a href="support/" data-zh="支持">Support</a></nav>
+<a class="lang" href="zh/" hreflang="zh-Hans" lang="zh-Hans" data-zh="English" data-zh-href="../" data-zh-hreflang="en" data-zh-lang="en">中文</a>
+<a class="gh" href="https://github.com/kccarlos/kvoice"><svg class="i" aria-hidden="true"><use href="assets/icons.svg#github"/></svg><span>GitHub</span></a>
+</div></header>
+<!-- header:end -->
+
+<main id="main">
+
+<!-- Hero -->
+<section class="hero dark-zone" aria-labelledby="hero-title">
+  <div class="wrap hero-in">
+    <div>
+      <p class="eyebrow" data-zh="Mac 和 iPhone 上的语音输入">Dictation for Mac and iPhone</p>
+      <h1 id="hero-title" data-zh="说一次，<span class='nw'><em>成稿</em>直接打在</span><span class='nw'>你正在用的地方。</span>">Speak once. Get <em>finished text</em>, typed where you work.</h1>
+      <p class="lead" data-zh="开口说话，KVoice 在本机把语音转成文字，直接打在光标处。">Talk naturally. KVoice types it at your cursor, transcribed on your device.</p>
+      <div class="cta">
+        <a class="btn btn-voice" href="mac/"><svg class="i" aria-hidden="true"><use href="assets/icons.svg#laptop"/></svg><span><span data-zh="KVoice Mac 版">KVoice for Mac</span><small data-zh="免费下载 · macOS 15+">Free download · macOS 15+</small></span></a>
+        <a class="btn btn-cursor" href="ios/"><svg class="i" aria-hidden="true"><use href="assets/icons.svg#iphone"/></svg><span><span data-zh="KVoice iPhone 版">KVoice for iPhone</span><small data-zh="TestFlight 公开测试 · iOS 26+">TestFlight beta · iOS 26+</small></span></a>
+      </div>
+      <p class="fine"><a href="https://github.com/kccarlos/kvoice"><svg class="i" aria-hidden="true"><use href="assets/icons.svg#star"/></svg> <span data-zh="在 GitHub 上点个 Star">Star on GitHub</span></a></p>
+    </div>
+
+    <div class="hero-visual">
+      <div class="mac-frame">
+        <div class="desk stage" id="hero" data-steps="1000,750,3300,550,1100,1300,1600,1700,1500" data-final="7" data-variants="clean,email,todo,translate" role="img"
+             aria-label="A Mac with a TextEdit window. Control-Shift-Space is held, the KVoice recorder appears under the window and shows the live transcript, then it transcribes locally, runs an AI action and types the finished text into the document."
+             data-zh-aria-label="一台 Mac 上开着“文本编辑”窗口。按住 Control-Shift-Space，KVoice 录音条出现并显示实时转写；松开后在本机转写、运行 AI 操作，再把成稿打进文档。">
+          <div class="menubar"><b data-zh="文本编辑">TextEdit</b><span data-zh="文件">File</span><span data-zh="编辑">Edit</span><span data-zh="格式">Format</span><span class="r"><span class="kvi" data-cls="hot@1-6"><svg aria-hidden="true"><use href="assets/icons.svg#kv-menubar"/></svg><i class="dot" data-show="2"></i></span><svg aria-hidden="true"><use href="assets/icons.svg#wifi"/></svg><span>9:41</span></span></div>
+          <div class="win">
+            <div class="win-bar"><i></i><i></i><i></i><span data-zh="未命名">Untitled</span></div>
+            <div class="doc fx">
+              <span class="caret" data-show="0-5"></span>
+              <div class="out gone on" data-show="6-8" data-variant="clean" data-type="900" data-zh="<p>那个设计评审改到周五上午，然后在那之前把幻灯片发给大家。<span class='caret'></span></p>"><p>So the design review, let's move it to Friday morning, and send the slides to the team before then.<span class="caret"></span></p></div>
+              <div class="out gone" data-show="6-8" data-variant="email" data-type="1100" data-zh="<p>大家好：</p><p>设计评审改到周五上午，请在那之前把幻灯片发给大家。</p><p>谢谢！<span class='caret'></span></p>"><p>Hi team,</p><p>The design review is moving to Friday morning. Please send the slides to the team before then.</p><p>Thanks,<span class="caret"></span></p></div>
+              <div class="out gone" data-show="6-8" data-variant="todo" data-type="900" data-zh="<ul class='todo'><li>把设计评审改到周五上午</li><li>评审前把幻灯片发给大家<span class='caret'></span></li></ul>"><ul class="todo"><li>Move the design review to Friday morning</li><li>Send the slides to the team before the review<span class="caret"></span></li></ul></div>
+              <div class="out gone" data-show="6-8" data-variant="translate" data-type="900" data-zh="<p>Let's move the design review to Friday morning, and send the slides to everyone before then.<span class='caret'></span></p>"><p>设计评审改到周五上午，在那之前把幻灯片发给团队。<span class="caret"></span></p></div>
+            </div>
+          </div>
+          <div class="keys" data-show="0-2"><span class="keycap" data-cls="dn@1-2"><span>⌃</span></span><span class="keycap" data-cls="dn@1-2"><span>⇧</span></span><span class="keycap wide" data-cls="dn@1-2"><span>Space</span></span></div>
+          <div class="hud-pos on" data-show="1-7">
+            <div class="hud" data-cls="tall@2">
+              <div class="hud-row">
+                <div class="glyph"><i class="g-ring" data-show="1"></i><i class="g-rec" data-show="2"><svg aria-hidden="true"><use href="assets/icons.svg#mic-fill"/></svg></i><i class="g-spin" data-show="3-6"></i><i class="g-done on" data-show="7-8"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 12.5 4 4L18 8" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></i></div>
+                <div class="hud-txt">
+                  <div class="hud-title">
+                    <span class="swap">
+                      <b data-show="1" data-zh="正在启动麦克风…">Starting mic…</b>
+                      <b data-show="2" data-zh="录音">Recording</b>
+                      <b data-show="3" data-zh="正在准备音频">Preparing audio</b>
+                      <b data-show="4" data-zh="正在本地转写">Transcribing locally</b>
+                      <b data-show="5" data-variant="clean email todo" data-zh="正在润色">Polishing</b>
+                      <b data-show="5" data-variant="translate" data-zh="正在翻译为英语">Translating to Chinese, Simplified</b>
+                      <b data-show="6" data-zh="正在插入">Inserting</b>
+                      <b class="on" data-show="7-8" data-zh="已插入">Inserted</b>
+                    </span>
+                    <span class="swap">
+                      <span class="chip" data-show="1-2" data-variant="clean"><span data-zh="清理">Clean Up</span><span>⌘1</span></span>
+                      <span class="chip" data-show="1-2" data-variant="email"><span data-zh="邮件草稿">Email Draft</span><span>⌘7</span></span>
+                      <span class="chip" data-show="1-2" data-variant="todo"><span data-zh="待办清单">TODO List</span><span>⌘9</span></span>
+                      <span class="chip" data-show="1-2" data-variant="translate"><span data-zh="翻译">Translate 2</span></span>
+                      <span class="chip" data-show="5" data-variant="clean"><span data-zh="清理">Clean Up</span></span>
+                      <span class="chip" data-show="5" data-variant="email"><span data-zh="邮件草稿">Email Draft</span></span>
+                      <span class="chip" data-show="5" data-variant="todo"><span data-zh="待办清单">TODO List</span></span>
+                    </span>
+                  </div>
+                  <span class="swap">
+                    <span class="hud-sub" data-show="1-2" data-zh="松开停止">Release to stop</span>
+                    <span class="hud-sub" data-show="3">Whisper large-v3-turbo</span>
+                    <span class="hud-sub" data-show="4" data-zh="Whisper large-v3-turbo · 在本机">Whisper large-v3-turbo · on device</span>
+                    <span class="hud-sub" data-show="5" data-zh="Apple 智能（本机）">Apple Intelligence (on-device)</span>
+                    <span class="hud-sub" data-show="6" data-zh="到 文本编辑">into TextEdit</span>
+                    <span class="hud-sub on" data-show="7-8" data-variant="clean" data-zh="16 个词 → 文本编辑">19 words → TextEdit</span>
+                    <span class="hud-sub" data-show="7-8" data-variant="email" data-zh="17 个词 → 文本编辑">20 words → TextEdit</span>
+                    <span class="hud-sub" data-show="7-8" data-variant="todo" data-zh="14 个词 → 文本编辑">16 words → TextEdit</span>
+                    <span class="hud-sub" data-show="7-8" data-variant="translate" data-zh="16 个词 → 文本编辑">14 words → TextEdit</span>
+                  </span>
+                </div>
+                <div class="hud-trail" data-show="1-2">
+                  <span class="meter" data-cls="off@1"><i></i><i></i><i></i><i></i><i></i></span>
+                  <span class="swap"><span class="clock dim" data-show="1">0:00</span><span class="clock" data-show="2" data-clock="0">0:04</span></span>
+                </div>
+              </div>
+              <div class="live-words gone" data-show="2" data-variant="clean email todo translate" data-words="2900" data-zh="嗯，那个设计评审，改到周四吧，不对，周五上午，然后，呃，在那之前把幻灯片发给大家。">Um, so the design review, let's move it to Thursday, no wait, Friday morning, and, uh, send the slides to the team before then.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="hero-actions" data-for="hero" aria-hidden="true">
+        <span class="cur" data-vtab="clean" data-zh="🧹 清理">🧹 Clean Up</span>
+        <span data-vtab="email" data-zh="✉️ 邮件草稿">✉️ Email Draft</span>
+        <span data-vtab="todo" data-zh="☑️ 待办清单">☑️ TODO List</span>
+        <span data-vtab="translate" data-zh="🌐 翻译">🔁 Translate 2</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<ul class="facts" aria-label="At a glance" data-zh-aria-label="一览">
+  <li><svg class="i" aria-hidden="true"><use href="assets/icons.svg#cpu"/></svg><span data-zh="本机语音转文字">On-device speech to text</span></li>
+  <li><svg class="i" aria-hidden="true"><use href="assets/icons.svg#sparkles"/></svg><span data-zh="AI 可选，默认关闭">AI optional, off by default</span></li>
+  <li><svg class="i" aria-hidden="true"><use href="assets/icons.svg#lock"/></svg><span data-zh="无账号、无统计">No account, no analytics</span></li>
+  <li><svg class="i" aria-hidden="true"><use href="assets/icons.svg#github"/></svg><span data-zh="免费开源（MIT）">Free and open source</span></li>
+</ul>
+
+<!-- The two apps -->
+<section class="sec" id="apps" aria-labelledby="apps-title">
+  <div class="wrap">
+    <div class="sec-head center rv">
+      <p class="kicker" data-zh="两个应用">Two apps</p>
+      <h2 id="apps-title" data-zh="选择你的 KVoice">Pick your KVoice</h2>
+      <p data-zh="Mac 上的菜单栏听写工具，iPhone 上的语音输入键盘。">A menu-bar dictation app for Mac. A voice keyboard for iPhone.</p>
+    </div>
+    <div class="products">
+      <article class="product mac rv">
+        <header><img src="assets/kvoice-mac.svg" alt="KVoice for Mac app icon" data-zh-alt="KVoice Mac 版应用图标" width="64" height="64"><div><h3 data-zh="KVoice Mac 版">KVoice for Mac</h3><p class="meta" data-zh="Apple 芯片 · macOS 15 或更高版本 · 免费">Apple silicon · macOS 15 or later · free</p></div></header>
+        <ul>
+          <li><svg class="i" aria-hidden="true"><use href="assets/icons.svg#check"/></svg><span data-zh="按住快捷键说话，文字打进任何应用">Hold a shortcut, speak: text lands in any app</span></li>
+          <li><svg class="i" aria-hidden="true"><use href="assets/icons.svg#check"/></svg><span data-zh="13 个 AI 操作：清理、邮件草稿、翻译……">13 AI actions: Clean Up, Email Draft, Translate…</span></li>
+          <li><svg class="i" aria-hidden="true"><use href="assets/icons.svg#check"/></svg><span data-zh="Whisper、Parakeet 等本地模型">Whisper, Parakeet and more, all local</span></li>
+        </ul>
+        <div class="cta"><a class="btn btn-voice" href="mac/"><span data-zh="了解 Mac 版并开始使用">Get started on the Mac</span><svg class="i" aria-hidden="true"><use href="assets/icons.svg#arrow-right"/></svg></a></div>
+        <div class="peek">
+          <div class="mac-frame" style="max-width:360px">
+            <div class="desk" style="height:120em;width:600em;border-radius:14em 14em 0 0" role="img" aria-label="The KVoice recorder while recording, with the Clean Up action chip, a live level meter and the clock." data-zh-aria-label="KVoice 录音条正在录音，带有“清理”操作标签、实时电平条和计时。">
+              <div class="hud-pos" style="bottom:34em">
+                <div class="hud"><div class="hud-row">
+                  <div class="glyph"><i class="g-rec"><svg aria-hidden="true"><use href="assets/icons.svg#mic-fill"/></svg></i></div>
+                  <div class="hud-txt"><div class="hud-title"><b data-zh="录音">Recording</b><span class="chip"><span data-zh="清理">Clean Up</span><span>⌘1</span></span></div><span class="hud-sub" data-zh="松开停止">Release to stop</span></div>
+                  <div class="hud-trail"><span class="meter"><i></i><i></i><i></i><i></i><i></i></span><span class="clock">0:07</span></div>
+                </div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </article>
+      <article class="product ios rv">
+        <header><img src="assets/kvoice-ios-256.png" alt="KVoice for iPhone app icon" data-zh-alt="KVoice iPhone 版应用图标" width="64" height="64"><div><h3 data-zh="KVoice iPhone 版">KVoice for iPhone</h3><p class="meta" data-zh="iOS 26 或更高版本 · TestFlight 公开测试 · 免费">iOS 26 or later · public beta on TestFlight · free</p></div></header>
+        <ul>
+          <li><svg class="i" aria-hidden="true"><use href="assets/icons.svg#check"/></svg><span data-zh="语音键盘：在任何应用里点麦克风听写">A voice keyboard: tap the mic in any app</span></li>
+          <li><svg class="i" aria-hidden="true"><use href="assets/icons.svg#check"/></svg><span data-zh="也能用操作按钮、控制中心或 Siri 开始">Or start from the Action Button, Control Center or Siri</span></li>
+          <li><svg class="i" aria-hidden="true"><use href="assets/icons.svg#check"/></svg><span data-zh="模式：Clean up、Message、Email、Notes……">Modes: Clean up, Message, Email, Notes…</span></li>
+        </ul>
+        <div class="cta"><a class="btn btn-cursor" href="ios/"><span data-zh="了解 iPhone 版并开始设置">Set it up on iPhone</span><svg class="i" aria-hidden="true"><use href="assets/icons.svg#arrow-right"/></svg></a></div>
+        <div class="peek">
+          <div class="phone-frame sm peek-bottom">
+            <div class="iphone">
+              <div class="scr" role="img" aria-label="The KVoice keyboard at the bottom of a chat: mode chips Dictation, Clean up and Message, the blue microphone button, and a dictated reply in the text field." data-zh-aria-label="聊天界面底部的 KVoice 键盘：模式标签 Dictation、Clean up、Message，蓝色麦克风按钮，输入框里是听写出的回复。">
+                <div class="chat">
+                  <div class="field"><span data-zh="好的，我六点前到。">Sounds good, I’ll be there by six.</span></div>
+                </div>
+                <div class="kbd">
+                  <div class="kbar"><div class="left"><div class="mchips"><span class="mchip act"><svg aria-hidden="true"><use href="assets/icons.svg#mic"/></svg><span>Dictation</span></span><span class="mchip"><svg aria-hidden="true"><use href="assets/icons.svg#sparkles"/></svg><span>Clean up</span></span><span class="mchip"><svg aria-hidden="true"><use href="assets/icons.svg#message"/></svg><span>Message</span></span><span class="mchip"><svg aria-hidden="true"><use href="assets/icons.svg#envelope"/></svg><span>Email</span></span></div></div><span class="kmic"><span class="m"><svg aria-hidden="true"><use href="assets/icons.svg#mic-fill"/></svg></span></span></div>
+                  <div class="keys-i">
+                    <div class="krow"><i><span>q</span></i><i><span>w</span></i><i><span>e</span></i><i><span>r</span></i><i><span>t</span></i><i><span>y</span></i><i><span>u</span></i><i><span>i</span></i><i><span>o</span></i><i><span>p</span></i></div>
+                    <div class="krow r2"><i><span>a</span></i><i><span>s</span></i><i><span>d</span></i><i><span>f</span></i><i><span>g</span></i><i><span>h</span></i><i><span>j</span></i><i><span>k</span></i><i><span>l</span></i></div>
+                    <div class="krow r3"><i class="f"><svg aria-hidden="true"><use href="assets/icons.svg#shift"/></svg></i><i><span>z</span></i><i><span>x</span></i><i><span>c</span></i><i><span>v</span></i><i><span>b</span></i><i><span>n</span></i><i><span>m</span></i><i class="f"><svg aria-hidden="true"><use href="assets/icons.svg#delete"/></svg></i></div>
+                  </div>
+                </div>
+                <div class="homebar"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- Demo video -->
+<section class="sec alt" id="demo" aria-labelledby="demo-title">
+  <div class="wrap">
+    <div class="sec-head center rv">
+      <p class="kicker" data-zh="半分钟演示">Under half a minute</p>
+      <h2 id="demo-title" data-zh="Mac 上的 KVoice，实际运行">KVoice on a Mac, for real</h2>
+      <p data-zh="真实录屏：听写、AI 操作，还有终端。">A real recording: dictation, AI actions and a terminal.</p>
+    </div>
+    <div class="video rv">
+      <video controls muted loop playsinline preload="none" data-autoplay poster="assets/demo-en-poster.webp" data-zh-poster="assets/demo-zh-poster.webp" aria-label="KVoice demo video, under half a minute" data-zh-aria-label="KVoice 演示视频，不到半分钟">
+        <source src="assets/demo-en.mp4" data-zh-src="assets/demo-zh.mp4" type="video/mp4">
+      </video>
+    </div>
+  </div>
+</section>
+
+<!-- One sentence, four results -->
+<section class="sec" id="ai" aria-labelledby="ai-title">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <p class="kicker blue" data-zh="可选 AI">Optional AI</p>
+      <h2 id="ai-title" data-zh="随口一说，得到能直接用的文字">Ramble once, get text you can send</h2>
+      <p data-zh="默认关闭。可用本机 Apple 智能，或你自己选的服务。">Off by default. Use Apple Intelligence on your device, or a service you choose.</p>
+    </div>
+    <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,150px),1fr))">
+      <div class="card rv"><div class="tile cursor" aria-hidden="true">🧹</div><h3 data-zh="清理">Clean Up</h3><p data-zh="去掉“嗯、呃”和改口">Drops the ums and false starts</p></div>
+      <div class="card rv"><div class="tile cursor" aria-hidden="true">✉️</div><h3 data-zh="邮件草稿">Email Draft</h3><p data-zh="随口一说，变成一封邮件">Turns a ramble into an email</p></div>
+      <div class="card rv"><div class="tile cursor" aria-hidden="true">☑️</div><h3 data-zh="待办清单">TODO List</h3><p data-zh="提取要做的事">Pulls out the action items</p></div>
+      <div class="card rv"><div class="tile cursor" aria-hidden="true">🌐</div><h3 data-zh="翻译">Translate</h3><p data-zh="换成另一种语言">Puts it in another language</p></div>
+    </div>
+    <p class="muted" style="margin-top:20px;font-size:15px" data-zh="<a href='mac/#actions'>Mac 版 13 个 AI 操作 →</a> · <a href='ios/#modes'>iPhone 版 7 个模式 →</a>"><a href="mac/#actions">13 AI actions on Mac →</a> · <a href="ios/#modes">7 modes on iPhone →</a></p>
+  </div>
+</section>
+
+<!-- Mac vs iPhone -->
+<section class="sec alt" id="compare" aria-labelledby="compare-title">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <p class="kicker" data-zh="一览">At a glance</p>
+      <h2 id="compare-title" data-zh="Mac 版和 iPhone 版有什么不同">Mac and iPhone, side by side</h2>
+    </div>
+    <div class="table-wrap rv">
+      <table class="min stack">
+        <thead><tr><th scope="col"></th><th scope="col" data-zh="KVoice Mac 版">KVoice for Mac</th><th scope="col" data-zh="KVoice iPhone 版">KVoice for iPhone</th></tr></thead>
+        <tbody>
+          <tr><th scope="row" data-zh="怎么开始">Start</th><td data-label="KVoice for Mac" data-zh-data-label="KVoice Mac 版" data-zh="按住快捷键">Hold a shortcut</td><td data-label="KVoice for iPhone" data-zh-data-label="KVoice iPhone 版" data-zh="键盘、操作按钮、控制中心、Siri">Keyboard, Action Button, Control Center, Siri</td></tr>
+          <tr><th scope="row" data-zh="语音识别">Speech recognition</th><td data-label="KVoice for Mac" data-zh-data-label="KVoice Mac 版" data-zh="Whisper、Parakeet 等，全在本机">Whisper, Parakeet and more, on device</td><td data-label="KVoice for iPhone" data-zh-data-label="KVoice iPhone 版" data-zh="Apple Speech 或 Whisper；云端可选">Apple Speech or Whisper; cloud optional</td></tr>
+          <tr><th scope="row" data-zh="获取方式">Get it</th><td data-label="KVoice for Mac" data-zh-data-label="KVoice Mac 版" data-zh="Homebrew 或 DMG；App Store 版即将推出">Homebrew or DMG; App Store edition coming</td><td data-label="KVoice for iPhone" data-zh-data-label="KVoice iPhone 版" data-zh="TestFlight 公开测试">TestFlight public beta</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="margin-top:22px"><a href="mac/" data-zh="Mac 版详细教程 →">Mac guide →</a> · <a href="ios/" data-zh="iPhone 版详细教程 →">iPhone guide →</a></p>
+  </div>
+</section>
+
+<!-- Privacy -->
+<section class="sec" id="privacy" aria-labelledby="privacy-title">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <p class="kicker" data-zh="隐私">Privacy</p>
+      <h2 id="privacy-title" data-zh="除非你自己选择，声音只留在你的设备上">Your voice stays on your device unless you choose otherwise</h2>
+      <p data-zh="没有服务器、没有账号、没有追踪。">No servers, no accounts, no tracking.</p>
+    </div>
+    <div class="priv">
+      <div class="card rv"><div class="tile voice" aria-hidden="true"><svg class="i"><use href="assets/icons.svg#laptop"/></svg></div><h3 data-zh="Mac 版">On the Mac</h3>
+        <ul>
+          <li data-zh="音频在本机转写，从不上传">Audio is transcribed locally, never uploaded</li>
+          <li data-zh="用本机 Apple 智能时，数据不离开 Mac">With Apple Intelligence, nothing leaves the Mac</li>
+          <li data-zh="诊断日志从不记录你说的内容">Diagnostics never hold your words</li>
+        </ul></div>
+      <div class="card rv"><div class="tile i-blue" aria-hidden="true"><svg class="i"><use href="assets/icons.svg#iphone"/></svg></div><h3 data-zh="iPhone 版">On iPhone</h3>
+        <ul>
+          <li data-zh="默认全部在 iPhone 上运行">Everything runs on the iPhone by default</li>
+          <li data-zh="首次发往云端服务前，先征求你的同意">Asks before anything first goes to a cloud service</li>
+          <li data-zh="KVoice 键盘不录音、不联网、不保存输入">The keyboard records, sends and keeps nothing</li>
+        </ul></div>
+    </div>
+    <p style="margin-top:22px"><a href="privacy/" data-zh="完整隐私说明 →">Full privacy details →</a></p>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="sec alt" id="faq" aria-labelledby="faq-title">
+  <div class="wrap">
+    <div class="sec-head center rv"><p class="kicker blue" data-zh="常见问题">FAQ</p><h2 id="faq-title" data-zh="常见问题">Questions, answered</h2></div>
+    <div class="faq-list">
+      <details class="faq"><summary data-zh="KVoice 要花钱吗？">Is KVoice free?</summary><div class="a" data-zh="<p>免费。两个应用都没有订阅和内购，以 MIT 许可证开源。你接入的付费 AI 服务可能另行收费。</p>"><p>Yes, and open source (MIT), with no subscriptions or in-app purchases. A paid AI service you connect may charge you.</p></div></details>
+      <details class="faq"><summary data-zh="需要联网吗？">Does it need the internet?</summary><div class="a" data-zh="<p>不需要。下载好语音模型后即可离线听写；只有你选的在线服务才要联网。</p>"><p>No. Once a speech model is downloaded, dictation works offline. Only online services you choose need the network.</p></div></details>
+      <details class="faq"><summary data-zh="支持哪些语言？">Which languages does it understand?</summary><div class="a" data-zh="<p>用 Whisper 时约一百种。Mac 版界面有英文和简体中文，iPhone 版目前只有英文。</p>"><p>About a hundred with Whisper. The app interface is English and Simplified Chinese on Mac, English on iPhone for now.</p></div></details>
+    </div>
+    <p class="center" style="margin-top:28px"><a href="support/" data-zh="更多问题与故障排查 →">More questions and troubleshooting →</a></p>
+  </div>
+</section>
+
+<!-- Final call -->
+<section class="final dark-zone hero" aria-labelledby="final-title">
+  <div class="wrap">
+    <h2 id="final-title" data-zh="少打字，多完成。">Type less. Finish more.</h2>
+    <p data-zh="免费、开源，在你的设备上运行。">Free, open source, and it runs on your device.</p>
+    <div class="cta">
+      <a class="btn btn-voice" href="https://github.com/kccarlos/kvoice/releases/latest"><svg class="i" aria-hidden="true"><use href="assets/icons.svg#download"/></svg><span data-zh="下载 Mac 版">Download for Mac</span></a>
+      <a class="btn btn-cursor" href="https://testflight.apple.com/join/WzN5CnG6" data-testflight><svg class="i" aria-hidden="true"><use href="assets/icons.svg#iphone"/></svg><span data-zh="加入 iPhone 版测试">Join the iPhone beta</span></a>
+    </div>
+    <div class="cta" style="margin-top:16px"><span class="cmd"><code>brew install --cask kccarlos/tap/kvoice</code><button type="button" hidden><svg class="i" aria-hidden="true"><use href="assets/icons.svg#copy"/></svg><span data-zh="复制">Copy</span></button></span></div>
+  </div>
+</section>
+
+</main>
+<!-- footer:begin -->
+<footer class="foot"><div class="wrap">
+<div class="foot-grid">
+<div><a class="brand" href="./"><img src="assets/kvoice-mac.svg" alt="" width="30" height="30"><span>KVoice</span></a>
+<p data-zh="说一次，成稿直接打在你正在用的地方。适用于 Mac 和 iPhone 的免费开源语音输入。">Speak once. Get finished text, typed where you work. Free and open source dictation for Mac and iPhone.</p></div>
+<div><p class="foot-h" data-zh="KVoice Mac 版">KVoice for Mac</p><ul><li><a href="mac/" data-zh="介绍与教程">Overview and tutorial</a></li><li><a href="https://github.com/kccarlos/kvoice/releases/latest" data-zh="下载 DMG">Download the DMG</a></li><li><a href="https://github.com/kccarlos/kvoice" data-zh="GitHub 源代码">Source code on GitHub</a></li><li><a href="https://github.com/kccarlos/kvoice/issues" data-zh="报告 Mac 版问题">Report a Mac bug</a></li></ul></div><div><p class="foot-h" data-zh="KVoice iPhone 版">KVoice for iPhone</p><ul><li><a href="ios/" data-zh="介绍与设置">Overview and setup</a></li><li><a href="https://testflight.apple.com/join/WzN5CnG6" data-testflight data-zh="加入 TestFlight 测试">Join the TestFlight beta</a></li><li><a href="https://github.com/kccarlos/kvoice-ios" data-zh="GitHub 源代码">Source code on GitHub</a></li><li><a href="https://github.com/kccarlos/kvoice-ios/issues" data-zh="报告 iPhone 版问题">Report an iPhone bug</a></li></ul></div><div><p class="foot-h" data-zh="帮助">Help</p><ul><li><a href="support/" data-zh="支持与常见问题">Support and FAQ</a></li><li><a href="privacy/" data-zh="隐私">Privacy</a></li><li><a href="https://github.com/kccarlos/kvoice/blob/main/Docs/User-Guide.md" data-zh="Mac 用户指南（英文）">Mac User Guide</a></li><li><a href="https://github.com/kccarlos/kvoice/blob/main/CHANGELOG.md" data-zh="更新记录（英文）">What's new</a></li></ul></div>
+</div>
+<p class="legal" data-zh="KVoice 是采用 MIT 许可证的自由软件，与 Apple 无关联。Apple、Mac、iPhone、macOS、iOS、Apple 智能和 TestFlight 是 Apple Inc. 的商标。">KVoice is free software under the MIT license. Not affiliated with Apple. Apple, Mac, iPhone, macOS, iOS, Apple Intelligence and TestFlight are trademarks of Apple Inc.</p>
+</div></footer>
+<!-- footer:end -->
+</body>
+</html>

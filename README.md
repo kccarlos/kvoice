@@ -7,6 +7,7 @@
 <h3 align="center">Speak once. Get finished text, typed where you work.</h3>
 
 <p align="center">
+  <a href="https://kccarlos.github.io/kvoice/"><img src="https://img.shields.io/badge/website-kccarlos.github.io%2Fkvoice-F26B1D" alt="website: kccarlos.github.io/kvoice"></a>
   <img src="https://img.shields.io/badge/Mac_App_Store-coming_soon-0D96F6?logo=appstore&logoColor=white" alt="Mac App Store: coming soon">
   <a href="https://github.com/kccarlos/kvoice/releases/latest"><img src="https://img.shields.io/github/v/release/kccarlos/kvoice?label=download&logo=github" alt="Latest GitHub release"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="License: MIT"></a>
@@ -21,6 +22,8 @@
   <a href="https://github.com/kccarlos/kvoice"><b>⭐ Star on GitHub</b></a>
   to follow new releases. It is free, and it helps other Mac users find KVoice.
 </p>
+
+<p align="center"><a href="https://kccarlos.github.io/kvoice/"><b>🌐 kccarlos.github.io/kvoice</b></a>: the website, with step-by-step guides for Mac and iPhone.</p>
 
 <p align="center">
   <img src="Docs/assets/kvoice-demo-en.gif" alt="KVoice in 20 seconds: hold a key and speak, the words are typed into TextEdit; the same messy sentence becomes a clean transcript, a to-do list or Chinese; a dictated request lands in Codex in a terminal" width="720">

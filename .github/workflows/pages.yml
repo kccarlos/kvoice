@@ -1,0 +1,52 @@
+# Pages: publishes site/ (https://kccarlos.github.io/kvoice/) when it
+# changes on main, or when started by hand. No build step: site/ is plain
+# HTML, CSS and JavaScript. The Chinese pages and sitemap.xml are generated
+# by Scripts/render_site.py and committed; the `check` step fails the run if
+# they are out of date, so a stale translation is never published.
+#
+# Repository settings: Pages › Source must be "GitHub Actions". The
+# github-pages environment is created by GitHub on the first run.
+name: Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - site/**
+      - Scripts/render_site.py
+      - .github/workflows/pages.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Check the generated pages are up to date
+        run: python3 Scripts/render_site.py --check
+      # site/README.md is for people editing the site, not a page.
+      - name: Leave the site README out of the published files
+        run: rm site/README.md
+      - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
+      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: site
+      - id: deployment
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1

@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  <url>
+    <loc>https://kccarlos.github.io/kvoice/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://kccarlos.github.io/kvoice/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://kccarlos.github.io/kvoice/zh/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://kccarlos.github.io/kvoice/"/>
+  </url>
+  <url>
+    <loc>https://kccarlos.github.io/kvoice/zh/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://kccarlos.github.io/kvoice/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://kccarlos.github.io/kvoice/zh/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://kccarlos.github.io/kvoice/"/>
+  </url>
+  <url>
+    <loc>https://kccarlos.github.io/kvoice/mac/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://kccarlos.github.io/kvoice/mac/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://kccarlos.github.io/kvoice/zh/mac/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://kccarlos.github.io/kvoice/mac/"/>
+  </url>
+  <url>
+    <loc>https://kccarlos.github.io/kvoice/zh/mac/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://kccarlos.github.io/kvoice/mac/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://kccarlos.github.io/kvoice/zh/mac/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://kccarlos.github.io/kvoice/mac/"/>
+  </url>
+  <url>
+    <loc>https://kccarlos.github.io/kvoice/ios/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://kccarlos.github.io/kvoice/ios/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://kccarlos.github.io/kvoice/zh/ios/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://kccarlos.github.io/kvoice/ios/"/>
+  </url>
+  <url>
+    <loc>https://kccarlos.github.io/kvoice/zh/ios/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://kccarlos.github.io/kvoice/ios/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://kccarlos.github.io/kvoice/zh/ios/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://kccarlos.github.io/kvoice/ios/"/>
+  </url>
+  <url>
+    <loc>https://kccarlos.github.io/kvoice/privacy/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://kccarlos.github.io/kvoice/privacy/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://kccarlos.github.io/kvoice/zh/privacy/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://kccarlos.github.io/kvoice/privacy/"/>
+  </url>
+  <url>
+    <loc>https://kccarlos.github.io/kvoice/zh/privacy/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://kccarlos.github.io/kvoice/privacy/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://kccarlos.github.io/kvoice/zh/privacy/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://kccarlos.github.io/kvoice/privacy/"/>
+  </url>
+  <url>
+    <loc>https://kccarlos.github.io/kvoice/support/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://kccarlos.github.io/kvoice/support/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://kccarlos.github.io/kvoice/zh/support/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://kccarlos.github.io/kvoice/support/"/>
+  </url>
+  <url>
+    <loc>https://kccarlos.github.io/kvoice/zh/support/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://kccarlos.github.io/kvoice/support/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://kccarlos.github.io/kvoice/zh/support/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://kccarlos.github.io/kvoice/support/"/>
+  </url>
+</urlset>

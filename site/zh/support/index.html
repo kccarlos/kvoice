@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>KVoice 支持：常见问题与故障排查（Mac 与 iPhone）</title>
+<meta name="description" content="KVoice Mac 版与 iPhone 版帮助：权限、iPhone 键盘与完全访问、操作按钮、语音模型下载、AI 设置和问题报告。">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#161d33">
+<!-- seo:begin -->
+<link rel="canonical" href="https://kccarlos.github.io/kvoice/zh/support/">
+<link rel="alternate" hreflang="en" href="https://kccarlos.github.io/kvoice/support/">
+<link rel="alternate" hreflang="zh-Hans" href="https://kccarlos.github.io/kvoice/zh/support/">
+<link rel="alternate" hreflang="x-default" href="https://kccarlos.github.io/kvoice/support/">
+<meta property="og:url" content="https://kccarlos.github.io/kvoice/zh/support/">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:locale:alternate" content="en_US">
+<meta property="og:image" content="https://kccarlos.github.io/kvoice/assets/og-zh.png">
+<meta name="twitter:image" content="https://kccarlos.github.io/kvoice/assets/og-zh.png">
+<!-- seo:end -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="KVoice">
+<meta property="og:title" content="KVoice 支持">
+<meta property="og:description" content="KVoice Mac 版与 iPhone 版的帮助、常见问题和故障排查。">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="KVoice：说一次，成稿直接打在你正在用的地方。">
+<meta name="twitter:card" content="summary_large_image">
+<!-- jsonld:begin -->
+<script type="application/ld+json">
+{
+ "@context": "https://schema.org",
+ "@graph": [
+  {
+   "@type": "BreadcrumbList",
+   "itemListElement": [
+    {
+     "@type": "ListItem",
+     "position": 1,
+     "name": "首页",
+     "item": "https://kccarlos.github.io/kvoice/zh/"
+    },
+    {
+     "@type": "ListItem",
+     "position": 2,
+     "name": "支持",
+     "item": "https://kccarlos.github.io/kvoice/zh/support/"
+    }
+   ]
+  },
+  {
+   "@type": "FAQPage",
+   "mainEntity": [
+    {
+     "@type": "Question",
+     "name": "KVoice 需要哪些权限？",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "两个：麦克风，在你按住快捷键时听你说话；辅助功能，把文字放进你正在用的应用（App Store 版只用其中模拟按键的部分）。KVoice 启动时不会请求任何权限，也不需要“输入监控”。没有辅助功能权限时，它照样转写，并把文字复制到剪贴板。如果你的 AI 服务运行在另一台电脑上，macOS 可能还会询问本地网络权限。"
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "系统设置里已经打开了辅助功能，KVoice 却说没有。",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "macOS 把这个权限绑定在应用的代码签名上。如果应用被一个签名不同的副本替换了（比如从源码构建，或用 cp -R 复制），原来的权限就不再适用。在辅助功能列表里移除 KVoice，再重新添加，然后重新打开 KVoice。"
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "没有插入文字，文字跑到了剪贴板里。",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "当前应用没有可写入的文本框、文本框是密码框，或者 KVoice 工作时你切换到了别的应用。按 ⌘V 粘贴即可。也可以从菜单里再次插入或复制上次的结果。如果某个应用总是失败，请告诉我们。"
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "语音模型下载失败或很慢。",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "模型从 huggingface.co 下载，推荐的 Whisper 模型约 650 MB，请确认网络能访问这个网站，并留出足够的磁盘空间（其他模型约 220 MB 到 1.7 GB）。每个文件都会和应用内置的清单核对，不匹配的会被拒绝，可以在语音模型里删除后重新下载。在 macOS 26 或更高版本上，Apple Speech 不需要 KVoice 下载任何东西。"
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "没说话却转写出了“Thank you.”",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "Whisper 有时会在静音时产生这句话。KVoice 会丢弃太安静、不可能有语音的录音。如果还是出现，请在“设置 › 麦克风”里检查麦克风音量。"
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "AI 操作没有效果。",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "AI 操作默认关闭。点菜单栏图标打开“使用 AI 操作”，并在“设置 › AI 操作”里添加一个配置：本机 Apple 智能（macOS 26 或更高版本，系统设置里需打开 Apple 智能），或兼容 OpenAI 的端点。用“测试当前配置”检查。AI 出错或超时时，KVoice 会插入原始转写，录音条会说明原因。"
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "我的文件在哪里？怎么卸载？",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "文件在 ~/Library/Application Support/kvoice/（App Store 版在 ~/Library/Containers/io.github.kccarlos.kvoice/Data/Library/Application Support/kvoice/）。用 Homebrew 卸载：brew uninstall --zap --cask kvoice 会连同设置、模型和历史一起删除。手动卸载：退出 KVoice，从“应用程序”删除，删除上面的文件夹，再运行 defaults delete io.github.kccarlos.kvoice。"
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "怎么添加 KVoice 键盘？",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "打开“设置 › 通用 › 键盘 › 键盘 › 添加新键盘…”，选择 KVoice。要用键盘听写，再点 KVoice，打开“允许完全访问”。不打开也能打字。"
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "键盘显示 Allow Full Access to dictate。",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "键盘听写需要完全访问。打开“设置 › 通用 › 键盘 › 键盘”，点 KVoice，打开“允许完全访问”，然后回来再点麦克风。完全访问只用于让键盘和这台 iPhone 上的 KVoice 应用通信，你输入的内容不会被保存或发送。"
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "怎么设置操作按钮？",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "打开“设置 › 操作按钮”，滑到“控制”，选择 KVoice › Toggle Dictation。按一下开始听写，再按一下结束，文字会复制到剪贴板，KVoice 键盘打开时还会直接打出来。没有操作按钮的 iPhone，可以把 Toggle Dictation 放进控制中心、锁定屏幕，或用“轻点背面”。"
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "按操作按钮时 KVoice 打开了一下。",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "KVoice 会尽量在后台开始录音；如果 iOS 不允许，它会短暂打开来开始听写。切回去继续说就行。如果 Toggle Dictation 一直不起作用，可以用快捷指令里的 Record Audio 做一个替代快捷指令，步骤见 iPhone 版设置教程。"
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "某个 AI 模式显示 Needs AI setup。",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "这个模式的 AI 服务暂时不能用：Apple 智能未开启或不受支持，或者云端服务还没有 API 密钥。到“Settings › AI formatting”里修复，或者改用 Dictation 模式。"
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "怎么停止向云端服务发送数据？怎么删除数据？",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "“Settings › Privacy › Stop Sending to（服务名）”会撤回同意，并换回设备上的引擎。删除数据：在“Settings › History”里点 Delete All History，或删除应用；请先在设置里移除 API 密钥，因为 iOS 删除应用后仍会保留钥匙串项目。"
+     }
+    }
+   ]
+  }
+ ]
+}
+</script>
+<!-- jsonld:end -->
+<script>if (!matchMedia('(prefers-reduced-motion: reduce)').matches && 'IntersectionObserver' in window) document.documentElement.classList.add('anim');</script>
+<link rel="icon" href="../../favicon.ico" sizes="48x48">
+<link rel="icon" href="../../assets/kvoice-mac.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../../assets/apple-touch-icon.png">
+<link rel="manifest" href="../../site.webmanifest">
+<link rel="stylesheet" href="../../styles.css">
+<script src="../../app.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">跳到正文</a>
+<!-- header:begin -->
+<header class="bar"><div class="bar-in">
+<a class="brand" href="../"><img src="../../assets/kvoice-mac.svg" alt="" width="30" height="30"><span>KVoice</span></a>
+<nav class="nav" aria-label="主导航"><a href="../mac/">Mac</a><a href="../ios/">iPhone</a><a href="../privacy/">隐私</a><a href="../support/" aria-current="page">支持</a></nav>
+<a class="lang" href="../../support/" hreflang="en" lang="en">English</a>
+<a class="gh" href="https://github.com/kccarlos/kvoice"><svg class="i" aria-hidden="true"><use href="../../assets/icons.svg#github" /></svg><span>GitHub</span></a>
+</div></header>
+<!-- header:end -->
+
+<main id="main">
+<section class="page-hero" aria-labelledby="support-title">
+  <div class="wrap">
+    <p class="crumbs"><a href="../">首页</a> › <span>支持</span></p>
+    <h1 id="support-title">KVoice 支持</h1>
+    <p class="lead">先看看下面的常见问题。没找到答案，或者发现了问题？请在 GitHub 上告诉我们，每个应用有自己的问题列表。</p>
+    <div class="cta">
+      <a class="btn btn-voice" href="https://github.com/kccarlos/kvoice/issues"><svg class="i" aria-hidden="true"><use href="../../assets/icons.svg#bug" /></svg><span>报告 Mac 版问题</span></a>
+      <a class="btn btn-ios" href="https://github.com/kccarlos/kvoice-ios/issues"><svg class="i" aria-hidden="true"><use href="../../assets/icons.svg#bug" /></svg><span>报告 iPhone 版问题</span></a>
+    </div>
+    <ul class="toc" style="margin-top:22px">
+      <li><a href="#mac">Mac 版</a></li>
+      <li><a href="#iphone">iPhone 版</a></li>
+      <li><a href="#report">怎么报告问题</a></li>
+    </ul>
+  </div>
+</section>
+
+<section class="sec" aria-labelledby="mac">
+  <div class="wrap">
+    <div class="sec-head"><p class="kicker">Mac 版</p><h2 id="mac">Mac 版常见问题与故障排查</h2>
+      <p>设置和日常使用见 <a href='../mac/'>Mac 版教程</a>，完整功能见 <a href='https://github.com/kccarlos/kvoice/blob/main/Docs/User-Guide.md'>用户指南（英文）</a>。</p></div>
+    <div class="faq-list" style="margin:0">
+      <details class="faq"><summary>KVoice 需要哪些权限？</summary><div class="a"><p>两个：<b>麦克风</b>，在你按住快捷键时听你说话；<b>辅助功能</b>，把文字放进你正在用的应用（App Store 版只用其中模拟按键的部分）。KVoice 启动时不会请求任何权限，也不需要“输入监控”。没有辅助功能权限时，它照样转写，并把文字复制到剪贴板。如果你的 AI 服务运行在另一台电脑上，macOS 可能还会询问本地网络权限。</p></div></details>
+      <details class="faq"><summary>系统设置里已经打开了辅助功能，KVoice 却说没有。</summary><div class="a"><p>macOS 把这个权限绑定在应用的代码签名上。如果应用被一个签名不同的副本替换了（比如从源码构建，或用 <code>cp -R</code> 复制），原来的权限就不再适用。在辅助功能列表里移除 KVoice，再重新添加，然后重新打开 KVoice。</p></div></details>
+      <details class="faq"><summary>没有插入文字，文字跑到了剪贴板里。</summary><div class="a"><p>当前应用没有可写入的文本框、文本框是密码框，或者 KVoice 工作时你切换到了别的应用。按 <kbd>⌘V</kbd> 粘贴即可。也可以从菜单里再次插入或复制上次的结果。如果某个应用总是失败，请<a href='https://github.com/kccarlos/kvoice/issues'>告诉我们</a>。</p></div></details>
+      <details class="faq"><summary>第一次听写要等好几分钟。</summary><div class="a"><p>那是 Core ML 在为你的 Mac 编译模型，每个模型只需一次（在“运行时”卡片里更换处理器后也会重新编译）。之后加载很快。</p></div></details>
+      <details class="faq"><summary>语音模型下载失败或很慢。</summary><div class="a"><p>模型从 huggingface.co 下载，推荐的 Whisper 模型约 650 MB，请确认网络能访问这个网站，并留出足够的磁盘空间（其他模型约 220 MB 到 1.7 GB）。每个文件都会和应用内置的清单核对，不匹配的会被拒绝，可以在<b>语音模型</b>里删除后重新下载。在 macOS 26 或更高版本上，Apple Speech 不需要 KVoice 下载任何东西。</p></div></details>
+      <details class="faq"><summary>没说话却转写出了“Thank you.”</summary><div class="a"><p>Whisper 有时会在静音时产生这句话。KVoice 会丢弃太安静、不可能有语音的录音。如果还是出现，请在“设置 › 麦克风”里检查麦克风音量。</p></div></details>
+      <details class="faq"><summary>AI 操作没有效果。</summary><div class="a"><p>AI 操作默认关闭。点菜单栏图标打开“使用 AI 操作”，并在“设置 › AI 操作”里添加一个配置：本机 Apple 智能（macOS 26 或更高版本，系统设置里需打开 Apple 智能），或兼容 OpenAI 的端点。用“测试当前配置”检查。AI 出错或超时时，KVoice 会插入原始转写，录音条会说明原因。</p></div></details>
+      <details class="faq"><summary>我的文件在哪里？怎么卸载？</summary><div class="a"><p>文件在 ~/Library/Application Support/kvoice/（App Store 版在 ~/Library/Containers/io.github.kccarlos.kvoice/Data/Library/Application Support/kvoice/）。用 Homebrew 卸载：<code>brew uninstall --zap --cask kvoice</code> 会连同设置、模型和历史一起删除。手动卸载：退出 KVoice，从“应用程序”删除，删除上面的文件夹，再运行 <code>defaults delete io.github.kccarlos.kvoice</code>。</p></div></details>
+    </div>
+  </div>
+</section>
+
+<section class="sec alt" aria-labelledby="iphone">
+  <div class="wrap">
+    <div class="sec-head"><p class="kicker blue">iPhone 版</p><h2 id="iphone">iPhone 版常见问题与故障排查</h2>
+      <p>分步设置见 <a href='../ios/'>iPhone 版设置教程</a>。iPhone 版界面是英文的，下面保留了应用里的英文名称。</p></div>
+    <div class="faq-list" style="margin:0">
+      <details class="faq"><summary>怎么添加 KVoice 键盘？</summary><div class="a"><p>打开“设置 › 通用 › 键盘 › 键盘 › 添加新键盘…”，选择 KVoice。要用键盘听写，再点 KVoice，打开“允许完全访问”。不打开也能打字。</p></div></details>
+      <details class="faq"><summary>为什么键盘会打开 KVoice 应用？</summary><div class="a"><p>iOS 键盘不能使用麦克风，所以由 KVoice 应用替键盘录音。点键盘上的麦克风，KVoice 打开并开始听，你返回原来的应用，文字会打在你离开的位置。之后几分钟内，键盘可以直接开始下一次听写（“Settings › Keep listening for the keyboard”，选 Off 可关闭）。</p></div></details>
+      <details class="faq"><summary>键盘显示 Allow Full Access to dictate。</summary><div class="a"><p>键盘听写需要完全访问。打开“设置 › 通用 › 键盘 › 键盘”，点 KVoice，打开“允许完全访问”，然后回来再点麦克风。完全访问只用于让键盘和这台 iPhone 上的 KVoice 应用通信，你输入的内容不会被保存或发送。</p></div></details>
+      <details class="faq"><summary>怎么设置操作按钮？</summary><div class="a"><p>打开“设置 › 操作按钮”，滑到“控制”，选择 KVoice › Toggle Dictation。按一下开始听写，再按一下结束，文字会复制到剪贴板，KVoice 键盘打开时还会直接打出来。没有操作按钮的 iPhone，可以把 Toggle Dictation 放进控制中心、锁定屏幕，或用“轻点背面”。</p></div></details>
+      <details class="faq"><summary>按操作按钮时 KVoice 打开了一下。</summary><div class="a"><p>KVoice 会尽量在后台开始录音；如果 iOS 不允许，它会短暂打开来开始听写。切回去继续说就行。如果 Toggle Dictation 一直不起作用，可以用快捷指令里的 Record Audio 做一个替代快捷指令，步骤见 <a href='../ios/#siri'>iPhone 版设置教程</a>。</p></div></details>
+      <details class="faq"><summary>为什么麦克风指示灯一直亮着？</summary><div class="a"><p>KVoice 正在录音，或在一次键盘听写后为键盘保持麦克风就绪。可以在实时活动里点 End，或用键盘上的电源按钮结束，也可以把 Keep listening for the keyboard 设为 Off。</p></div></details>
+      <details class="faq"><summary>某个 AI 模式显示 Needs AI setup。</summary><div class="a"><p>这个模式的 AI 服务暂时不能用：Apple 智能未开启或不受支持，或者云端服务还没有 API 密钥。到“Settings › AI formatting”里修复，或者改用 Dictation 模式。</p></div></details>
+      <details class="faq"><summary>怎么停止向云端服务发送数据？怎么删除数据？</summary><div class="a"><p>“Settings › Privacy › Stop Sending to（服务名）”会撤回同意，并换回设备上的引擎。删除数据：在“Settings › History”里点 Delete All History，或删除应用；请先在设置里移除 API 密钥，因为 iOS 删除应用后仍会保留钥匙串项目。</p></div></details>
+    </div>
+  </div>
+</section>
+
+<section class="sec" aria-labelledby="report">
+  <div class="wrap prose">
+    <h2 id="report">怎么报告问题</h2>
+    <div class="two">
+      <div class="card">
+        <h3 style="margin-top:0">Mac 版</h3>
+        <ol>
+          <li>在 <a href='https://github.com/kccarlos/kvoice/issues'>github.com/kccarlos/kvoice/issues</a> 新建一个 issue。</li>
+          <li>写清楚你做了什么、期望发生什么、实际发生了什么，以及出问题的应用名称。</li>
+          <li>附上 macOS 版本和 KVoice 版本。在“数据与隐私”里点“复制诊断信息”可以得到一份不含转写文字、密钥和端点路径的摘要，贴进 issue 即可。</li>
+        </ol>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0">iPhone 版</h3>
+        <ol>
+          <li>在 <a href='https://github.com/kccarlos/kvoice-ios/issues'>github.com/kccarlos/kvoice-ios/issues</a> 新建一个 issue。</li>
+          <li>写清楚你做了什么、期望发生什么、实际发生了什么。</li>
+          <li>附上 iPhone 型号、iOS 版本和 KVoice 版本（“Settings › About”）。后台开始录音有问题时，“Settings › About › Diagnostics”里的本地日志会有帮助，日志里没有你说的内容。</li>
+        </ol>
+      </div>
+    </div>
+    <p class="note warm">请不要在 issue 里贴 API 密钥，或任何你想保密的听写内容。安全问题请按 Mac 版仓库里的 <a href='https://github.com/kccarlos/kvoice/blob/main/SECURITY.md'>SECURITY.md</a> 私下报告。</p>
+  </div>
+</section>
+</main>
+<!-- footer:begin -->
+<footer class="foot"><div class="wrap">
+<div class="foot-grid">
+<div><a class="brand" href="../"><img src="../../assets/kvoice-mac.svg" alt="" width="30" height="30"><span>KVoice</span></a>
+<p>说一次，成稿直接打在你正在用的地方。适用于 Mac 和 iPhone 的免费开源语音输入。</p></div>
+<div><p class="foot-h">KVoice Mac 版</p><ul><li><a href="../mac/">介绍与教程</a></li><li><a href="https://github.com/kccarlos/kvoice/releases/latest">下载 DMG</a></li><li><a href="https://github.com/kccarlos/kvoice">GitHub 源代码</a></li><li><a href="https://github.com/kccarlos/kvoice/issues">报告 Mac 版问题</a></li></ul></div><div><p class="foot-h">KVoice iPhone 版</p><ul><li><a href="../ios/">介绍与设置</a></li><li><a href="https://testflight.apple.com/join/WzN5CnG6" data-testflight>加入 TestFlight 测试</a></li><li><a href="https://github.com/kccarlos/kvoice-ios">GitHub 源代码</a></li><li><a href="https://github.com/kccarlos/kvoice-ios/issues">报告 iPhone 版问题</a></li></ul></div><div><p class="foot-h">帮助</p><ul><li><a href="../support/">支持与常见问题</a></li><li><a href="../privacy/">隐私</a></li><li><a href="https://github.com/kccarlos/kvoice/blob/main/Docs/User-Guide.md">Mac 用户指南（英文）</a></li><li><a href="https://github.com/kccarlos/kvoice/blob/main/CHANGELOG.md">更新记录（英文）</a></li></ul></div>
+</div>
+<p class="legal">KVoice 是采用 MIT 许可证的自由软件，与 Apple 无关联。Apple、Mac、iPhone、macOS、iOS、Apple 智能和 TestFlight 是 Apple Inc. 的商标。</p>
+</div></footer>
+<!-- footer:end -->
+</body>
+</html>

@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en" data-zh-lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title data-zh="KVoice 隐私说明：Mac 版与 iPhone 版">KVoice privacy: what stays on your device, for Mac and iPhone</title>
+<meta name="description" content="KVoice privacy for Mac and iPhone: speech is transcribed on your device, AI is optional, and there are no accounts, analytics or tracking." data-zh-content="KVoice Mac 版与 iPhone 版隐私说明：语音在设备上转写，AI 可选，没有账号、统计分析或追踪。">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#161d33">
+<!-- seo:begin -->
+<link rel="canonical" href="https://kccarlos.github.io/kvoice/privacy/" data-zh-href="https://kccarlos.github.io/kvoice/zh/privacy/">
+<link rel="alternate" hreflang="en" href="https://kccarlos.github.io/kvoice/privacy/">
+<link rel="alternate" hreflang="zh-Hans" href="https://kccarlos.github.io/kvoice/zh/privacy/">
+<link rel="alternate" hreflang="x-default" href="https://kccarlos.github.io/kvoice/privacy/">
+<meta property="og:url" content="https://kccarlos.github.io/kvoice/privacy/" data-zh-content="https://kccarlos.github.io/kvoice/zh/privacy/">
+<meta property="og:locale" content="en_US" data-zh-content="zh_CN">
+<meta property="og:locale:alternate" content="zh_CN" data-zh-content="en_US">
+<meta property="og:image" content="https://kccarlos.github.io/kvoice/assets/og-en.png" data-zh-content="https://kccarlos.github.io/kvoice/assets/og-zh.png">
+<meta name="twitter:image" content="https://kccarlos.github.io/kvoice/assets/og-en.png" data-zh-content="https://kccarlos.github.io/kvoice/assets/og-zh.png">
+<!-- seo:end -->
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="KVoice">
+<meta property="og:title" content="KVoice privacy" data-zh-content="KVoice 隐私说明">
+<meta property="og:description" content="Your voice stays on your device. No servers, no accounts, no analytics." data-zh-content="你的声音留在你的设备上。没有服务器、没有账号、没有统计分析。">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="KVoice: speak once, get finished text typed where you work." data-zh-content="KVoice：说一次，成稿直接打在你正在用的地方。">
+<meta name="twitter:card" content="summary_large_image">
+<!-- jsonld:begin -->
+<script type="application/ld+json">
+{
+ "@context": "https://schema.org",
+ "@graph": [
+  {
+   "@type": "BreadcrumbList",
+   "itemListElement": [
+    {
+     "@type": "ListItem",
+     "position": 1,
+     "name": "Home",
+     "item": "https://kccarlos.github.io/kvoice/"
+    },
+    {
+     "@type": "ListItem",
+     "position": 2,
+     "name": "Privacy",
+     "item": "https://kccarlos.github.io/kvoice/privacy/"
+    }
+   ]
+  }
+ ]
+}
+</script>
+<!-- jsonld:end -->
+<script>if (!matchMedia('(prefers-reduced-motion: reduce)').matches && 'IntersectionObserver' in window) document.documentElement.classList.add('anim');</script>
+<link rel="icon" href="../favicon.ico" sizes="48x48">
+<link rel="icon" href="../assets/kvoice-mac.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+<link rel="manifest" href="../site.webmanifest">
+<link rel="stylesheet" href="../styles.css">
+<script src="../app.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main" data-zh="跳到正文">Skip to content</a>
+<!-- header:begin -->
+<header class="bar"><div class="bar-in">
+<a class="brand" href="../"><img src="../assets/kvoice-mac.svg" alt="" width="30" height="30"><span>KVoice</span></a>
+<nav class="nav" aria-label="Main" data-zh-aria-label="主导航"><a href="../mac/">Mac</a><a href="../ios/">iPhone</a><a href="../privacy/" aria-current="page" data-zh="隐私">Privacy</a><a href="../support/" data-zh="支持">Support</a></nav>
+<a class="lang" href="../zh/privacy/" hreflang="zh-Hans" lang="zh-Hans" data-zh="English" data-zh-href="../../privacy/" data-zh-hreflang="en" data-zh-lang="en">中文</a>
+<a class="gh" href="https://github.com/kccarlos/kvoice"><svg class="i" aria-hidden="true"><use href="../assets/icons.svg#github"/></svg><span>GitHub</span></a>
+</div></header>
+<!-- header:end -->
+
+<main id="main">
+<section class="page-hero" aria-labelledby="privacy-title">
+  <div class="wrap">
+    <p class="crumbs"><a href="../" data-zh="首页">Home</a> › <span data-zh="隐私">Privacy</span></p>
+    <h1 id="privacy-title" data-zh="隐私说明">Privacy</h1>
+    <p class="lead" data-zh="KVoice 的设计原则是：你的声音和文字留在你的设备上，除非你自己选择发送出去。这一页概括了 Mac 版和 iPhone 版保存什么、可能发送什么，以及发往哪里。完整说明以各应用仓库中的隐私文档为准。">KVoice is built so your voice and your words stay on your device unless you choose otherwise. This page summarizes what the Mac and iPhone apps store, what they can send, and where. The full policies in each app's repository are the authoritative versions.</p>
+    <ul class="toc">
+      <li><a href="#short" data-zh="简要版">The short version</a></li>
+      <li><a href="#mac" data-zh="Mac 版">KVoice for Mac</a></li>
+      <li><a href="#iphone" data-zh="iPhone 版">KVoice for iPhone</a></li>
+      <li><a href="#site" data-zh="本网站">This website</a></li>
+      <li><a href="#contact" data-zh="联系">Contact</a></li>
+    </ul>
+  </div>
+</section>
+
+<section class="sec" aria-labelledby="short">
+  <div class="wrap prose">
+    <h2 id="short" data-zh="简要版">The short version</h2>
+    <ul>
+      <li data-zh="<b>没有服务器、账号、统计分析、广告或追踪。</b>开发者收不到你的任何数据。"><b>No servers, accounts, analytics, advertising or tracking.</b> The developer receives none of your data.</li>
+      <li data-zh="<b>语音在你的设备上转写。</b>音频不会上传，除非你在 iPhone 上自己选择了云端转写服务。"><b>Speech is transcribed on your device.</b> Audio is not uploaded, unless you choose a cloud transcription service yourself on iPhone.</li>
+      <li data-zh="<b>AI 是可选的。</b>只有你自己选了在线服务并打开时，那一次的文字（在 iPhone 上用云端转写时还包括音频）才会直接从你的设备发给那个服务，不经过我们。"><b>AI is optional.</b> Only when you turn it on with an online service does that dictation's text (or, for cloud transcription on iPhone, its audio) go straight from your device to that service, never through us.</li>
+      <li data-zh="<b>API 密钥留在本地：</b>Mac 版存在只有你的用户账户能读取的文件里，iPhone 版存在 iOS 钥匙串里。"><b>API keys stay local:</b> in a file only your user account can read on the Mac, and in the iOS Keychain on iPhone.</li>
+      <li data-zh="<b>诊断日志只留在设备上</b>，只记录状态和耗时，从不记录你说的内容。"><b>Diagnostics stay on the device</b> and record states and timings, never your words.</li>
+    </ul>
+
+    <h2 id="mac" data-zh="KVoice Mac 版">KVoice for Mac</h2>
+    <h3 data-zh="留在你的 Mac 上的">What stays on your Mac</h3>
+    <ul>
+      <li data-zh="<b>听写时的音频</b>只在内存里，插入文字后丢弃；除非你打开了保留录音（默认关闭）。"><b>Audio while you dictate</b> is held in memory and discarded once the text is inserted, unless you turn on keeping recordings (off by default).</li>
+      <li data-zh="<b>历史记录</b>（默认开启，可关闭）保存在 ~/Library/Application Support/kvoice/ 里，保留多久由你设定；“全部清除”会删除它们。"><b>History</b> (on by default, can be turned off) is stored under ~/Library/Application Support/kvoice/, for as long as your retention setting says; Clear All deletes it.</li>
+      <li data-zh="<b>语音模型</b>、<b>设置</b>和<b>词典</b>都在本机。词典作为提示交给本地语音模型，不会离开 Mac。"><b>Speech models</b>, <b>settings</b> and the <b>Dictionary</b> stay on the Mac. The Dictionary is given to the local speech model as a hint and never leaves it.</li>
+      <li data-zh="<b>API 密钥</b>保存在只有你的用户账户能读取的文件里（权限 0600），从不写进设置文件。"><b>API keys</b> live in a file readable only by your user account (mode 0600), never in the settings file.</li>
+    </ul>
+    <h3 data-zh="可能离开你的 Mac 的">What can leave your Mac</h3>
+    <ul>
+      <li data-zh="<b>语音模型下载：</b>从 huggingface.co 通过 HTTPS 下载，版本固定在应用里，每个文件都与内置清单核对。请求里不包含你的音频、文字、设置或任何标识。Apple Speech 的语言资源由 macOS 自己下载和管理。"><b>Speech model downloads</b> over HTTPS from huggingface.co, at revisions pinned in the app, each file checked against a manifest inside the app. No audio, text, settings or identifiers of yours are sent. Apple Speech's language files are downloaded and managed by macOS.</li>
+      <li data-zh="<b>AI 操作（默认关闭）：</b>打开后，每次听写的转写文字和操作指令发给你选的引擎。你写的用户档案、以及你为某个操作打开的剪贴板或选中文字，也会一起发送。用本机 Apple 智能时，什么都不会离开 Mac；用兼容 OpenAI 的服务时，只发到你配置的那个端点；私密云计算（仅 App Store 版）由 Apple 的服务器处理，必须你明确选择。"><b>AI Actions (off by default):</b> when on, each transcript and the action's instructions go to the engine you chose, with your user profile and, only for actions you set up that way, clipboard or selected text. With Apple Intelligence on the Mac, nothing leaves it; with an OpenAI-compatible endpoint, only that endpoint receives it; Private Cloud Compute (App Store edition only) is processed on Apple's servers and only when you choose it explicitly.</li>
+      <li data-zh="<b>你手动发起的检查：</b>“验证并保存”和“测试当前配置”会向那个引擎发一个简短的固定测试请求（绝不是转写内容）。"><b>Checks you start:</b> Verify &amp; Save and Test Active Configuration send one short fixed test request, never a transcript, to the engine being checked.</li>
+    </ul>
+    <p data-zh="AI 操作关闭时，KVoice 的设计是除了下载模型和你手动发起的检查外，不发出任何网络请求。远程端点必须使用 HTTPS；明文 HTTP 只允许 localhost。">With AI Actions off, KVoice is designed to make no network requests beyond model downloads and the checks you start by hand. Remote endpoints must use HTTPS; plain HTTP is accepted only for localhost.</p>
+    <p data-zh="完整说明：<a href='https://github.com/kccarlos/kvoice/blob/main/PRIVACY.md'>Mac 版 PRIVACY.md（英文）</a>">Full policy: <a href="https://github.com/kccarlos/kvoice/blob/main/PRIVACY.md">PRIVACY.md for KVoice for Mac</a></p>
+
+    <h2 id="iphone" data-zh="KVoice iPhone 版">KVoice for iPhone</h2>
+    <h3 data-zh="留在你的 iPhone 上的">What stays on your iPhone</h3>
+    <ul>
+      <li data-zh="<b>录音</b>只在你听写时进行。KVoice 为键盘保持麦克风就绪时，在你开始听写之前不会录下或保存任何内容。默认录音会保存在历史记录里，关闭 Keep audio recordings 后每段录音转写完就删除。"><b>Recordings</b> happen only while you dictate. While KVoice keeps the microphone ready for the keyboard, nothing is recorded or saved until you start a dictation. By default a recording is kept in History; turn off Keep audio recordings to delete each one once it is transcribed.</li>
+      <li data-zh="<b>转写和整理后的文字</b>保存在历史记录里，可以限制为 30 天或 7 天，Delete All History 会全部删除。删除应用会删除历史、录音、模式和设置。"><b>Transcripts and formatted text</b> are kept in History, which can be limited to 30 or 7 days; Delete All History removes everything. Deleting KVoice deletes history, recordings, modes and settings.</li>
+      <li data-zh="<b>API 密钥</b>只存在 iOS 钥匙串里，只发给它所属的服务。iOS 删除应用后仍会保留钥匙串项目，所以想彻底删除的话，请先在设置里移除密钥。"><b>API keys</b> are stored in the iOS Keychain only, and sent only to the provider they belong to. iOS keeps Keychain items after an app is deleted, so remove your keys in Settings first if you want them gone.</li>
+      <li data-zh="<b>KVoice 键盘</b>不录音、不联网，也不保存或分享你输入的内容。不打开完全访问时它就是普通键盘；打开后它只和同一台 iPhone 上的 KVoice 应用通信。"><b>The KVoice keyboard</b> records no audio, sends nothing over the network, and does not keep or share what you type. Without Full Access it is a plain keyboard; with it, it talks only to the KVoice app on the same iPhone.</li>
+    </ul>
+    <h3 data-zh="可能离开你的 iPhone 的">When data leaves your iPhone</h3>
+    <ul>
+      <li data-zh="<b>云端转写</b>（你选择 OpenAI、Groq、Google AI Studio、Google Vertex AI 或你填写的兼容端点时）：每次听写的音频发给那个服务。"><b>Cloud transcription</b>, if you choose OpenAI, Groq, Google AI Studio, Google Vertex AI or an OpenAI-compatible endpoint you enter: each dictation's audio goes to that provider.</li>
+      <li data-zh="<b>云端 AI 整理</b>（你选择 OpenAI、Anthropic、Google AI Studio、Google Vertex AI、Groq、OpenRouter 或兼容端点时）：转写文字和模式指令发给那个服务。"><b>Cloud AI formatting</b>, if you choose OpenAI, Anthropic, Google AI Studio, Google Vertex AI, Groq, OpenRouter or an OpenAI-compatible endpoint: the transcript and the mode's instructions go to that provider.</li>
+      <li data-zh="<b>下载：</b>Whisper 模型来自 Hugging Face 上的 WhisperKit 模型仓库，Apple Speech 语言模型来自 Apple。这些下载不包含你的任何听写内容。"><b>Downloads:</b> Whisper models from the WhisperKit model repository on Hugging Face, and Apple Speech language models from Apple. They send none of your dictation.</li>
+    </ul>
+    <p data-zh="第一次发送到云端服务之前，KVoice 会显示服务名称和要发送的内容，并征求你的同意；拒绝的话就留在设备上。随时可以在“Settings › Privacy › Stop Sending to（服务名）”撤回同意。">Before anything goes to a cloud provider for the first time, KVoice shows which provider and what will be sent, and asks; if you decline, it stays on device. Withdraw at any time with Settings › Privacy › Stop Sending to <i>provider</i>.</p>
+    <p data-zh="完整说明：<a href='https://github.com/kccarlos/kvoice-ios/blob/main/Docs/Privacy.md'>iPhone 版隐私政策（英文）</a>">Full policy: <a href="https://github.com/kccarlos/kvoice-ios/blob/main/Docs/Privacy.md">privacy policy for KVoice for iPhone</a></p>
+
+    <h2 id="site" data-zh="本网站">This website</h2>
+    <p data-zh="本网站是托管在 GitHub Pages 上的静态页面：没有 Cookie、没有统计分析、没有第三方脚本或字体。GitHub 作为托管方可能会出于安全和运维目的记录访问日志，详见 GitHub 的隐私声明。">This site is a set of static pages hosted on GitHub Pages: no cookies, no analytics, and no third-party scripts or fonts. As the host, GitHub may log requests for security and operations; see GitHub's privacy statement.</p>
+
+    <h2 id="contact" data-zh="联系">Contact</h2>
+    <p data-zh="对隐私有疑问？请在对应仓库开一个 issue：<a href='https://github.com/kccarlos/kvoice/issues'>Mac 版</a>，<a href='https://github.com/kccarlos/kvoice-ios/issues'>iPhone 版</a>。请不要在 issue 里贴 API 密钥或你想保密的听写内容。">Questions about privacy? Open an issue in the app's repository: <a href="https://github.com/kccarlos/kvoice/issues">KVoice for Mac</a> or <a href="https://github.com/kccarlos/kvoice-ios/issues">KVoice for iPhone</a>. Please do not post API keys or dictation you want to keep private.</p>
+    <p class="muted" data-zh="最后更新：2026 年 11 月。">Last updated: November 2026.</p>
+  </div>
+</section>
+</main>
+<!-- footer:begin -->
+<footer class="foot"><div class="wrap">
+<div class="foot-grid">
+<div><a class="brand" href="../"><img src="../assets/kvoice-mac.svg" alt="" width="30" height="30"><span>KVoice</span></a>
+<p data-zh="说一次，成稿直接打在你正在用的地方。适用于 Mac 和 iPhone 的免费开源语音输入。">Speak once. Get finished text, typed where you work. Free and open source dictation for Mac and iPhone.</p></div>
+<div><p class="foot-h" data-zh="KVoice Mac 版">KVoice for Mac</p><ul><li><a href="../mac/" data-zh="介绍与教程">Overview and tutorial</a></li><li><a href="https://github.com/kccarlos/kvoice/releases/latest" data-zh="下载 DMG">Download the DMG</a></li><li><a href="https://github.com/kccarlos/kvoice" data-zh="GitHub 源代码">Source code on GitHub</a></li><li><a href="https://github.com/kccarlos/kvoice/issues" data-zh="报告 Mac 版问题">Report a Mac bug</a></li></ul></div><div><p class="foot-h" data-zh="KVoice iPhone 版">KVoice for iPhone</p><ul><li><a href="../ios/" data-zh="介绍与设置">Overview and setup</a></li><li><a href="https://testflight.apple.com/join/WzN5CnG6" data-testflight data-zh="加入 TestFlight 测试">Join the TestFlight beta</a></li><li><a href="https://github.com/kccarlos/kvoice-ios" data-zh="GitHub 源代码">Source code on GitHub</a></li><li><a href="https://github.com/kccarlos/kvoice-ios/issues" data-zh="报告 iPhone 版问题">Report an iPhone bug</a></li></ul></div><div><p class="foot-h" data-zh="帮助">Help</p><ul><li><a href="../support/" data-zh="支持与常见问题">Support and FAQ</a></li><li><a href="../privacy/" data-zh="隐私">Privacy</a></li><li><a href="https://github.com/kccarlos/kvoice/blob/main/Docs/User-Guide.md" data-zh="Mac 用户指南（英文）">Mac User Guide</a></li><li><a href="https://github.com/kccarlos/kvoice/blob/main/CHANGELOG.md" data-zh="更新记录（英文）">What's new</a></li></ul></div>
+</div>
+<p class="legal" data-zh="KVoice 是采用 MIT 许可证的自由软件，与 Apple 无关联。Apple、Mac、iPhone、macOS、iOS、Apple 智能和 TestFlight 是 Apple Inc. 的商标。">KVoice is free software under the MIT license. Not affiliated with Apple. Apple, Mac, iPhone, macOS, iOS, Apple Intelligence and TestFlight are trademarks of Apple Inc.</p>
+</div></footer>
+<!-- footer:end -->
+</body>
+</html>
